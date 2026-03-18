@@ -90,7 +90,7 @@ export default function RiskMap({ campusWeather, mapMode }: RiskMapProps) {
         })}
       </MapContainer>
 
-      <div className="absolute right-4 top-4 z-[1000] space-y-2 rounded-xl border border-slate-200/90 bg-white/92 p-3 text-[10px] font-bold shadow-lg backdrop-blur-md">
+      <div className="absolute right-4 top-4 z-[1000] space-y-2 rounded-xl border border-slate-200 bg-white p-3 text-[10px] font-bold shadow-lg">
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-emerald-500" /> SAFE
         </div>
