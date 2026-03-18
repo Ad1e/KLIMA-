@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Marker, Popup, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
 import {
@@ -32,6 +32,11 @@ interface EarthquakeEvent {
 }
 
 type MapMode = 'street' | 'satellite' | 'dark';
+
+interface EarthquakeAnalysisProps {
+  mapMode: MapMode;
+  onMapModeChange: (mode: MapMode) => void;
+}
 
 const latestEQ: EarthquakeEvent = {
   magnitude: 4.3,
@@ -80,8 +85,7 @@ const haversineDistanceKm = (start: [number, number], end: [number, number]): nu
   return earthRadiusKm * c;
 };
 
-export default function EarthquakeAnalysis() {
-  const [mapMode, setMapMode] = useState<MapMode>('dark');
+export default function EarthquakeAnalysis({ mapMode, onMapModeChange }: EarthquakeAnalysisProps) {
 
   const campusDistances = useMemo(() => {
     return CAMPUSES.map((campus) => {
@@ -121,7 +125,7 @@ export default function EarthquakeAnalysis() {
               ].map((mode) => (
                 <button
                   key={mode.key}
-                  onClick={() => setMapMode(mode.key)}
+                  onClick={() => onMapModeChange(mode.key)}
                   className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[10px] font-bold transition-colors ${
                     mapMode === mode.key
                       ? 'bg-sky-700 text-white'

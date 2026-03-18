@@ -34,7 +34,7 @@ interface DashboardProps {
 export default function Dashboard({ onLogout }: DashboardProps) {
   const navigate = useNavigate()
   const [activeNav, setActiveNav] = useState('local');
-  const [mapMode, setMapMode] = useState('street');
+  const [mapMode, setMapMode] = useState<'street' | 'satellite' | 'dark'>('street');
   const [campusWeather, setCampusWeather] = useState<CampusWeather[]>(getFallbackCampusWeather());
   const [isLiveWeather, setIsLiveWeather] = useState(false);
 
@@ -177,7 +177,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </div>
 
         {activeNav === 'eq' ? (
-          <EarthquakeAnalysis />
+          <EarthquakeAnalysis mapMode={mapMode} onMapModeChange={setMapMode} />
         ) : (
         <div className="p-8">
           {/* 1. Header Section */}
@@ -198,13 +198,17 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <h3 className="text-lg font-bold text-slate-900">Risk Map</h3>
                   <div className="flex gap-2">
                     {[
-                      { key: 'street', label: 'Street', icon: <Eye size={14} className="inline mr-1" /> },
                       {
-                        key: 'satellite',
+                        key: 'street' as const,
+                        label: 'Street',
+                        icon: <Eye size={14} className="inline mr-1" />,
+                      },
+                      {
+                        key: 'satellite' as const,
                         label: 'Satellite',
                         icon: <Layers size={14} className="inline mr-1" />,
                       },
-                      { key: 'dark', label: 'Dark', icon: null },
+                      { key: 'dark' as const, label: 'Dark', icon: null },
                     ].map((mode) => (
                       <button
                         key={mode.key}
