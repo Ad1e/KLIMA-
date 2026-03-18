@@ -14,9 +14,7 @@ import {
   Flame,
   Gauge,
   RefreshCw,
-  Sparkles,
   Thermometer,
-  TrendingUp,
   Wind,
   type LucideIcon,
 } from 'lucide-react';
@@ -225,6 +223,15 @@ export default function DetailedSiteAnalysis() {
   const currentWeather = scenarioAdjustedForecast[0];
   const lookAheadTimeline = scenarioAdjustedForecast.slice(0, Math.min(6, scenarioAdjustedForecast.length));
   const updatedLabel = lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const scenarioLabel = forecastScenario === 'rain-heavy' ? 'Rain Heavy' : forecastScenario === 'windy' ? 'Windy' : 'Baseline';
+  const plainLanguageSummary =
+    forecastKpis.maxRain > 2.5
+      ? 'Moderate to heavy rain is possible. Plan for wet roads and slower movement around campus.'
+      : forecastKpis.maxRain > 0.8
+        ? 'Light to moderate rain is possible. Keep classes and activities weather-aware.'
+        : 'Low rainfall expected. Conditions are generally manageable for normal operations.';
+  const immediateOutlook =
+    forecastKpis.maxGust > 35 ? 'Strong wind gusts possible' : forecastKpis.maxGust > 22 ? 'Noticeable wind at times' : 'Light to moderate wind expected';
 
   return (
     <div className="min-h-full bg-slate-50 px-6 py-8 lg:px-8">
@@ -395,93 +402,89 @@ export default function DetailedSiteAnalysis() {
           </section>
         ) : (
           <section className="space-y-6">
-            <div className="rounded-3xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 p-4 shadow-sm">
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
-                    <Sparkles size={18} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Predictive Controls</p>
-                    <p className="text-sm font-semibold text-slate-700">Tune scenario and horizon for planning simulations</p>
-                  </div>
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Simple Forecast View</p>
+                  <h2 className="mt-1 text-xl font-black tracking-tight text-slate-900">Easy-to-read outlook for the next {forecastHorizon} hours</h2>
+                  <p className="mt-2 text-sm text-slate-600">{plainLanguageSummary}</p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">Choose forecast type</p>
+                  <div className="flex flex-wrap items-center gap-2">
                     {[
-                      { key: 'baseline' as const, label: 'Baseline' },
-                      { key: 'rain-heavy' as const, label: 'Rain Heavy' },
+                      { key: 'baseline' as const, label: 'Normal' },
+                      { key: 'rain-heavy' as const, label: 'Rainy' },
                       { key: 'windy' as const, label: 'Windy' },
                     ].map((item) => (
                       <button
                         key={item.key}
                         onClick={() => setForecastScenario(item.key)}
-                        className={`rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] transition-colors ${
+                        className={`rounded-xl px-3 py-2 text-xs font-bold transition-colors ${
                           forecastScenario === item.key
                             ? 'bg-rose-700 text-white'
-                            : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                            : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
                         }`}
                       >
                         {item.label}
                       </button>
                     ))}
                   </div>
-
-                  <div className="flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-                    {[6, 12, 24].map((hours) => (
-                      <button
-                        key={hours}
-                        onClick={() => setForecastHorizon(hours as ForecastHorizon)}
-                        className={`rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] transition-colors ${
-                          forecastHorizon === hours
-                            ? 'bg-sky-700 text-white'
-                            : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
-                        }`}
-                      >
-                        {hours}h
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm">
-                    <RefreshCw size={13} /> Updated {updatedLabel}
-                  </div>
                 </div>
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                {[6, 12, 24].map((hours) => (
+                  <button
+                    key={hours}
+                    onClick={() => setForecastHorizon(hours as ForecastHorizon)}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      forecastHorizon === hours
+                        ? 'bg-sky-700 text-white'
+                        : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    Next {hours}h
+                  </button>
+                ))}
+                <span className="ml-auto inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">
+                  <RefreshCw size={13} /> Updated {updatedLabel}
+                </span>
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Forecast Risk Score</p>
-                <p className="mt-2 text-3xl font-black text-rose-700">{forecastKpis.riskScore}</p>
-                <p className="mt-1 text-xs text-slate-500">Scenario-adjusted storm impact index</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">Rain Outlook</p>
+                <p className="mt-2 text-2xl font-black text-blue-700">{forecastKpis.maxRain.toFixed(1)} mm max</p>
+                <p className="mt-1 text-xs text-slate-500">Highest rainfall expected in a 3-hour period</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Peak Rainfall</p>
-                <p className="mt-2 text-3xl font-black text-blue-700">{forecastKpis.maxRain.toFixed(1)} mm</p>
-                <p className="mt-1 text-xs text-slate-500">Highest expected 3-hour precipitation</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">Wind Outlook</p>
+                <p className="mt-2 text-2xl font-black text-amber-700">{forecastKpis.maxGust} kph gust</p>
+                <p className="mt-1 text-xs text-slate-500">{immediateOutlook}</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Peak Wind Gust</p>
-                <p className="mt-2 inline-flex items-center gap-2 text-3xl font-black text-amber-700">
-                  <TrendingUp size={22} /> {forecastKpis.maxGust} kph
-                </p>
-                <p className="mt-1 text-xs text-slate-500">Maximum projected gust for selected horizon</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">Current Snapshot</p>
+                <p className="mt-2 text-2xl font-black text-slate-800">{currentWeather.temp.toFixed(1)} degC</p>
+                <p className="mt-1 text-xs font-semibold text-slate-500">{scenarioLabel} scenario • {currentWeather.chanceRain}% rain chance</p>
               </div>
             </div>
 
             <div className="grid grid-cols-12 gap-6">
               <div className="col-span-12 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:col-span-4 xl:col-span-3">
                 <div className="mb-3 flex items-center justify-between">
-                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Weather Summary</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">What This Means</p>
                   <CloudSun size={18} className="text-amber-500" />
                 </div>
-                <p className="text-4xl font-black text-slate-900">{currentWeather.temp.toFixed(1)} degC</p>
+                <p className="text-3xl font-black text-slate-900">{currentWeather.temp.toFixed(1)} degC</p>
                 <p className="mt-1 text-sm font-semibold text-slate-600">{currentWeather.condition}</p>
                 <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-[11px] font-semibold text-slate-500">Rain Chance</p>
-                  <p className="text-lg font-black text-rose-700">{currentWeather.chanceRain}%</p>
+                  <p className="text-[11px] font-semibold text-slate-500">Quick guidance</p>
+                  <p className="text-sm font-semibold leading-relaxed text-slate-700">
+                    {plainLanguageSummary}
+                  </p>
                 </div>
               </div>
 
@@ -510,69 +513,28 @@ export default function DetailedSiteAnalysis() {
               </div>
             </div>
 
-            <div className="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm">
-              <div className="min-w-[820px] p-5">
-                <h3 className="mb-4 text-sm font-bold text-slate-800">6-Hour Look Ahead</h3>
-                <div className="grid grid-cols-[170px_repeat(6,minmax(0,1fr))] gap-2">
-                  <div className="rounded-xl bg-rose-700 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white">Label</div>
-                  {lookAheadTimeline.map((point) => (
-                    <div key={`time-head-${point.time}`} className="rounded-xl bg-slate-50 px-2 py-2 text-center text-[11px] font-bold text-slate-600">
-                      {point.time}
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.1em] text-slate-700">Next Periods</h3>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {lookAheadTimeline.slice(0, 4).map((point) => (
+                  <article key={`mini-outlook-${point.time}`} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <p className="text-xs font-bold text-slate-700">{point.time}</p>
+                      {point.rain > 1 ? <CloudRain size={15} className="text-blue-600" /> : <Cloud size={15} className="text-slate-500" />}
                     </div>
-                  ))}
-
-                  <div className="rounded-xl bg-rose-700 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white">Time</div>
-                  {lookAheadTimeline.map((point) => (
-                    <div key={`time-row-${point.time}`} className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-xs font-semibold text-slate-700">
-                      {point.time}
-                    </div>
-                  ))}
-
-                  <div className="rounded-xl bg-rose-700 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white">Weather</div>
-                  {lookAheadTimeline.map((point) => (
-                    <div key={`icon-row-${point.time}`} className="flex items-center justify-center rounded-xl border border-slate-200 bg-white px-2 py-2 text-slate-600">
-                      {point.rain > 1 ? <CloudRain size={16} className="text-blue-600" /> : <Cloud size={16} className="text-slate-500" />}
-                    </div>
-                  ))}
-
-                  <div className="rounded-xl bg-rose-700 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white">Chance of Rain</div>
-                  {lookAheadTimeline.map((point) => (
-                    <div key={`rain-chance-${point.time}`} className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-xs font-bold text-blue-700">
-                      {point.chanceRain}%
-                    </div>
-                  ))}
-
-                  <div className="rounded-xl bg-rose-700 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white">Avg Wind</div>
-                  {lookAheadTimeline.map((point) => (
-                    <div key={`wind-row-${point.time}`} className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-xs font-bold text-slate-700">
-                      {point.wind} kph
-                    </div>
-                  ))}
-                </div>
+                    <p className="text-xs text-slate-600">Rain: <span className="font-bold text-slate-800">{point.chanceRain}%</span></p>
+                    <p className="text-xs text-slate-600">Wind: <span className="font-bold text-slate-800">{point.wind} kph</span></p>
+                    <p className="text-xs text-slate-600">Temp: <span className="font-bold text-slate-800">{point.temp.toFixed(1)} degC</span></p>
+                  </article>
+                ))}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-              <ForecastChart
-                title="Relative Humidity Trend"
-                subtitle="Atmospheric moisture behavior"
-                data={scenarioAdjustedForecast}
-                xKey="time"
-                unit="%"
-                chartType="area"
-                yDomain={[65, 95]}
-                series={[{ key: 'humidity', label: 'Humidity', color: '#14b8a6' }]}
-              />
-              <ForecastChart
-                title="Atmospheric Pressure Trend"
-                subtitle="Pressure shifts (hPa)"
-                data={scenarioAdjustedForecast}
-                xKey="time"
-                unit="hPa"
-                chartType="area"
-                yDomain={[1006, 1014]}
-                series={[{ key: 'pressure', label: 'Pressure', color: '#0f766e' }]}
-              />
+            <div className="rounded-2xl border border-slate-200 bg-blue-50 p-4 text-sm text-slate-700">
+              <p className="font-bold text-slate-900">How to read this section</p>
+              <p className="mt-1">1) Choose a weather type (Normal, Rainy, Windy).</p>
+              <p>2) Choose how far ahead you want to see (6h, 12h, 24h).</p>
+              <p>3) Check Rain Outlook and Wind Outlook first, then review charts for details.</p>
             </div>
           </section>
         )}
