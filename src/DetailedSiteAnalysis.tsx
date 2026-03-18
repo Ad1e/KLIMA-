@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
-import { CircleMarker, MapContainer, Popup, TileLayer, ZoomControl } from 'react-leaflet';
+import { useEffect, useMemo, useState } from 'react';
+import { CircleMarker, MapContainer, Marker, Popup, TileLayer, ZoomControl, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import {
   AlertTriangle,
   ChevronDown,
@@ -20,6 +21,8 @@ import {
   Wind,
   type LucideIcon,
 } from 'lucide-react';
+import bsuLogo from './assets/bsu-logo.png';
+import { CAMPUSES } from './services/weather';
 
 type AnalysisTab = 'observed' | 'forecast' | 'synopsis';
 type ColumnKey = 'timestamp' | 'rain' | 'temp' | 'wind' | 'humidity' | 'pressure' | 'cloud';
@@ -48,14 +51,31 @@ interface MetricCardProps {
 }
 
 const SITE_CAMPUSES = [
-  'Alangilan Campus',
-  'Lipa Campus',
-  'Main Campus',
-  'Malvar Campus',
-  'Nasugbu Campus',
+  ...CAMPUSES.map((campus) => campus.name),
 ];
 
 const ALANGILAN_CENTER: [number, number] = [13.784295, 121.07428];
+
+const bsuCampusIcon = L.icon({
+  iconUrl: bsuLogo,
+  iconSize: [30, 30],
+  iconAnchor: [15, 15],
+  popupAnchor: [0, -16],
+  className: 'rounded-full border-2 border-white shadow-[0_6px_18px_rgba(15,23,42,0.35)] bg-white',
+});
+
+function CampusViewportController() {
+  const map = useMap();
+
+  useEffect(() => {
+    map.fitBounds(
+      CAMPUSES.map((campus) => [campus.lat, campus.lon] as [number, number]),
+      { padding: [40, 40], maxZoom: 11, animate: false },
+    );
+  }, [map]);
+
+  return null;
+}
 
 const COLUMNS: ColumnDefinition[] = [
   { key: 'timestamp', label: 'Date / Time' },
@@ -374,17 +394,30 @@ export default function DetailedSiteAnalysis() {
                   <div className="h-[520px] w-full">
                     <MapContainer
                       center={ALANGILAN_CENTER}
-                      zoom={15}
+                      zoom={9}
                       zoomControl={false}
                       style={{ height: '100%', width: '100%' }}
                     >
+                      <CampusViewportController />
                       <TileLayer
                         url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
                         attribution="&copy; Esri"
                       />
+                      {CAMPUSES.map((campus) => (
+                        <Marker key={campus.name} position={[campus.lat, campus.lon]} icon={bsuCampusIcon} zIndexOffset={1000}>
+                          <Popup>
+                            <div className="space-y-1 text-xs">
+                              <p className="font-semibold text-slate-700">{campus.name}</p>
+                              <p className="text-slate-500">
+                                {campus.lat.toFixed(6)}, {campus.lon.toFixed(6)}
+                              </p>
+                            </div>
+                          </Popup>
+                        </Marker>
+                      ))}
                       <CircleMarker
                         center={ALANGILAN_CENTER}
-                        radius={10}
+                        radius={8}
                         pathOptions={{ color: '#be123c', fillColor: '#f43f5e', fillOpacity: 0.8, weight: 2 }}
                       >
                         <Popup>

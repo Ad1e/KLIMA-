@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Marker, Popup, Polyline, ZoomControl } from 'react-leaflet';
+import { useEffect, useMemo, useState } from 'react';
+import { MapContainer, TileLayer, CircleMarker, Marker, Popup, Polyline, ZoomControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import {
   Activity,
@@ -39,6 +39,30 @@ type FocusMode = 'combined' | 'campuses' | 'event';
 interface EarthquakeAnalysisProps {
   mapMode: MapMode;
   onMapModeChange: (mode: MapMode) => void;
+}
+
+interface MapViewportControllerProps {
+  center: [number, number];
+  zoom: number;
+  focusMode: FocusMode;
+}
+
+function MapViewportController({ center, zoom, focusMode }: MapViewportControllerProps) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (focusMode === 'campuses') {
+      map.fitBounds(
+        CAMPUSES.map((campus) => [campus.lat, campus.lon] as [number, number]),
+        { padding: [42, 42], maxZoom: 11, animate: true },
+      );
+      return;
+    }
+
+    map.setView(center, zoom, { animate: true });
+  }, [center, zoom, map, focusMode]);
+
+  return null;
 }
 
 const latestEQ: EarthquakeEvent = {
@@ -89,7 +113,7 @@ const haversineDistanceKm = (start: [number, number], end: [number, number]): nu
 };
 
 export default function EarthquakeAnalysis({ mapMode, onMapModeChange }: EarthquakeAnalysisProps) {
-  const [focusMode, setFocusMode] = useState<FocusMode>('combined');
+  const [focusMode, setFocusMode] = useState<FocusMode>('campuses');
 
   const campusDistances = useMemo(() => {
     return CAMPUSES.map((campus) => {
@@ -177,6 +201,7 @@ export default function EarthquakeAnalysis({ mapMode, onMapModeChange }: Earthqu
                 zoomControl={false}
                 style={{ height: '100%', width: '100%' }}
               >
+                <MapViewportController center={mapView.center} zoom={mapView.zoom} focusMode={focusMode} />
                 <TileLayer url={mapTileUrl} attribution="&copy; OpenStreetMap contributors" />
 
                 {focusMode !== 'event' &&
@@ -203,7 +228,7 @@ export default function EarthquakeAnalysis({ mapMode, onMapModeChange }: Earthqu
                 </CircleMarker>
 
                 {CAMPUSES.map((campus) => (
-                  <Marker key={campus.name} position={[campus.lat, campus.lon]} icon={bsuCampusIcon}>
+                  <Marker key={campus.name} position={[campus.lat, campus.lon]} icon={bsuCampusIcon} zIndexOffset={1000}>
                     <Popup>
                       <div className="space-y-1 text-xs">
                         <p className="font-semibold text-slate-700">{campus.name}</p>
