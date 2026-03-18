@@ -24,7 +24,7 @@ import CampusSummary from './CampusSummary';
 import RiskMap from './RiskMap';
 import EarthquakeAnalysis from './EarthquakeAnalysis';
 import TropicalCycloneAnalysis from './TropicalCycloneAnalysis';
-import DetailedSiteAnalysis from './DetailedSiteAnalysis.tsx';
+import DetailedSiteAnalysis from './DetailedSiteAnalysis';
 import {
   fetchCampusWeather,
   getFallbackCampusWeather,

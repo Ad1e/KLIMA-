@@ -4,44 +4,26 @@ import L from 'leaflet';
 import {
   AlertTriangle,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   ChevronUp,
   Cloud,
   CloudRain,
+  CloudSun,
   Compass,
   Droplets,
   Eye,
   Flame,
   Gauge,
-  ListFilter,
-  Search,
-  Settings2,
   Thermometer,
   Wind,
   type LucideIcon,
 } from 'lucide-react';
 import bsuLogo from './assets/bsu-logo.png';
+import ForecastChart from './components/ForecastChart';
 import { CAMPUSES } from './services/weather';
+import { forecastData, timelineData } from './data/forecastData';
 
 type AnalysisTab = 'observed' | 'forecast' | 'synopsis';
-type ColumnKey = 'timestamp' | 'rain' | 'temp' | 'wind' | 'humidity' | 'pressure' | 'cloud';
 type Severity = 'safe' | 'caution' | 'warning';
-
-interface DataRow {
-  timestamp: string;
-  rain: number;
-  temp: number;
-  wind: number;
-  humidity: number;
-  pressure: number;
-  cloud: number;
-}
-
-interface ColumnDefinition {
-  key: ColumnKey;
-  label: string;
-}
 
 interface MetricCardProps {
   label: string;
@@ -50,10 +32,7 @@ interface MetricCardProps {
   severity: Severity;
 }
 
-const SITE_CAMPUSES = [
-  ...CAMPUSES.map((campus) => campus.name),
-];
-
+const SITE_CAMPUSES = [...CAMPUSES.map((campus) => campus.name)];
 const ALANGILAN_CENTER: [number, number] = [13.784295, 121.07428];
 
 const bsuCampusIcon = L.icon({
@@ -77,42 +56,6 @@ function CampusViewportController() {
   return null;
 }
 
-const COLUMNS: ColumnDefinition[] = [
-  { key: 'timestamp', label: 'Date / Time' },
-  { key: 'rain', label: 'Rain (mm)' },
-  { key: 'temp', label: 'Temp (degC)' },
-  { key: 'wind', label: 'Wind (km/h)' },
-  { key: 'humidity', label: 'Humidity (%)' },
-  { key: 'pressure', label: 'Pressure (hPa)' },
-  { key: 'cloud', label: 'Cloud (%)' },
-];
-
-const observedData: DataRow[] = [
-  { timestamp: 'Mar 18, 2026 • 06:00', rain: 0, temp: 28, wind: 12, humidity: 72, pressure: 1012, cloud: 45 },
-  { timestamp: 'Mar 18, 2026 • 08:00', rain: 0.2, temp: 29, wind: 13, humidity: 74, pressure: 1011, cloud: 52 },
-  { timestamp: 'Mar 18, 2026 • 10:00', rain: 0, temp: 31, wind: 15, humidity: 69, pressure: 1010, cloud: 35 },
-  { timestamp: 'Mar 18, 2026 • 12:00', rain: 0.5, temp: 32, wind: 18, humidity: 71, pressure: 1010, cloud: 58 },
-  { timestamp: 'Mar 18, 2026 • 14:00', rain: 1.1, temp: 30, wind: 21, humidity: 78, pressure: 1009, cloud: 72 },
-  { timestamp: 'Mar 18, 2026 • 16:00', rain: 0.4, temp: 29, wind: 17, humidity: 80, pressure: 1009, cloud: 67 },
-  { timestamp: 'Mar 18, 2026 • 18:00', rain: 0, temp: 28, wind: 14, humidity: 82, pressure: 1010, cloud: 50 },
-  { timestamp: 'Mar 18, 2026 • 20:00', rain: 0.7, temp: 27, wind: 11, humidity: 83, pressure: 1011, cloud: 62 },
-  { timestamp: 'Mar 18, 2026 • 22:00', rain: 0, temp: 26, wind: 10, humidity: 84, pressure: 1012, cloud: 41 },
-  { timestamp: 'Mar 19, 2026 • 00:00', rain: 0, temp: 25, wind: 9, humidity: 85, pressure: 1013, cloud: 38 },
-];
-
-const forecastData: DataRow[] = [
-  { timestamp: 'Mar 19, 2026 • 06:00', rain: 0.9, temp: 29, wind: 16, humidity: 79, pressure: 1010, cloud: 64 },
-  { timestamp: 'Mar 19, 2026 • 09:00', rain: 1.4, temp: 30, wind: 18, humidity: 81, pressure: 1009, cloud: 75 },
-  { timestamp: 'Mar 19, 2026 • 12:00', rain: 2.2, temp: 31, wind: 22, humidity: 84, pressure: 1008, cloud: 82 },
-  { timestamp: 'Mar 19, 2026 • 15:00', rain: 1.8, temp: 30, wind: 24, humidity: 86, pressure: 1008, cloud: 88 },
-  { timestamp: 'Mar 19, 2026 • 18:00', rain: 1.1, temp: 29, wind: 20, humidity: 85, pressure: 1009, cloud: 76 },
-  { timestamp: 'Mar 19, 2026 • 21:00', rain: 0.6, temp: 27, wind: 15, humidity: 84, pressure: 1010, cloud: 63 },
-  { timestamp: 'Mar 20, 2026 • 00:00', rain: 0.2, temp: 26, wind: 13, humidity: 82, pressure: 1011, cloud: 54 },
-  { timestamp: 'Mar 20, 2026 • 03:00', rain: 0, temp: 25, wind: 11, humidity: 81, pressure: 1012, cloud: 42 },
-  { timestamp: 'Mar 20, 2026 • 06:00', rain: 0, temp: 26, wind: 10, humidity: 78, pressure: 1012, cloud: 37 },
-  { timestamp: 'Mar 20, 2026 • 09:00', rain: 0.3, temp: 30, wind: 12, humidity: 75, pressure: 1011, cloud: 44 },
-];
-
 const synopsisActions = [
   { parameter: 'Strong Wind Gusts', action: 'Avoid outdoor scaffold work near open areas.' },
   { parameter: 'Moderate Rainfall Bands', action: 'Caution on low-lying campus roads and pathways.' },
@@ -129,14 +72,6 @@ const getActionClass = (action: string): string => {
     return 'bg-amber-500 text-white';
   }
   return 'bg-slate-500 text-white';
-};
-
-const getTempClass = (temp: number): string => {
-  return temp > 30 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700';
-};
-
-const getRainClass = (rain: number): string => {
-  return rain > 0 ? 'bg-blue-100 text-blue-700' : 'bg-slate-50 text-slate-500';
 };
 
 const getSeverityClass = (severity: Severity): string => {
@@ -160,26 +95,9 @@ function MetricCard({ label, value, icon: Icon, severity }: MetricCardProps) {
 export default function DetailedSiteAnalysis() {
   const [activeTab, setActiveTab] = useState<AnalysisTab>('observed');
   const [selectedCampus, setSelectedCampus] = useState(SITE_CAMPUSES[0]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showColumnPopover, setShowColumnPopover] = useState(false);
   const [showLegend, setShowLegend] = useState(true);
-  const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(COLUMNS.map((column) => column.key));
-  const [page, setPage] = useState(1);
 
-  const rows = forecastData;
-  const filteredRows = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
-    if (!term) return rows;
-
-    return rows.filter((row) => Object.values(row).some((value) => String(value).toLowerCase().includes(term)));
-  }, [rows, searchTerm]);
-
-  const pageSize = 6;
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
-  const currentPage = Math.min(page, totalPages);
-  const paginatedRows = filteredRows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  const latestObserved = observedData[3];
+  const latestObserved = useMemo(() => forecastData[3], []);
 
   const observedMetrics = [
     {
@@ -190,9 +108,9 @@ export default function DetailedSiteAnalysis() {
     },
     {
       label: 'Rain Probability (%)',
-      value: '68 %',
+      value: `${latestObserved.chanceRain.toFixed(0)} %`,
       icon: CloudRain,
-      severity: 'caution',
+      severity: latestObserved.chanceRain > 65 ? 'warning' : latestObserved.chanceRain > 35 ? 'caution' : 'safe',
     },
     {
       label: 'MSLP (hPa)',
@@ -232,9 +150,9 @@ export default function DetailedSiteAnalysis() {
     },
     {
       label: 'Wind Gust (kph)',
-      value: `${(latestObserved.wind + 7).toFixed(1)} kph`,
+      value: `${latestObserved.gust.toFixed(1)} kph`,
       icon: Wind,
-      severity: latestObserved.wind + 7 > 24 ? 'warning' : latestObserved.wind + 7 > 16 ? 'caution' : 'safe',
+      severity: latestObserved.gust > 30 ? 'warning' : latestObserved.gust > 18 ? 'caution' : 'safe',
     },
     {
       label: 'Wind Speed (kph)',
@@ -250,46 +168,13 @@ export default function DetailedSiteAnalysis() {
     },
     {
       label: 'Cloud Cover (%)',
-      value: `${latestObserved.cloud.toFixed(0)} %`,
+      value: '58 %',
       icon: Cloud,
-      severity: latestObserved.cloud > 80 ? 'warning' : latestObserved.cloud > 60 ? 'caution' : 'safe',
+      severity: 'caution',
     },
   ] as const;
 
-  const toggleColumn = (key: ColumnKey) => {
-    setVisibleColumns((prev) => {
-      if (prev.includes(key)) {
-        if (prev.length === 1) return prev;
-        return prev.filter((item) => item !== key);
-      }
-      return [...prev, key];
-    });
-  };
-
-  const renderCell = (row: DataRow, key: ColumnKey) => {
-    if (key === 'timestamp') {
-      return <span className="text-xs font-semibold text-slate-700">{row.timestamp}</span>;
-    }
-
-    if (key === 'temp') {
-      return (
-        <span className={`rounded-md px-2 py-1 text-[11px] font-bold ${getTempClass(row.temp)}`}>
-          {row.temp}
-        </span>
-      );
-    }
-
-    if (key === 'rain') {
-      return (
-        <span className={`rounded-md px-2 py-1 text-[11px] font-bold ${getRainClass(row.rain)}`}>
-          {row.rain}
-        </span>
-      );
-    }
-
-    const value = row[key];
-    return <span className="text-xs font-semibold text-slate-700">{value}</span>;
-  };
+  const currentWeather = forecastData[0];
 
   return (
     <div className="min-h-full bg-slate-50 px-6 py-8 lg:px-8">
@@ -325,10 +210,7 @@ export default function DetailedSiteAnalysis() {
               ].map((tab) => (
                 <button
                   key={tab.key}
-                  onClick={() => {
-                    setActiveTab(tab.key);
-                    setPage(1);
-                  }}
+                  onClick={() => setActiveTab(tab.key)}
                   className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-[0.08em] transition-colors ${
                     activeTab === tab.key
                       ? 'bg-rose-700 text-white'
@@ -370,9 +252,7 @@ export default function DetailedSiteAnalysis() {
                       {item.parameter}
                     </div>
                     <div className="col-span-8 px-4 py-3">
-                      <span
-                        className={`inline-block rounded-lg px-3 py-1.5 text-xs font-semibold ${getActionClass(item.action)}`}
-                      >
+                      <span className={`inline-block rounded-lg px-3 py-1.5 text-xs font-semibold ${getActionClass(item.action)}`}>
                         {item.action}
                       </span>
                     </div>
@@ -464,103 +344,109 @@ export default function DetailedSiteAnalysis() {
             </div>
           </section>
         ) : (
-          <section className="space-y-4">
-            <div className="flex flex-col justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:flex-row md:items-center">
-              <div className="relative w-full max-w-sm">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  value={searchTerm}
-                  onChange={(event) => {
-                    setSearchTerm(event.target.value);
-                    setPage(1);
-                  }}
-                  placeholder="Search records..."
-                  className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-xs font-medium text-slate-700 outline-none transition-colors focus:border-rose-300"
-                />
+          <section className="space-y-6">
+            <div className="grid grid-cols-12 gap-6">
+              <div className="col-span-12 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:col-span-4 xl:col-span-3">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Weather Summary</p>
+                  <CloudSun size={18} className="text-amber-500" />
+                </div>
+                <p className="text-4xl font-black text-slate-900">{currentWeather.temp.toFixed(1)} degC</p>
+                <p className="mt-1 text-sm font-semibold text-slate-600">{currentWeather.condition}</p>
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-[11px] font-semibold text-slate-500">Rain Chance</p>
+                  <p className="text-lg font-black text-rose-700">{currentWeather.chanceRain}%</p>
+                </div>
               </div>
 
-              <div className="relative">
-                <button
-                  onClick={() => setShowColumnPopover((prev) => !prev)}
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-slate-600 transition-colors hover:bg-slate-50"
-                >
-                  <Settings2 size={14} />
-                  Columns
-                </button>
-
-                {showColumnPopover ? (
-                  <div className="absolute right-0 z-20 mt-2 w-52 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
-                    <div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">
-                      <ListFilter size={13} /> Visible Columns
-                    </div>
-                    <div className="space-y-2">
-                      {COLUMNS.map((column) => (
-                        <label key={column.key} className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                          <input
-                            type="checkbox"
-                            checked={visibleColumns.includes(column.key)}
-                            onChange={() => toggleColumn(column.key)}
-                          />
-                          {column.label}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
+              <div className="col-span-12 md:col-span-8 xl:col-span-9">
+                <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                  <ForecastChart
+                    title="Rainfall Forecast"
+                    subtitle="Next 24 hours (mm)"
+                    data={forecastData}
+                    xKey="time"
+                    unit="mm"
+                    series={[{ key: 'rain', label: 'Rainfall', color: '#2563eb' }]}
+                  />
+                  <ForecastChart
+                    title="Wind Speed vs Gust"
+                    subtitle="Projected wind behavior"
+                    data={forecastData}
+                    xKey="time"
+                    unit="kph"
+                    series={[
+                      { key: 'wind', label: 'Wind Speed', color: '#0ea5e9' },
+                      { key: 'gust', label: 'Wind Gust', color: '#f97316' },
+                    ]}
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="min-w-full border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50">
-                      {COLUMNS.filter((column) => visibleColumns.includes(column.key)).map((column) => (
-                        <th
-                          key={column.key}
-                          className="whitespace-nowrap border-b border-slate-200 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500"
-                        >
-                          {column.label}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
+            <div className="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm">
+              <div className="min-w-[820px] p-5">
+                <h3 className="mb-4 text-sm font-bold text-slate-800">6-Hour Look Ahead</h3>
+                <div className="grid grid-cols-[170px_repeat(6,minmax(0,1fr))] gap-2">
+                  <div className="rounded-xl bg-rose-700 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white">Label</div>
+                  {timelineData.map((point) => (
+                    <div key={`time-head-${point.time}`} className="rounded-xl bg-slate-50 px-2 py-2 text-center text-[11px] font-bold text-slate-600">
+                      {point.time}
+                    </div>
+                  ))}
 
-                  <tbody>
-                    {paginatedRows.map((row) => (
-                      <tr key={row.timestamp} className="border-b border-slate-100 hover:bg-slate-50/70">
-                        {COLUMNS.filter((column) => visibleColumns.includes(column.key)).map((column) => (
-                          <td key={`${row.timestamp}-${column.key}`} className="whitespace-nowrap px-4 py-3 align-middle">
-                            {renderCell(row, column.key)}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                  <div className="rounded-xl bg-rose-700 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white">Time</div>
+                  {timelineData.map((point) => (
+                    <div key={`time-row-${point.time}`} className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-xs font-semibold text-slate-700">
+                      {point.time}
+                    </div>
+                  ))}
+
+                  <div className="rounded-xl bg-rose-700 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white">Weather</div>
+                  {timelineData.map((point) => (
+                    <div key={`icon-row-${point.time}`} className="flex items-center justify-center rounded-xl border border-slate-200 bg-white px-2 py-2 text-slate-600">
+                      {point.rain > 1 ? <CloudRain size={16} className="text-blue-600" /> : <Cloud size={16} className="text-slate-500" />}
+                    </div>
+                  ))}
+
+                  <div className="rounded-xl bg-rose-700 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white">Chance of Rain</div>
+                  {timelineData.map((point) => (
+                    <div key={`rain-chance-${point.time}`} className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-xs font-bold text-blue-700">
+                      {point.chanceRain}%
+                    </div>
+                  ))}
+
+                  <div className="rounded-xl bg-rose-700 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white">Avg Wind</div>
+                  {timelineData.map((point) => (
+                    <div key={`wind-row-${point.time}`} className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-xs font-bold text-slate-700">
+                      {point.wind} kph
+                    </div>
+                  ))}
+                </div>
               </div>
+            </div>
 
-              <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-4 py-3">
-                <button
-                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <ChevronLeft size={13} /> Prev
-                </button>
-
-                <span className="text-xs font-semibold text-slate-500">
-                  Page {currentPage} of {totalPages}
-                </span>
-
-                <button
-                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                  className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Next <ChevronRight size={13} />
-                </button>
-              </div>
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+              <ForecastChart
+                title="Relative Humidity Trend"
+                subtitle="Atmospheric moisture behavior"
+                data={forecastData}
+                xKey="time"
+                unit="%"
+                chartType="area"
+                yDomain={[65, 95]}
+                series={[{ key: 'humidity', label: 'Humidity', color: '#14b8a6' }]}
+              />
+              <ForecastChart
+                title="Atmospheric Pressure Trend"
+                subtitle="Pressure shifts (hPa)"
+                data={forecastData}
+                xKey="time"
+                unit="hPa"
+                chartType="area"
+                yDomain={[1006, 1014]}
+                series={[{ key: 'pressure', label: 'Pressure', color: '#0f766e' }]}
+              />
             </div>
           </section>
         )}
