@@ -6,7 +6,6 @@ import {
   Navigation,
   Info,
   ShieldAlert,
-  Waves,
   Map,
   Satellite,
   Moon,
@@ -129,6 +128,17 @@ export default function EarthquakeAnalysis({ mapMode, onMapModeChange }: Earthqu
   }, []);
 
   const mapTileUrl = getEqTileUrl(mapMode);
+  const nearestCampus = campusDistances[0];
+  const advisoryLevel =
+    nearestCampus.status === 'Monitor'
+      ? 'Heightened monitoring'
+      : nearestCampus.status === 'Watch'
+        ? 'Preparedness watch'
+        : 'Routine awareness';
+  const shakingEstimate =
+    latestEQ.depthKm > 300
+      ? 'Deep-focus event: generally lower surface shaking impact is expected in Batangas.'
+      : 'Shallow-to-mid depth event: monitor for stronger local ground motion and aftershocks.';
 
   const mapView =
     focusMode === 'event'
@@ -324,37 +334,40 @@ export default function EarthquakeAnalysis({ mapMode, onMapModeChange }: Earthqu
             </table>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white/95 to-cyan-50/40 p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2">
-              <LocateFixed size={14} className="text-cyan-600" />
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">
-                BSU Campus Coordinates (Verified)
-              </p>
+              <Radar size={14} className="text-cyan-700" />
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-700">Action Briefing</p>
             </div>
-            <div className="space-y-2">
-              {CAMPUSES.map((campus) => (
-                <div
-                  key={`coord-${campus.name}`}
-                  className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50/70 px-3 py-2"
-                >
-                  <p className="text-xs font-semibold text-slate-700">{campus.name}</p>
-                  <p className="text-[11px] font-mono text-slate-500">
-                    {campus.lat.toFixed(6)}, {campus.lon.toFixed(6)}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white/95 to-amber-50/30 p-4 shadow-sm">
-            <div className="mb-2 flex items-center gap-2 text-amber-700">
-              <Waves size={14} />
-              <p className="text-[10px] font-bold uppercase tracking-[0.14em]">Operational Note</p>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-xl border border-slate-200 bg-white/85 p-2">
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Nearest Campus</p>
+                <p className="mt-1 text-xs font-semibold text-slate-800">{nearestCampus.name}</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white/85 p-2">
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Distance</p>
+                <p className="mt-1 text-xs font-semibold text-slate-800">{nearestCampus.distanceKm.toFixed(0)} km</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white/85 p-2">
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Advisory</p>
+                <p className="mt-1 text-xs font-semibold text-slate-800">{advisoryLevel}</p>
+              </div>
             </div>
-            <p className="text-xs text-slate-600">
-              For automatic earthquake feeds, integrate PHIVOLCS or USGS GeoJSON event endpoints and update the
-              latest event object in this module.
-            </p>
+
+            <div className="mt-3 rounded-xl border border-slate-200 bg-white/90 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Expected Ground Impact</p>
+              <p className="mt-1 text-xs text-slate-700">{shakingEstimate}</p>
+            </div>
+
+            <div className="mt-3 rounded-xl border border-slate-200 bg-white/90 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Recommended Actions</p>
+              <div className="mt-2 space-y-1 text-xs text-slate-700">
+                <p>Check official seismic advisories every 30 minutes.</p>
+                <p>Confirm building and lab safety status before high-occupancy activities.</p>
+                <p>Prepare response teams for possible aftershock notifications.</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
