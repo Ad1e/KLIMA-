@@ -1,15 +1,29 @@
 import { useMemo, useState } from 'react';
+import { CircleMarker, MapContainer, Popup, TileLayer, ZoomControl } from 'react-leaflet';
 import {
   AlertTriangle,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  Cloud,
+  CloudRain,
+  Compass,
+  Droplets,
+  Eye,
+  Flame,
+  Gauge,
   ListFilter,
   Search,
   Settings2,
+  Thermometer,
+  Wind,
+  type LucideIcon,
 } from 'lucide-react';
 
 type AnalysisTab = 'observed' | 'forecast' | 'synopsis';
 type ColumnKey = 'timestamp' | 'rain' | 'temp' | 'wind' | 'humidity' | 'pressure' | 'cloud';
+type Severity = 'safe' | 'caution' | 'warning';
 
 interface DataRow {
   timestamp: string;
@@ -26,13 +40,22 @@ interface ColumnDefinition {
   label: string;
 }
 
-const CAMPUSES = [
+interface MetricCardProps {
+  label: string;
+  value: string;
+  icon: LucideIcon;
+  severity: Severity;
+}
+
+const SITE_CAMPUSES = [
   'Alangilan Campus',
   'Lipa Campus',
   'Main Campus',
   'Malvar Campus',
   'Nasugbu Campus',
 ];
+
+const ALANGILAN_CENTER: [number, number] = [13.784295, 121.07428];
 
 const COLUMNS: ColumnDefinition[] = [
   { key: 'timestamp', label: 'Date / Time' },
@@ -89,37 +112,129 @@ const getActionClass = (action: string): string => {
 };
 
 const getTempClass = (temp: number): string => {
-  return temp > 30
-    ? 'bg-amber-100 text-amber-700'
-    : 'bg-emerald-100 text-emerald-700';
+  return temp > 30 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700';
 };
 
 const getRainClass = (rain: number): string => {
   return rain > 0 ? 'bg-blue-100 text-blue-700' : 'bg-slate-50 text-slate-500';
 };
 
+const getSeverityClass = (severity: Severity): string => {
+  if (severity === 'warning') return 'bg-orange-500';
+  if (severity === 'caution') return 'bg-amber-400';
+  return 'bg-emerald-500';
+};
+
+function MetricCard({ label, value, icon: Icon, severity }: MetricCardProps) {
+  return (
+    <article className={`rounded-2xl p-4 text-white shadow-sm ${getSeverityClass(severity)}`}>
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/85">{label}</p>
+        <Icon size={16} className="text-white/90" />
+      </div>
+      <p className="text-2xl font-black leading-none">{value}</p>
+    </article>
+  );
+}
+
 export default function DetailedSiteAnalysis() {
   const [activeTab, setActiveTab] = useState<AnalysisTab>('observed');
-  const [selectedCampus, setSelectedCampus] = useState(CAMPUSES[0]);
+  const [selectedCampus, setSelectedCampus] = useState(SITE_CAMPUSES[0]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showColumnPopover, setShowColumnPopover] = useState(false);
+  const [showLegend, setShowLegend] = useState(true);
   const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(COLUMNS.map((column) => column.key));
   const [page, setPage] = useState(1);
 
-  const rows = activeTab === 'forecast' ? forecastData : observedData;
+  const rows = forecastData;
   const filteredRows = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return rows;
 
-    return rows.filter((row) => {
-      return Object.values(row).some((value) => String(value).toLowerCase().includes(term));
-    });
+    return rows.filter((row) => Object.values(row).some((value) => String(value).toLowerCase().includes(term)));
   }, [rows, searchTerm]);
 
   const pageSize = 6;
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const paginatedRows = filteredRows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const latestObserved = observedData[3];
+
+  const observedMetrics = [
+    {
+      label: 'Rain (mm)',
+      value: `${latestObserved.rain.toFixed(2)} mm`,
+      icon: CloudRain,
+      severity: latestObserved.rain > 1 ? 'warning' : latestObserved.rain > 0 ? 'caution' : 'safe',
+    },
+    {
+      label: 'Rain Probability (%)',
+      value: '68 %',
+      icon: CloudRain,
+      severity: 'caution',
+    },
+    {
+      label: 'MSLP (hPa)',
+      value: `${latestObserved.pressure.toFixed(0)} hPa`,
+      icon: Gauge,
+      severity: latestObserved.pressure < 1009 ? 'warning' : latestObserved.pressure < 1011 ? 'caution' : 'safe',
+    },
+    {
+      label: 'Humidity (%)',
+      value: `${latestObserved.humidity.toFixed(0)} %`,
+      icon: Droplets,
+      severity: latestObserved.humidity > 85 ? 'warning' : latestObserved.humidity > 75 ? 'caution' : 'safe',
+    },
+    {
+      label: 'Temperature (degC)',
+      value: `${latestObserved.temp.toFixed(2)} degC`,
+      icon: Thermometer,
+      severity: latestObserved.temp > 32 ? 'warning' : latestObserved.temp > 30 ? 'caution' : 'safe',
+    },
+    {
+      label: 'Dewpoint (degC)',
+      value: '24.10 degC',
+      icon: Thermometer,
+      severity: 'caution',
+    },
+    {
+      label: 'Heat Index (degC)',
+      value: '36.20 degC',
+      icon: Flame,
+      severity: 'warning',
+    },
+    {
+      label: 'Wind Direction (deg)',
+      value: '128 deg',
+      icon: Compass,
+      severity: 'caution',
+    },
+    {
+      label: 'Wind Gust (kph)',
+      value: `${(latestObserved.wind + 7).toFixed(1)} kph`,
+      icon: Wind,
+      severity: latestObserved.wind + 7 > 24 ? 'warning' : latestObserved.wind + 7 > 16 ? 'caution' : 'safe',
+    },
+    {
+      label: 'Wind Speed (kph)',
+      value: `${latestObserved.wind.toFixed(1)} kph`,
+      icon: Wind,
+      severity: latestObserved.wind > 20 ? 'warning' : latestObserved.wind > 14 ? 'caution' : 'safe',
+    },
+    {
+      label: 'Visibility (km)',
+      value: '8.40 km',
+      icon: Eye,
+      severity: 'safe',
+    },
+    {
+      label: 'Cloud Cover (%)',
+      value: `${latestObserved.cloud.toFixed(0)} %`,
+      icon: Cloud,
+      severity: latestObserved.cloud > 80 ? 'warning' : latestObserved.cloud > 60 ? 'caution' : 'safe',
+    },
+  ] as const;
 
   const toggleColumn = (key: ColumnKey) => {
     setVisibleColumns((prev) => {
@@ -137,11 +252,19 @@ export default function DetailedSiteAnalysis() {
     }
 
     if (key === 'temp') {
-      return <span className={`rounded-md px-2 py-1 text-[11px] font-bold ${getTempClass(row.temp)}`}>{row.temp}</span>;
+      return (
+        <span className={`rounded-md px-2 py-1 text-[11px] font-bold ${getTempClass(row.temp)}`}>
+          {row.temp}
+        </span>
+      );
     }
 
     if (key === 'rain') {
-      return <span className={`rounded-md px-2 py-1 text-[11px] font-bold ${getRainClass(row.rain)}`}>{row.rain}</span>;
+      return (
+        <span className={`rounded-md px-2 py-1 text-[11px] font-bold ${getRainClass(row.rain)}`}>
+          {row.rain}
+        </span>
+      );
     }
 
     const value = row[key];
@@ -158,7 +281,7 @@ export default function DetailedSiteAnalysis() {
               onChange={(event) => setSelectedCampus(event.target.value)}
               className="w-fit rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm outline-none transition-colors focus:border-rose-400"
             >
-              {CAMPUSES.map((campus) => (
+              {SITE_CAMPUSES.map((campus) => (
                 <option key={campus} value={campus}>
                   {campus}
                 </option>
@@ -227,12 +350,83 @@ export default function DetailedSiteAnalysis() {
                       {item.parameter}
                     </div>
                     <div className="col-span-8 px-4 py-3">
-                      <span className={`inline-block rounded-lg px-3 py-1.5 text-xs font-semibold ${getActionClass(item.action)}`}>
+                      <span
+                        className={`inline-block rounded-lg px-3 py-1.5 text-xs font-semibold ${getActionClass(item.action)}`}
+                      >
                         {item.action}
                       </span>
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </section>
+        ) : activeTab === 'observed' ? (
+          <section className="space-y-4">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-2xl font-black tracking-tight text-slate-900">Current Observation</h2>
+              <p className="mt-1 text-sm text-slate-600">Local map and field metrics for BatStateU Alangilan Campus</p>
+            </div>
+
+            <div className="grid grid-cols-12 gap-6">
+              <div className="col-span-12 space-y-4 lg:col-span-7">
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                  <div className="h-[520px] w-full">
+                    <MapContainer
+                      center={ALANGILAN_CENTER}
+                      zoom={15}
+                      zoomControl={false}
+                      style={{ height: '100%', width: '100%' }}
+                    >
+                      <TileLayer
+                        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                        attribution="&copy; Esri"
+                      />
+                      <CircleMarker
+                        center={ALANGILAN_CENTER}
+                        radius={10}
+                        pathOptions={{ color: '#be123c', fillColor: '#f43f5e', fillOpacity: 0.8, weight: 2 }}
+                      >
+                        <Popup>
+                          <p className="text-xs font-semibold">BatStateU Alangilan Campus</p>
+                        </Popup>
+                      </CircleMarker>
+                      <ZoomControl position="bottomright" />
+                    </MapContainer>
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                  <button
+                    onClick={() => setShowLegend((prev) => !prev)}
+                    className="flex w-full items-center justify-between px-4 py-3 text-left"
+                  >
+                    <span className="text-xs font-bold uppercase tracking-[0.12em] text-slate-700">Legend</span>
+                    {showLegend ? <ChevronUp size={15} className="text-slate-500" /> : <ChevronDown size={15} className="text-slate-500" />}
+                  </button>
+
+                  {showLegend ? (
+                    <div className="grid grid-cols-1 gap-3 border-t border-slate-100 px-4 py-3 text-xs font-semibold text-slate-700 sm:grid-cols-3">
+                      <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-emerald-500" /> Safe</div>
+                      <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-amber-400" /> Caution</div>
+                      <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-orange-500" /> Warning</div>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="col-span-12 lg:col-span-5">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {observedMetrics.map((metric) => (
+                    <MetricCard
+                      key={metric.label}
+                      label={metric.label}
+                      value={metric.value}
+                      icon={metric.icon}
+                      severity={metric.severity}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           </section>
