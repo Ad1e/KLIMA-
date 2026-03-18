@@ -18,3 +18,51 @@ body {
   background: #0f172a;
   overflow: hidden;
 }
+
+/* Modern scrollbars for dashboard content areas */
+.modern-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(71, 85, 105, 0.6) rgba(226, 232, 240, 0.45);
+}
+
+.modern-scrollbar::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+
+.modern-scrollbar::-webkit-scrollbar-track {
+  background: linear-gradient(180deg, rgba(241, 245, 249, 0.75), rgba(226, 232, 240, 0.72));
+  border-radius: 999px;
+}
+
+.modern-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(71, 85, 105, 0.85), rgba(51, 65, 85, 0.85));
+  border: 2px solid rgba(241, 245, 249, 0.85);
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+
+.modern-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(51, 65, 85, 0.95), rgba(30, 41, 59, 0.95));
+}
+
+.modern-scrollbar-dark {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(251, 113, 133, 0.55) rgba(127, 29, 29, 0.18);
+}
+
+.modern-scrollbar-dark::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.modern-scrollbar-dark::-webkit-scrollbar-track {
+  background: rgba(69, 10, 10, 0.35);
+  border-radius: 999px;
+}
+
+.modern-scrollbar-dark::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(251, 113, 133, 0.85), rgba(225, 29, 72, 0.85));
+  border: 2px solid rgba(69, 10, 10, 0.45);
+  border-radius: 999px;
+}

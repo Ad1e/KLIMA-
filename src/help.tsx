@@ -72,7 +72,7 @@ export default function HelpSection() {
             <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400">Priority Contacts</span>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="modern-scrollbar overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-white">
@@ -104,7 +104,7 @@ export default function HelpSection() {
             <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400">Secondary Contacts</span>
           </div>
 
-          <div className="max-h-[420px] overflow-y-auto">
+          <div className="modern-scrollbar max-h-[420px] overflow-y-auto">
             <table className="w-full text-left">
               <thead className="sticky top-0 bg-white">
                 <tr>
