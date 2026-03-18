@@ -13,17 +13,22 @@ import {
   Eye,
   Flame,
   Gauge,
+  RefreshCw,
+  Sparkles,
   Thermometer,
+  TrendingUp,
   Wind,
   type LucideIcon,
 } from 'lucide-react';
 import bsuLogo from './assets/bsu-logo.png';
 import ForecastChart from './components/ForecastChart';
 import { CAMPUSES } from './services/weather';
-import { forecastData, timelineData } from './data/forecastData';
+import { forecastData } from './data/forecastData';
 
 type AnalysisTab = 'observed' | 'forecast' | 'synopsis';
 type Severity = 'safe' | 'caution' | 'warning';
+type ForecastScenario = 'baseline' | 'rain-heavy' | 'windy';
+type ForecastHorizon = 6 | 12 | 24;
 
 interface MetricCardProps {
   label: string;
@@ -96,6 +101,19 @@ export default function DetailedSiteAnalysis() {
   const [activeTab, setActiveTab] = useState<AnalysisTab>('observed');
   const [selectedCampus, setSelectedCampus] = useState(SITE_CAMPUSES[0]);
   const [showLegend, setShowLegend] = useState(true);
+  const [forecastScenario, setForecastScenario] = useState<ForecastScenario>('baseline');
+  const [forecastHorizon, setForecastHorizon] = useState<ForecastHorizon>(24);
+  const [lastUpdated, setLastUpdated] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setLastUpdated(new Date());
+    }, 60_000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, []);
 
   const latestObserved = useMemo(() => forecastData[3], []);
 
@@ -174,7 +192,39 @@ export default function DetailedSiteAnalysis() {
     },
   ] as const;
 
-  const currentWeather = forecastData[0];
+  const scenarioAdjustedForecast = useMemo(() => {
+    const multipliers =
+      forecastScenario === 'rain-heavy'
+        ? { rain: 1.35, wind: 1.08, gust: 1.12, humidity: 1.05, pressureDelta: -1.2 }
+        : forecastScenario === 'windy'
+          ? { rain: 0.9, wind: 1.28, gust: 1.35, humidity: 1.02, pressureDelta: -0.7 }
+          : { rain: 1, wind: 1, gust: 1, humidity: 1, pressureDelta: 0 };
+
+    const pointsToShow = Math.max(2, Math.min(forecastData.length, Math.floor(forecastHorizon / 3)));
+    return forecastData.slice(0, pointsToShow).map((point) => ({
+      ...point,
+      rain: Number((point.rain * multipliers.rain).toFixed(2)),
+      wind: Math.round(point.wind * multipliers.wind),
+      gust: Math.round(point.gust * multipliers.gust),
+      humidity: Math.min(99, Math.round(point.humidity * multipliers.humidity)),
+      pressure: Number((point.pressure + multipliers.pressureDelta).toFixed(1)),
+      chanceRain: Math.min(99, Math.round(point.chanceRain * multipliers.rain)),
+    }));
+  }, [forecastScenario, forecastHorizon]);
+
+  const forecastKpis = useMemo(() => {
+    const maxRain = Math.max(...scenarioAdjustedForecast.map((point) => point.rain));
+    const maxGust = Math.max(...scenarioAdjustedForecast.map((point) => point.gust));
+    const avgHumidity =
+      scenarioAdjustedForecast.reduce((sum, point) => sum + point.humidity, 0) /
+      scenarioAdjustedForecast.length;
+    const riskScore = Math.min(100, Math.round(maxRain * 18 + maxGust * 1.35 + avgHumidity * 0.25));
+    return { maxRain, maxGust, avgHumidity: Math.round(avgHumidity), riskScore };
+  }, [scenarioAdjustedForecast]);
+
+  const currentWeather = scenarioAdjustedForecast[0];
+  const lookAheadTimeline = scenarioAdjustedForecast.slice(0, Math.min(6, scenarioAdjustedForecast.length));
+  const updatedLabel = lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   return (
     <div className="min-h-full bg-slate-50 px-6 py-8 lg:px-8">
@@ -345,6 +395,82 @@ export default function DetailedSiteAnalysis() {
           </section>
         ) : (
           <section className="space-y-6">
+            <div className="rounded-3xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 p-4 shadow-sm">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
+                    <Sparkles size={18} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Predictive Controls</p>
+                    <p className="text-sm font-semibold text-slate-700">Tune scenario and horizon for planning simulations</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+                    {[
+                      { key: 'baseline' as const, label: 'Baseline' },
+                      { key: 'rain-heavy' as const, label: 'Rain Heavy' },
+                      { key: 'windy' as const, label: 'Windy' },
+                    ].map((item) => (
+                      <button
+                        key={item.key}
+                        onClick={() => setForecastScenario(item.key)}
+                        className={`rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] transition-colors ${
+                          forecastScenario === item.key
+                            ? 'bg-rose-700 text-white'
+                            : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+                    {[6, 12, 24].map((hours) => (
+                      <button
+                        key={hours}
+                        onClick={() => setForecastHorizon(hours as ForecastHorizon)}
+                        className={`rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] transition-colors ${
+                          forecastHorizon === hours
+                            ? 'bg-sky-700 text-white'
+                            : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                        }`}
+                      >
+                        {hours}h
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm">
+                    <RefreshCw size={13} /> Updated {updatedLabel}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Forecast Risk Score</p>
+                <p className="mt-2 text-3xl font-black text-rose-700">{forecastKpis.riskScore}</p>
+                <p className="mt-1 text-xs text-slate-500">Scenario-adjusted storm impact index</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Peak Rainfall</p>
+                <p className="mt-2 text-3xl font-black text-blue-700">{forecastKpis.maxRain.toFixed(1)} mm</p>
+                <p className="mt-1 text-xs text-slate-500">Highest expected 3-hour precipitation</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Peak Wind Gust</p>
+                <p className="mt-2 inline-flex items-center gap-2 text-3xl font-black text-amber-700">
+                  <TrendingUp size={22} /> {forecastKpis.maxGust} kph
+                </p>
+                <p className="mt-1 text-xs text-slate-500">Maximum projected gust for selected horizon</p>
+              </div>
+            </div>
+
             <div className="grid grid-cols-12 gap-6">
               <div className="col-span-12 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:col-span-4 xl:col-span-3">
                 <div className="mb-3 flex items-center justify-between">
@@ -363,16 +489,16 @@ export default function DetailedSiteAnalysis() {
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
                   <ForecastChart
                     title="Rainfall Forecast"
-                    subtitle="Next 24 hours (mm)"
-                    data={forecastData}
+                    subtitle={`Next ${forecastHorizon} hours (mm)`}
+                    data={scenarioAdjustedForecast}
                     xKey="time"
                     unit="mm"
                     series={[{ key: 'rain', label: 'Rainfall', color: '#2563eb' }]}
                   />
                   <ForecastChart
                     title="Wind Speed vs Gust"
-                    subtitle="Projected wind behavior"
-                    data={forecastData}
+                    subtitle={`Scenario: ${forecastScenario.replace('-', ' ')}`}
+                    data={scenarioAdjustedForecast}
                     xKey="time"
                     unit="kph"
                     series={[
@@ -389,35 +515,35 @@ export default function DetailedSiteAnalysis() {
                 <h3 className="mb-4 text-sm font-bold text-slate-800">6-Hour Look Ahead</h3>
                 <div className="grid grid-cols-[170px_repeat(6,minmax(0,1fr))] gap-2">
                   <div className="rounded-xl bg-rose-700 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white">Label</div>
-                  {timelineData.map((point) => (
+                  {lookAheadTimeline.map((point) => (
                     <div key={`time-head-${point.time}`} className="rounded-xl bg-slate-50 px-2 py-2 text-center text-[11px] font-bold text-slate-600">
                       {point.time}
                     </div>
                   ))}
 
                   <div className="rounded-xl bg-rose-700 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white">Time</div>
-                  {timelineData.map((point) => (
+                  {lookAheadTimeline.map((point) => (
                     <div key={`time-row-${point.time}`} className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-xs font-semibold text-slate-700">
                       {point.time}
                     </div>
                   ))}
 
                   <div className="rounded-xl bg-rose-700 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white">Weather</div>
-                  {timelineData.map((point) => (
+                  {lookAheadTimeline.map((point) => (
                     <div key={`icon-row-${point.time}`} className="flex items-center justify-center rounded-xl border border-slate-200 bg-white px-2 py-2 text-slate-600">
                       {point.rain > 1 ? <CloudRain size={16} className="text-blue-600" /> : <Cloud size={16} className="text-slate-500" />}
                     </div>
                   ))}
 
                   <div className="rounded-xl bg-rose-700 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white">Chance of Rain</div>
-                  {timelineData.map((point) => (
+                  {lookAheadTimeline.map((point) => (
                     <div key={`rain-chance-${point.time}`} className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-xs font-bold text-blue-700">
                       {point.chanceRain}%
                     </div>
                   ))}
 
                   <div className="rounded-xl bg-rose-700 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white">Avg Wind</div>
-                  {timelineData.map((point) => (
+                  {lookAheadTimeline.map((point) => (
                     <div key={`wind-row-${point.time}`} className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-xs font-bold text-slate-700">
                       {point.wind} kph
                     </div>
@@ -430,7 +556,7 @@ export default function DetailedSiteAnalysis() {
               <ForecastChart
                 title="Relative Humidity Trend"
                 subtitle="Atmospheric moisture behavior"
-                data={forecastData}
+                data={scenarioAdjustedForecast}
                 xKey="time"
                 unit="%"
                 chartType="area"
@@ -440,7 +566,7 @@ export default function DetailedSiteAnalysis() {
               <ForecastChart
                 title="Atmospheric Pressure Trend"
                 subtitle="Pressure shifts (hPa)"
-                data={forecastData}
+                data={scenarioAdjustedForecast}
                 xKey="time"
                 unit="hPa"
                 chartType="area"
