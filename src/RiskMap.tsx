@@ -25,7 +25,7 @@ const bsuCampusIcon = L.icon({
   iconUrl: bsuLogo,
   iconSize: [32, 32],
   iconAnchor: [16, 16],
-  popupAnchor: [0, -14],
+  popupAnchor: [0, -18],
   className: 'rounded-full border-2 border-white shadow-[0_8px_20px_rgba(15,23,42,0.35)] bg-white',
 });
 
@@ -56,7 +56,7 @@ export default function RiskMap({ campusWeather, mapMode }: RiskMapProps) {
   const tileUrl = getTileUrl(mapMode);
 
   return (
-    <div className="relative h-[450px] w-full overflow-hidden rounded-xl border border-red-100/40 bg-slate-800 shadow-inner">
+    <div className="relative h-[450px] w-full overflow-hidden rounded-xl border border-slate-200/90 bg-slate-800 shadow-inner">
       <MapContainer
         center={center}
         zoom={9}
@@ -78,7 +78,7 @@ export default function RiskMap({ campusWeather, mapMode }: RiskMapProps) {
             <Marker key={campus.name} position={[campus.lat, campus.lon]} icon={bsuCampusIcon}>
               <Popup>
                 <div className="min-w-[180px] space-y-1 text-sm">
-                  <p className="font-bold text-red-700">{campus.name}</p>
+                  <p className="font-bold text-cyan-700">{campus.name}</p>
                   <p className="text-xs text-slate-600">Status: {risk.label}</p>
                   <p className="text-xs text-slate-600">Rain: {weather?.rain ?? '0.00'} mm</p>
                   <p className="text-xs text-slate-600">Humidity: {weather?.humidity ?? '0'}%</p>
@@ -90,7 +90,7 @@ export default function RiskMap({ campusWeather, mapMode }: RiskMapProps) {
         })}
       </MapContainer>
 
-      <div className="absolute right-4 top-4 z-[1000] space-y-2 rounded-xl border border-white/20 bg-white/90 p-3 text-[10px] font-bold shadow-lg backdrop-blur-md">
+      <div className="absolute right-4 top-4 z-[1000] space-y-2 rounded-xl border border-slate-200/90 bg-white/92 p-3 text-[10px] font-bold shadow-lg backdrop-blur-md">
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-emerald-500" /> SAFE
         </div>

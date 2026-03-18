@@ -48,14 +48,14 @@ const CampusSummary = () => {
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-200">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
           Campus Parameters
         </p>
         <span
           className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] ${
             dataSource === 'live'
-              ? 'border-red-300/40 bg-red-500/20 text-red-100'
-              : 'border-red-200/40 bg-red-900/30 text-red-200'
+              ? 'border-cyan-300/60 bg-cyan-100 text-cyan-700'
+              : 'border-slate-300 bg-slate-100 text-slate-600'
           }`}
         >
           {dataSource === 'live' ? 'Live API Data' : 'Fallback Data'}
@@ -66,18 +66,18 @@ const CampusSummary = () => {
         {campusData.map((campus) => (
           <div
             key={campus.name}
-            className="group rounded-3xl border border-red-100/70 bg-gradient-to-br from-white/95 to-red-50/35 backdrop-blur-sm transition-all duration-200 hover:-translate-y-1 hover:border-red-300/70 hover:shadow-[0_20px_48px_rgba(185,28,28,0.18)]"
+            className="group rounded-3xl border border-slate-200 bg-gradient-to-br from-white/95 to-cyan-50/35 backdrop-blur-sm transition-all duration-200 hover:-translate-y-1 hover:border-cyan-300/70 hover:shadow-[0_20px_48px_rgba(8,145,178,0.2)]"
           >
-            <div className="flex items-center justify-between border-b border-red-100/70 bg-gradient-to-r from-red-500/7 to-transparent px-5 py-4">
+            <div className="flex items-center justify-between border-b border-slate-200/80 bg-gradient-to-r from-cyan-500/8 to-transparent px-5 py-4">
               <div className="min-w-0 flex-1">
                 <h3 className="truncate text-sm font-bold text-slate-800">{campus.name}</h3>
                 <div className="mt-1 flex items-center gap-2">
                   {campus.warning ? (
-                    <AlertCircle size={12} className="shrink-0 text-red-600" />
+                    <AlertCircle size={12} className="shrink-0 text-rose-600" />
                   ) : (
-                    <Droplets size={12} className="shrink-0 text-red-500" />
+                    <Droplets size={12} className="shrink-0 text-cyan-600" />
                   )}
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-red-700">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-cyan-700">
                     {campus.status}
                   </span>
                 </div>
@@ -94,15 +94,15 @@ const CampusSummary = () => {
                 <p className="text-[10px] text-slate-500">Possibility: {campus.rainPossibility}</p>
               </div>
 
-              <div className="h-px bg-gradient-to-r from-red-200/40 to-transparent" />
+              <div className="h-px bg-gradient-to-r from-cyan-200/45 to-transparent" />
 
               <div className="grid grid-cols-2 gap-2">
                 {metricItems.map((metric) => {
                   const value = campus[metric.key];
                   const cellClass =
                     metric.key === 'cloudCover'
-                      ? 'col-span-2 rounded-xl border border-red-100/70 bg-white/80 p-2'
-                      : 'rounded-xl border border-red-100/70 bg-white/80 p-2';
+                      ? 'col-span-2 rounded-xl border border-slate-200/90 bg-white/85 p-2'
+                      : 'rounded-xl border border-slate-200/90 bg-white/85 p-2';
                   return (
                     <div key={`${campus.name}-${metric.key}`} className={cellClass}>
                       <p className="text-[9px] font-bold uppercase text-slate-600">{metric.label}</p>
@@ -115,7 +115,11 @@ const CampusSummary = () => {
                 })}
               </div>
 
-              <div className="mt-3 rounded-xl border border-red-200/70 bg-gradient-to-r from-red-100 to-red-50 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wide text-red-700">
+              <div className={`mt-3 rounded-xl border px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wide ${
+                campus.warning
+                  ? 'border-rose-200/80 bg-gradient-to-r from-rose-100 to-rose-50 text-rose-700'
+                  : 'border-emerald-200/80 bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-700'
+              }`}>
                 {campus.warning ? 'Monitoring Required' : 'No Warning'}
               </div>
 

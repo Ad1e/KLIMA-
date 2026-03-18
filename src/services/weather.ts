@@ -22,11 +22,11 @@ export interface CampusWeather {
 }
 
 export const CAMPUSES: CampusSeed[] = [
-  { name: 'Alangilan Campus', lat: 13.7846, lon: 121.0735 },
-  { name: 'Lipa Campus', lat: 13.9411, lon: 121.1631 },
-  { name: 'Main Campus', lat: 13.7565, lon: 121.0583 },
-  { name: 'Malvar Campus', lat: 14.0453, lon: 121.1604 },
-  { name: 'Nasugbu Campus', lat: 14.0723, lon: 120.6311 },
+  { name: 'Alangilan Campus', lat: 13.784295, lon: 121.07428 },
+  { name: 'Lipa Campus', lat: 13.956872, lon: 121.16312 },
+  { name: 'Main Campus', lat: 13.754456, lon: 121.053131 },
+  { name: 'Malvar Campus', lat: 14.044912, lon: 121.156329 },
+  { name: 'Nasugbu Campus', lat: 14.067244, lon: 120.626752 },
 ];
 
 const FALLBACK_DATA: CampusWeather[] = [
@@ -114,11 +114,6 @@ const FALLBACK_DATA: CampusWeather[] = [
 
 const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
 const BASE_URL = import.meta.env.VITE_WEATHER_API_URL ?? 'https://api.openweathermap.org/data/2.5/weather';
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
-const MAPBOX_STYLE_STREET = import.meta.env.VITE_MAPBOX_STYLE_STREET ?? 'mapbox/streets-v12';
-const MAPBOX_STYLE_SATELLITE =
-  import.meta.env.VITE_MAPBOX_STYLE_SATELLITE ?? 'mapbox/satellite-streets-v12';
-const MAPBOX_STYLE_DARK = import.meta.env.VITE_MAPBOX_STYLE_DARK ?? 'mapbox/dark-v11';
 
 const asCardinalDirection = (degrees: number): string => {
   const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
@@ -165,7 +160,6 @@ const toCampusWeather = (name: string, apiData: any): CampusWeather => {
 };
 
 export const hasWeatherApiKey = (): boolean => Boolean(API_KEY);
-export const hasMapboxToken = (): boolean => Boolean(MAPBOX_TOKEN);
 
 export const getFallbackCampusWeather = (): CampusWeather[] => FALLBACK_DATA;
 
@@ -187,31 +181,4 @@ export const fetchCampusWeather = async (): Promise<CampusWeather[]> => {
   );
 
   return responses;
-};
-
-const styleFromMode = (mode: string): string => {
-  if (mode === 'satellite') return MAPBOX_STYLE_SATELLITE;
-  if (mode === 'dark') return MAPBOX_STYLE_DARK;
-  return MAPBOX_STYLE_STREET;
-};
-
-export const getMapboxStaticPreviewUrl = (
-  mode: string,
-  weatherData: CampusWeather[],
-): string | null => {
-  if (!MAPBOX_TOKEN) return null;
-
-  const style = styleFromMode(mode);
-  const markers = CAMPUSES.map((campus) => {
-    const weather = weatherData.find((item) => item.name === campus.name);
-    const color = weather?.warning ? 'b91c1c' : '16a34a';
-    return `pin-s+${color}(${campus.lon},${campus.lat})`;
-  }).join(',');
-
-  const centerLon = 121.02;
-  const centerLat = 13.93;
-  const zoom = 8.2;
-  const size = '1200x650';
-
-  return `https://api.mapbox.com/styles/v1/${style}/static/${markers}/${centerLon},${centerLat},${zoom}/${size}?access_token=${MAPBOX_TOKEN}`;
 };
