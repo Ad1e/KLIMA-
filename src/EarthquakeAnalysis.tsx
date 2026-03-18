@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Marker, Popup, ZoomControl } from 'react-leaflet';
+import { useMemo, useState } from 'react';
+import { MapContainer, TileLayer, CircleMarker, Marker, Popup, Polyline, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
 import {
   Activity,
@@ -10,6 +10,8 @@ import {
   Map,
   Satellite,
   Moon,
+  LocateFixed,
+  Radar,
 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import bsuLogo from './assets/bsu-logo.png';
@@ -32,6 +34,7 @@ interface EarthquakeEvent {
 }
 
 type MapMode = 'street' | 'satellite' | 'dark';
+type FocusMode = 'combined' | 'campuses' | 'event';
 
 interface EarthquakeAnalysisProps {
   mapMode: MapMode;
@@ -86,6 +89,7 @@ const haversineDistanceKm = (start: [number, number], end: [number, number]): nu
 };
 
 export default function EarthquakeAnalysis({ mapMode, onMapModeChange }: EarthquakeAnalysisProps) {
+  const [focusMode, setFocusMode] = useState<FocusMode>('combined');
 
   const campusDistances = useMemo(() => {
     return CAMPUSES.map((campus) => {
@@ -101,6 +105,13 @@ export default function EarthquakeAnalysis({ mapMode, onMapModeChange }: Earthqu
   }, []);
 
   const mapTileUrl = getEqTileUrl(mapMode);
+
+  const mapView =
+    focusMode === 'event'
+      ? ({ center: latestEQ.coords as [number, number], zoom: 5 } as const)
+      : focusMode === 'campuses'
+        ? ({ center: [13.93, 121.02] as [number, number], zoom: 9 } as const)
+        : ({ center: [18.7, 127.5] as [number, number], zoom: 4 } as const);
 
   return (
     <div className="space-y-6 p-8">
@@ -138,14 +149,44 @@ export default function EarthquakeAnalysis({ mapMode, onMapModeChange }: Earthqu
               ))}
             </div>
 
+            <div className="absolute right-6 top-6 z-[1000] flex gap-2 rounded-full border border-slate-200/95 bg-white/90 p-1 backdrop-blur-md">
+              {[
+                { key: 'combined' as const, label: 'Combined', icon: <Radar size={13} /> },
+                { key: 'campuses' as const, label: 'Campuses', icon: <LocateFixed size={13} /> },
+                { key: 'event' as const, label: 'Event', icon: <LocateFixed size={13} /> },
+              ].map((mode) => (
+                <button
+                  key={mode.key}
+                  onClick={() => setFocusMode(mode.key)}
+                  className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[10px] font-bold transition-colors ${
+                    focusMode === mode.key
+                      ? 'bg-rose-700 text-white'
+                      : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                  }`}
+                >
+                  {mode.icon}
+                  {mode.label}
+                </button>
+              ))}
+            </div>
+
             <div className="h-[500px] w-full overflow-hidden rounded-2xl">
               <MapContainer
-                center={[18.7, 127.5]}
-                zoom={4}
+                center={mapView.center}
+                zoom={mapView.zoom}
                 zoomControl={false}
                 style={{ height: '100%', width: '100%' }}
               >
                 <TileLayer url={mapTileUrl} attribution="&copy; OpenStreetMap contributors" />
+
+                {focusMode !== 'event' &&
+                  CAMPUSES.map((campus) => (
+                    <Polyline
+                      key={`link-${campus.name}`}
+                      positions={[latestEQ.coords, [campus.lat, campus.lon]]}
+                      pathOptions={{ color: '#f43f5e', weight: 1.5, opacity: 0.25, dashArray: '4 8' }}
+                    />
+                  ))}
 
                 <CircleMarker
                   center={latestEQ.coords}
@@ -164,7 +205,12 @@ export default function EarthquakeAnalysis({ mapMode, onMapModeChange }: Earthqu
                 {CAMPUSES.map((campus) => (
                   <Marker key={campus.name} position={[campus.lat, campus.lon]} icon={bsuCampusIcon}>
                     <Popup>
-                      <p className="text-xs font-semibold text-slate-700">{campus.name}</p>
+                      <div className="space-y-1 text-xs">
+                        <p className="font-semibold text-slate-700">{campus.name}</p>
+                        <p className="text-slate-500">
+                          {campus.lat.toFixed(6)}, {campus.lon.toFixed(6)}
+                        </p>
+                      </div>
                     </Popup>
                   </Marker>
                 ))}
@@ -181,7 +227,7 @@ export default function EarthquakeAnalysis({ mapMode, onMapModeChange }: Earthqu
             </div>
             <div className="grid grid-cols-3 gap-4 text-[10px] font-semibold text-slate-700">
               <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-full border border-slate-300 bg-white" /> BSU Campus</div>
-              <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" /> Watch</div>
+              <div className="flex items-center gap-2"><span className="h-1 w-5 bg-rose-400/70" /> Epicenter Link</div>
               <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-rose-500" /> Earthquake Source</div>
             </div>
           </div>
@@ -251,6 +297,28 @@ export default function EarthquakeAnalysis({ mapMode, onMapModeChange }: Earthqu
                 ))}
               </tbody>
             </table>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-sm">
+            <div className="mb-3 flex items-center gap-2">
+              <LocateFixed size={14} className="text-cyan-600" />
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">
+                BSU Campus Coordinates (Verified)
+              </p>
+            </div>
+            <div className="space-y-2">
+              {CAMPUSES.map((campus) => (
+                <div
+                  key={`coord-${campus.name}`}
+                  className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50/70 px-3 py-2"
+                >
+                  <p className="text-xs font-semibold text-slate-700">{campus.name}</p>
+                  <p className="text-[11px] font-mono text-slate-500">
+                    {campus.lat.toFixed(6)}, {campus.lon.toFixed(6)}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white/95 to-amber-50/30 p-4 shadow-sm">
