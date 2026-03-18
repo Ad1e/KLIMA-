@@ -107,7 +107,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <div className="absolute inset-y-0 right-0 w-px bg-gradient-to-b from-rose-300/0 via-rose-300/45 to-rose-300/0" />
         {/* Logo Card */}
         <div className="border-b border-red-700/35 p-6">
-          <div className="flex items-center gap-3 rounded-r-2xl rounded-l-none border border-slate-300/25 bg-white/10 p-4 backdrop-blur-md">
+          <div className="flex items-center gap-3 rounded-none border border-slate-300/25 bg-white/10 p-4 backdrop-blur-md">
             <img src={bsuLogo} alt="BSU Logo" className="h-10 w-10" />
             <div>
               <h3 className="font-['Trebuchet_MS',sans-serif] text-base font-black tracking-[0.14em] text-white">KLIMA</h3>
@@ -128,21 +128,21 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <button
                 key={item.id}
                 onClick={() => setActiveNav(item.id)}
-                className={`group flex w-full items-center gap-3 rounded-r-2xl rounded-l-none px-4 py-3 transition-all ${
+                className={`group flex w-full items-center gap-3 rounded-none px-4 py-3 transition-all ${
                   isActive
                     ? 'border border-rose-200/40 bg-rose-300/20 text-rose-50 shadow-[0_12px_26px_rgba(127,29,29,0.35)] backdrop-blur-sm'
                     : 'text-slate-100/90 hover:border hover:border-red-300/25 hover:bg-white/10 hover:text-rose-50'
                 }`}
               >
                 <span
-                  className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                  className={`inline-flex h-8 w-8 items-center justify-center rounded-none transition-colors ${
                     isActive ? 'bg-white/20 text-white' : 'bg-black/10 text-rose-100 group-hover:bg-white/15'
                   }`}
                 >
                   <Icon size={17} />
                 </span>
                 <span className="font-['Trebuchet_MS',sans-serif] text-[13px] font-semibold tracking-[0.02em]">{item.label}</span>
-                {isActive ? <span className="ml-auto h-2 w-2 rounded-full bg-rose-100 shadow-[0_0_0_5px_rgba(255,255,255,0.08)]" /> : null}
+                {isActive ? <span className="ml-auto h-2 w-2 rounded-none bg-rose-100 shadow-[0_0_0_5px_rgba(255,255,255,0.08)]" /> : null}
               </button>
             );
           })}
@@ -152,7 +152,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <div className="space-y-3 border-t border-red-700/35 p-4">
           <button
             onClick={handleLogout}
-            className="flex w-full items-center justify-center gap-2 rounded-r-xl rounded-l-none bg-rose-700 px-4 py-2.5 font-['Trebuchet_MS',sans-serif] text-sm font-semibold tracking-[0.03em] transition-colors hover:bg-rose-800"
+            className="flex w-full items-center justify-center gap-2 rounded-none bg-rose-700 px-4 py-2.5 font-['Trebuchet_MS',sans-serif] text-sm font-semibold tracking-[0.03em] transition-colors hover:bg-rose-800"
           >
             <LogOut size={16} />
             Logout
@@ -175,11 +175,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button className="rounded-xl border border-slate-200 bg-white p-2 text-slate-600 transition-colors hover:bg-cyan-50 hover:text-cyan-700">
+            <button className="rounded-none border border-slate-200 bg-white p-2 text-slate-600 transition-colors hover:bg-cyan-50 hover:text-cyan-700">
               <Bell size={20} />
             </button>
-            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-sky-700">
+            <div className="flex items-center gap-3 rounded-none border border-slate-200 bg-white px-3 py-2 shadow-sm">
+              <div className="flex h-8 w-8 items-center justify-center rounded-none bg-gradient-to-br from-cyan-500 to-sky-700">
                 <User size={16} className="text-white" />
               </div>
               <div>
