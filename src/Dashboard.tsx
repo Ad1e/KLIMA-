@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Activity,
+  CloudLightning,
   MapPin,
   AlertTriangle,
   Settings,
@@ -21,6 +22,7 @@ import bsuLogo from './assets/bsu-logo.png';
 import CampusSummary from './CampusSummary';
 import RiskMap from './RiskMap';
 import EarthquakeAnalysis from './EarthquakeAnalysis';
+import TropicalCycloneAnalysis from './TropicalCycloneAnalysis';
 import {
   fetchCampusWeather,
   getFallbackCampusWeather,
@@ -46,6 +48,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const navItems = [
     { id: 'local', label: 'Local Analysis', icon: LayoutDashboard, active: true },
     { id: 'eq', label: 'EQ Analysis', icon: Activity, active: false },
+    { id: 'tc', label: 'TC Analysis', icon: CloudLightning, active: false },
     { id: 'regional', label: 'Regional View', icon: MapPin, active: false },
     { id: 'alerts', label: 'Alerts', icon: AlertTriangle, active: false },
     { id: 'reports', label: 'Reports', icon: MessageSquare, active: false },
@@ -178,6 +181,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
         {activeNav === 'eq' ? (
           <EarthquakeAnalysis mapMode={mapMode} onMapModeChange={setMapMode} />
+        ) : activeNav === 'tc' ? (
+          <TropicalCycloneAnalysis mapMode={mapMode} onMapModeChange={setMapMode} />
         ) : (
         <div className="p-8">
           {/* 1. Header Section */}
