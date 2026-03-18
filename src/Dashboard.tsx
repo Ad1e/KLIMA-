@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
+  Activity,
   MapPin,
   AlertTriangle,
   Settings,
   HelpCircle,
   LogOut,
-  Phone,
   Cloud,
   AlertCircle,
   MessageSquare,
@@ -20,6 +20,7 @@ import {
 import bsuLogo from './assets/bsu-logo.png';
 import CampusSummary from './CampusSummary';
 import RiskMap from './RiskMap';
+import EarthquakeAnalysis from './EarthquakeAnalysis';
 import {
   fetchCampusWeather,
   getFallbackCampusWeather,
@@ -44,6 +45,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   const navItems = [
     { id: 'local', label: 'Local Analysis', icon: LayoutDashboard, active: true },
+    { id: 'eq', label: 'EQ Analysis', icon: Activity, active: false },
     { id: 'regional', label: 'Regional View', icon: MapPin, active: false },
     { id: 'alerts', label: 'Alerts', icon: AlertTriangle, active: false },
     { id: 'reports', label: 'Reports', icon: MessageSquare, active: false },
@@ -136,13 +138,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
         {/* Footer */}
         <div className="space-y-3 border-t border-slate-600/35 p-4">
-          <div className="rounded-xl border border-white/25 bg-white/10 p-3 backdrop-blur-md">
-            <div className="flex items-center gap-2 mb-2">
-              <Phone size={16} className="text-amber-300" />
-              <p className="text-xs font-semibold">Emergency</p>
-            </div>
-            <p className="text-sm font-bold tracking-wide">+63 917 XXX XXXX</p>
-          </div>
           <button onClick={handleLogout} className="flex w-full items-center justify-center gap-2 rounded-lg bg-rose-700 px-4 py-2 text-sm font-medium transition-colors hover:bg-rose-800">
             <LogOut size={16} />
             Logout
@@ -181,7 +176,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </div>
 
-        {/* Dashboard Grid */}
+        {activeNav === 'eq' ? (
+          <EarthquakeAnalysis />
+        ) : (
         <div className="p-8">
           {/* 1. Header Section */}
           <header className="mb-8">
@@ -340,6 +337,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   );
