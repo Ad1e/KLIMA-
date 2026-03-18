@@ -552,14 +552,6 @@ export default function DetailedSiteAnalysis() {
               />
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-600">Forecast Interpretation</p>
-              <p className="mt-2 text-sm leading-relaxed text-slate-700">
-                This section now focuses only on the next 24 hours.
-                The rainfall chart shows 24-hour rain trend, and the wind chart shows both wind speed and gust in the same timeframe.
-              </p>
-            </div>
-
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
               <ForecastChart
                 title="Relative Humidity Trend"
