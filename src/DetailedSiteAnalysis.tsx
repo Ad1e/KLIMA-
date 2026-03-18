@@ -226,6 +226,15 @@ export default function DetailedSiteAnalysis() {
   const updatedLabel = lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const horizon12Data = scenarioAdjustedForecast.slice(0, Math.min(4, scenarioAdjustedForecast.length));
   const horizon24Data = scenarioAdjustedForecast.slice(0, Math.min(8, scenarioAdjustedForecast.length));
+  const rainOutlookComparison = useMemo(
+    () =>
+      horizon24Data.map((point, index) => ({
+        time: point.time,
+        rain24: point.rain,
+        rain12: index < horizon12Data.length ? horizon12Data[index].rain : null,
+      })),
+    [horizon12Data, horizon24Data],
+  );
   const weatherStatus =
     currentWeather.chanceRain >= 70
       ? 'High chance of rainfall and possible operational delays.'
@@ -529,67 +538,37 @@ export default function DetailedSiteAnalysis() {
               />
             </div>
 
-            <div className="space-y-6">
-              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-600">12-Hour Outlook</p>
-                <p className="mt-1 text-sm text-slate-600">Near-term rainfall and wind behavior for immediate planning.</p>
-                <div className="mt-4 grid grid-cols-1 gap-6 xl:grid-cols-2">
-                  <ForecastChart
-                    title="Rainfall (12h)"
-                    subtitle="Expected rain intensity"
-                    data={horizon12Data}
-                    xKey="time"
-                    unit="mm"
-                    chartType="area"
-                    series={[{ key: 'rain', label: 'Rainfall', color: '#2563eb' }]}
-                  />
-                  <ForecastChart
-                    title="Wind Speed and Gust (12h)"
-                    subtitle="Expected wind movement"
-                    data={horizon12Data}
-                    xKey="time"
-                    unit="kph"
-                    series={[
-                      { key: 'wind', label: 'Wind Speed', color: '#0ea5e9' },
-                      { key: 'gust', label: 'Wind Gust', color: '#f97316' },
-                    ]}
-                  />
-                </div>
-              </div>
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+              <ForecastChart
+                title="Rainfall Outlook (12h vs 24h)"
+                subtitle="Two-line comparison in one graph"
+                data={rainOutlookComparison}
+                xKey="time"
+                unit="mm"
+                series={[
+                  { key: 'rain12', label: '12h Rainfall', color: '#1d4ed8' },
+                  { key: 'rain24', label: '24h Rainfall', color: '#38bdf8' },
+                ]}
+              />
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-600">24-Hour Outlook</p>
-                <p className="mt-1 text-sm text-slate-600">Day-scale rainfall and wind trend for next-day operations.</p>
-                <div className="mt-4 grid grid-cols-1 gap-6 xl:grid-cols-2">
-                  <ForecastChart
-                    title="Rainfall (24h)"
-                    subtitle="Expected rain trend through the day"
-                    data={horizon24Data}
-                    xKey="time"
-                    unit="mm"
-                    chartType="area"
-                    series={[{ key: 'rain', label: 'Rainfall', color: '#2563eb' }]}
-                  />
-                  <ForecastChart
-                    title="Wind Speed and Gust (24h)"
-                    subtitle="Expected wind trend through the day"
-                    data={horizon24Data}
-                    xKey="time"
-                    unit="kph"
-                    series={[
-                      { key: 'wind', label: 'Wind Speed', color: '#0ea5e9' },
-                      { key: 'gust', label: 'Wind Gust', color: '#f97316' },
-                    ]}
-                  />
-                </div>
-              </div>
+              <ForecastChart
+                title="Wind Speed and Gust Outlook (12h + 24h)"
+                subtitle="Single graph to reduce space"
+                data={horizon24Data}
+                xKey="time"
+                unit="kph"
+                series={[
+                  { key: 'wind', label: 'Wind Speed', color: '#0ea5e9' },
+                  { key: 'gust', label: 'Wind Gust', color: '#f97316' },
+                ]}
+              />
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-600">Forecast Interpretation</p>
               <p className="mt-2 text-sm leading-relaxed text-slate-700">
-                Both outlook sections now show rainfall and wind together so you can compare precipitation and wind risk in the same time window.
-                Use 12-hour outlook for immediate decisions and 24-hour outlook for next-day preparation.
+                The rainfall chart now compares 12-hour and 24-hour outlook in one graph using two lines.
+                Wind speed and gust are also shown together in one graph so the section uses less space and is easier to scan.
               </p>
               <p className="mt-2 text-sm font-semibold text-slate-700">
                 Current scenario: <span className="text-rose-700">{forecastScenario.replace('-', ' ')}</span> • Active horizon: <span className="text-sky-700">{forecastHorizon}h</span>
