@@ -22,7 +22,7 @@ import RiskMap from './RiskMap';
 import EarthquakeAnalysis from './EarthquakeAnalysis';
 import TropicalCycloneAnalysis from './TropicalCycloneAnalysis';
 import DetailedSiteAnalysis from './DetailedSiteAnalysis';
-import HelpSection from './HelpSection';
+import HelpSection from './HelpSection.tsx';
 import {
   fetchCampusWeather,
   getFallbackCampusWeather,
