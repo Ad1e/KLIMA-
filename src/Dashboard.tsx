@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Activity,
+  FileSearch,
   CloudLightning,
   MapPin,
   AlertTriangle,
@@ -23,6 +24,7 @@ import CampusSummary from './CampusSummary';
 import RiskMap from './RiskMap';
 import EarthquakeAnalysis from './EarthquakeAnalysis';
 import TropicalCycloneAnalysis from './TropicalCycloneAnalysis';
+import DetailedSiteAnalysis from './DetailedSiteAnalysis';
 import {
   fetchCampusWeather,
   getFallbackCampusWeather,
@@ -47,6 +49,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   const navItems = [
     { id: 'local', label: 'Local Analysis', icon: LayoutDashboard, active: true },
+    { id: 'site', label: 'Site Analysis', icon: FileSearch, active: false },
     { id: 'eq', label: 'EQ Analysis', icon: Activity, active: false },
     { id: 'tc', label: 'TC Analysis', icon: CloudLightning, active: false },
     { id: 'regional', label: 'Regional View', icon: MapPin, active: false },
@@ -105,14 +108,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   return (
     <div className="flex h-screen overflow-hidden bg-[radial-gradient(circle_at_12%_8%,rgba(45,212,191,0.2),transparent_34%),radial-gradient(circle_at_88%_3%,rgba(56,189,248,0.18),transparent_38%),linear-gradient(165deg,#f4f7fb_0%,#edf3fb_45%,#e8eef8_100%)]">
       {/* Sidebar */}
-      <div className="flex h-screen w-72 shrink-0 flex-col rounded-none border-r border-slate-800/40 bg-[linear-gradient(180deg,#0f172a_0%,#13253f_45%,#0a1020_100%)] text-slate-100 shadow-[12px_0_45px_rgba(2,6,23,0.45)]">
+      <div className="flex h-screen w-72 shrink-0 flex-col rounded-none border-r border-red-950/40 bg-[linear-gradient(180deg,#4a0303_0%,#8a1111_45%,#220404_100%)] text-slate-100 shadow-[12px_0_45px_rgba(74,3,3,0.35)]">
         {/* Logo Card */}
-        <div className="border-b border-slate-600/35 p-6">
+        <div className="border-b border-red-700/35 p-6">
           <div className="flex items-center gap-3 rounded-2xl border border-slate-300/25 bg-white/10 p-4 backdrop-blur-md">
             <img src={bsuLogo} alt="BSU Logo" className="w-10 h-10" />
             <div>
               <h3 className="text-sm font-bold tracking-[0.08em]">KLIMA</h3>
-              <p className="text-xs uppercase tracking-[0.12em] text-cyan-200/90">Risk Alert</p>
+              <p className="text-xs uppercase tracking-[0.12em] text-rose-200/90">Risk Alert</p>
             </div>
           </div>
         </div>
@@ -128,8 +131,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 onClick={() => setActiveNav(item.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                   isActive
-                    ? 'border border-cyan-200/35 bg-cyan-300/20 text-cyan-50 shadow-[0_12px_26px_rgba(8,47,73,0.35)] backdrop-blur-sm'
-                    : 'text-slate-200/90 hover:border hover:border-slate-300/20 hover:bg-white/10 hover:text-cyan-100'
+                    ? 'border border-rose-200/35 bg-rose-300/20 text-rose-50 shadow-[0_12px_26px_rgba(127,29,29,0.35)] backdrop-blur-sm'
+                    : 'text-slate-200/90 hover:border hover:border-red-300/20 hover:bg-white/10 hover:text-rose-100'
                 }`}
               >
                 <Icon size={20} />
@@ -140,7 +143,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </nav>
 
         {/* Footer */}
-        <div className="space-y-3 border-t border-slate-600/35 p-4">
+        <div className="space-y-3 border-t border-red-700/35 p-4">
           <button onClick={handleLogout} className="flex w-full items-center justify-center gap-2 rounded-lg bg-rose-700 px-4 py-2 text-sm font-medium transition-colors hover:bg-rose-800">
             <LogOut size={16} />
             Logout
@@ -179,7 +182,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </div>
 
-        {activeNav === 'eq' ? (
+        {activeNav === 'site' ? (
+          <DetailedSiteAnalysis />
+        ) : activeNav === 'eq' ? (
           <EarthquakeAnalysis mapMode={mapMode} onMapModeChange={setMapMode} />
         ) : activeNav === 'tc' ? (
           <TropicalCycloneAnalysis mapMode={mapMode} onMapModeChange={setMapMode} />
