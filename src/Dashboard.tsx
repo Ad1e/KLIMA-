@@ -103,20 +103,23 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   return (
     <div className="flex h-screen overflow-hidden bg-[radial-gradient(circle_at_12%_8%,rgba(45,212,191,0.2),transparent_34%),radial-gradient(circle_at_88%_3%,rgba(56,189,248,0.18),transparent_38%),linear-gradient(165deg,#f4f7fb_0%,#edf3fb_45%,#e8eef8_100%)]">
       {/* Sidebar */}
-      <div className="flex h-screen w-72 shrink-0 flex-col rounded-none border-r border-red-950/40 bg-[linear-gradient(180deg,#4a0303_0%,#8a1111_45%,#220404_100%)] text-slate-100 shadow-[12px_0_45px_rgba(74,3,3,0.35)]">
+      <div className="flex h-screen w-72 shrink-0 flex-col rounded-none border-r border-red-950/50 bg-[radial-gradient(circle_at_14%_10%,rgba(251,191,36,0.16),transparent_28%),linear-gradient(180deg,#3f0202_0%,#7f0d0d_44%,#1e0303_100%)] text-slate-100 shadow-[12px_0_45px_rgba(74,3,3,0.35)]">
         {/* Logo Card */}
         <div className="border-b border-red-700/35 p-6">
           <div className="flex items-center gap-3 rounded-2xl border border-slate-300/25 bg-white/10 p-4 backdrop-blur-md">
-            <img src={bsuLogo} alt="BSU Logo" className="w-10 h-10" />
+            <img src={bsuLogo} alt="BSU Logo" className="h-10 w-10" />
             <div>
-              <h3 className="text-sm font-bold tracking-[0.08em]">KLIMA</h3>
-              <p className="text-xs uppercase tracking-[0.12em] text-rose-200/90">Risk Alert</p>
+              <h3 className="font-['Trebuchet_MS',sans-serif] text-base font-black tracking-[0.14em] text-white">KLIMA</h3>
+              <p className="font-['Trebuchet_MS',sans-serif] text-[11px] uppercase tracking-[0.16em] text-rose-200/90">Risk Alert</p>
             </div>
           </div>
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 space-y-2 p-4">
+          <p className="px-2 pb-2 font-['Trebuchet_MS',sans-serif] text-[10px] font-bold uppercase tracking-[0.18em] text-rose-100/80">
+            Navigation
+          </p>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = item.id === activeNav;
@@ -124,14 +127,21 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <button
                 key={item.id}
                 onClick={() => setActiveNav(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                className={`group flex w-full items-center gap-3 rounded-2xl px-4 py-3 transition-all ${
                   isActive
-                    ? 'border border-rose-200/35 bg-rose-300/20 text-rose-50 shadow-[0_12px_26px_rgba(127,29,29,0.35)] backdrop-blur-sm'
-                    : 'text-slate-200/90 hover:border hover:border-red-300/20 hover:bg-white/10 hover:text-rose-100'
+                    ? 'border border-rose-200/40 bg-rose-300/20 text-rose-50 shadow-[0_12px_26px_rgba(127,29,29,0.35)] backdrop-blur-sm'
+                    : 'text-slate-100/90 hover:border hover:border-red-300/20 hover:bg-white/10 hover:text-rose-50'
                 }`}
               >
-                <Icon size={20} />
-                <span className="text-sm font-medium">{item.label}</span>
+                <span
+                  className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-black/10 text-rose-100 group-hover:bg-white/15'
+                  }`}
+                >
+                  <Icon size={17} />
+                </span>
+                <span className="font-['Trebuchet_MS',sans-serif] text-[13px] font-semibold tracking-[0.02em]">{item.label}</span>
+                {isActive ? <span className="ml-auto h-2 w-2 rounded-full bg-rose-100" /> : null}
               </button>
             );
           })}
@@ -139,7 +149,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
         {/* Footer */}
         <div className="space-y-3 border-t border-red-700/35 p-4">
-          <button onClick={handleLogout} className="flex w-full items-center justify-center gap-2 rounded-lg bg-rose-700 px-4 py-2 text-sm font-medium transition-colors hover:bg-rose-800">
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-700 px-4 py-2.5 font-['Trebuchet_MS',sans-serif] text-sm font-semibold tracking-[0.03em] transition-colors hover:bg-rose-800"
+          >
             <LogOut size={16} />
             Logout
           </button>
