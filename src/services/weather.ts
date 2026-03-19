@@ -133,8 +133,6 @@ const FALLBACK_DATA: CampusWeather[] = [
   },
 ];
 
-const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
-const BASE_URL = import.meta.env.VITE_WEATHER_API_URL ?? 'https://api.openweathermap.org/data/2.5/weather';
 const OPEN_METEO_FORECAST_URL =
   import.meta.env.VITE_OPEN_METEO_FORECAST_API_URL ?? 'https://api.open-meteo.com/v1/forecast';
 const OPEN_METEO_TIMEZONE = import.meta.env.VITE_OPEN_METEO_TIMEZONE ?? 'Asia/Manila';
@@ -152,6 +150,15 @@ const OPEN_METEO_CURRENT_VARIABLES = [
 ] as const;
 
 const OPEN_METEO_DAILY_VARIABLES = ['weather_code', 'daylight_duration'] as const;
+
+const OPEN_METEO_CAMPUS_HOURLY_VARIABLES = [
+  'precipitation_probability',
+  'cloud_cover',
+  'visibility',
+  'surface_pressure',
+  'dew_point_2m',
+  'rain',
+] as const;
 
 const OPEN_METEO_HOURLY_VARIABLES = [
   'temperature_2m',
@@ -200,6 +207,14 @@ const OPEN_METEO_DAILY_INDEX: Record<(typeof OPEN_METEO_DAILY_VARIABLES)[number]
     acc[key] = index;
     return acc;
   }, {} as Record<(typeof OPEN_METEO_DAILY_VARIABLES)[number], number>);
+
+const OPEN_METEO_CAMPUS_HOURLY_INDEX: Record<
+  (typeof OPEN_METEO_CAMPUS_HOURLY_VARIABLES)[number],
+  number
+> = OPEN_METEO_CAMPUS_HOURLY_VARIABLES.reduce((acc, key, index) => {
+  acc[key] = index;
+  return acc;
+}, {} as Record<(typeof OPEN_METEO_CAMPUS_HOURLY_VARIABLES)[number], number>);
 
 const asCardinalDirection = (degrees: number): string => {
   const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
@@ -257,27 +272,59 @@ const toNumberArray = (values: Float32Array | null | undefined): number[] => {
 };
 
 const toCampusWeather = (name: string, apiData: any): CampusWeather => {
-  const rainMm = Number(apiData?.rain?.['1h'] ?? 0);
-  const cloudCover = Number(apiData?.clouds?.all ?? 0);
-  const humidity = Number(apiData?.main?.humidity ?? 0);
-  const temp = Number(apiData?.main?.temp ?? 0);
-  const mslp = Number(apiData?.main?.pressure ?? 0);
-  const dewPoint = computeDewPoint(temp, humidity);
-  const windDeg = Number(apiData?.wind?.deg ?? 0);
-  const windSpeed = Number(apiData?.wind?.speed ?? 0) * 3.6;
-  const windGust = Number(apiData?.wind?.gust ?? apiData?.wind?.speed ?? 0) * 3.6;
-  const visibilityKm = Number(apiData?.visibility ?? 10000) / 1000;
+  const current = apiData?.current?.();
+  const hourly = apiData?.hourly?.();
 
-  const rainChance = Math.min(100, Math.max(cloudCover, rainMm > 0 ? 40 : 0));
-  const warning = rainMm >= 0.5 || rainChance >= 40;
+  const currentRain = Number(current?.variables(OPEN_METEO_CURRENT_INDEX.rain)?.value() ?? 0);
+  const humidity = Number(
+    current?.variables(OPEN_METEO_CURRENT_INDEX.relative_humidity_2m)?.value() ?? 0,
+  );
+  const temp = Number(current?.variables(OPEN_METEO_CURRENT_INDEX.temperature_2m)?.value() ?? 0);
+  const heatIndex = Number(
+    current?.variables(OPEN_METEO_CURRENT_INDEX.apparent_temperature)?.value() ?? temp,
+  );
+  const windDeg = Number(current?.variables(OPEN_METEO_CURRENT_INDEX.wind_direction_10m)?.value() ?? 0);
+  const windSpeed = Number(current?.variables(OPEN_METEO_CURRENT_INDEX.wind_speed_10m)?.value() ?? 0);
+  const windGust = Number(
+    current?.variables(OPEN_METEO_CURRENT_INDEX.wind_gusts_10m)?.value() ?? windSpeed,
+  );
+
+  const rainSeries = toNumberArray(
+    hourly?.variables(OPEN_METEO_CAMPUS_HOURLY_INDEX.rain)?.valuesArray(),
+  );
+  const chanceSeries = toNumberArray(
+    hourly?.variables(OPEN_METEO_CAMPUS_HOURLY_INDEX.precipitation_probability)?.valuesArray(),
+  );
+  const cloudSeries = toNumberArray(
+    hourly?.variables(OPEN_METEO_CAMPUS_HOURLY_INDEX.cloud_cover)?.valuesArray(),
+  );
+  const visibilitySeries = toNumberArray(
+    hourly?.variables(OPEN_METEO_CAMPUS_HOURLY_INDEX.visibility)?.valuesArray(),
+  );
+  const pressureSeries = toNumberArray(
+    hourly?.variables(OPEN_METEO_CAMPUS_HOURLY_INDEX.surface_pressure)?.valuesArray(),
+  );
+  const dewPointSeries = toNumberArray(
+    hourly?.variables(OPEN_METEO_CAMPUS_HOURLY_INDEX.dew_point_2m)?.valuesArray(),
+  );
+
+  const rainMm = currentRain > 0 ? currentRain : Number(rainSeries[0] ?? 0);
+  const cloudCover = Number(cloudSeries[0] ?? 0);
+  const rainChanceBase = Number(chanceSeries[0] ?? Math.max(cloudCover, rainMm > 0 ? 45 : 20));
+  const rainChance = Math.max(0, Math.min(100, Math.round(rainChanceBase)));
+  const visibilityKm = Number(visibilitySeries[0] ?? 10000) / 1000;
+  const mslp = Number(pressureSeries[0] ?? 1013);
+  const dewPoint = Number(dewPointSeries[0] ?? computeDewPoint(temp, humidity));
+
+  const warning = rainMm >= 0.5 || rainChance >= 45 || windGust >= 30;
 
   return {
     name,
     rain: rainMm.toFixed(2),
-    rainPossibility: `${Math.round(rainChance)}%`,
+    rainPossibility: `${rainChance}%`,
     mslp: `${Math.round(mslp)}`,
     dewpoint: dewPoint.toFixed(1),
-    heatIndex: Number(apiData?.main?.feels_like ?? temp).toFixed(1),
+    heatIndex: heatIndex.toFixed(1),
     humidity: `${Math.round(humidity)}`,
     windDirection: asCardinalDirection(windDeg),
     windGust: windGust.toFixed(0),
@@ -289,23 +336,27 @@ const toCampusWeather = (name: string, apiData: any): CampusWeather => {
   };
 };
 
-export const hasWeatherApiKey = (): boolean => Boolean(API_KEY);
-
 export const getFallbackCampusWeather = (): CampusWeather[] => FALLBACK_DATA;
 
 export const fetchCampusWeather = async (): Promise<CampusWeather[]> => {
-  if (!API_KEY) {
-    return FALLBACK_DATA;
-  }
-
   const responses = await Promise.all(
     CAMPUSES.map(async (campus) => {
-      const url = `${BASE_URL}?lat=${campus.lat}&lon=${campus.lon}&appid=${API_KEY}&units=metric`;
-      const res = await fetch(url);
-      if (!res.ok) {
-        throw new Error(`Weather API failed for ${campus.name}`);
+      const params = {
+        latitude: campus.lat,
+        longitude: campus.lon,
+        timezone: OPEN_METEO_TIMEZONE,
+        forecast_days: 1,
+        current: OPEN_METEO_CURRENT_VARIABLES,
+        hourly: OPEN_METEO_CAMPUS_HOURLY_VARIABLES,
+      };
+
+      const apiResponses = await fetchWeatherApi(OPEN_METEO_FORECAST_URL, params);
+      const data = apiResponses?.[0];
+
+      if (!data) {
+        throw new Error(`Open-Meteo API failed for ${campus.name}`);
       }
-      const data = await res.json();
+
       return toCampusWeather(campus.name, data);
     }),
   );

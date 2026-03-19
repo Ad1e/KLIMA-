@@ -7,11 +7,8 @@ import {
   CloudLightning,
   HelpCircle,
   LogOut,
-  Cloud,
-  AlertCircle,
   Eye,
   Layers,
-  TrendingUp,
   Bell,
   User,
 } from 'lucide-react';
@@ -38,6 +35,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [mapMode, setMapMode] = useState<'street' | 'satellite' | 'dark'>('street');
   const [campusWeather, setCampusWeather] = useState<CampusWeather[]>(getFallbackCampusWeather());
   const [isLiveWeather, setIsLiveWeather] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [selectedCampusName, setSelectedCampusName] = useState<string | null>(null);
 
   const handleLogout = () => {
     onLogout()
@@ -61,16 +60,23 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         if (!isMounted) return;
         setCampusWeather(data);
         setIsLiveWeather(true);
+        setLastUpdated(new Date());
       } catch {
         if (!isMounted) return;
         setCampusWeather(getFallbackCampusWeather());
         setIsLiveWeather(false);
+        setLastUpdated(new Date());
       }
     };
 
     void loadWeather();
+    const refreshId = setInterval(() => {
+      void loadWeather();
+    }, 30000);
+
     return () => {
       isMounted = false;
+      clearInterval(refreshId);
     };
   }, []);
 
@@ -96,6 +102,29 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       topRainCampus,
       strongestWind,
     };
+  }, [campusWeather]);
+
+  const selectedCampus = useMemo(() => {
+    if (!selectedCampusName) {
+      return null;
+    }
+
+    return campusWeather.find((campus) => campus.name === selectedCampusName) ?? null;
+  }, [campusWeather, selectedCampusName]);
+
+  useEffect(() => {
+    if (campusWeather.length === 0) {
+      setSelectedCampusName(null);
+      return;
+    }
+
+    setSelectedCampusName((previous) => {
+      if (previous && campusWeather.some((campus) => campus.name === previous)) {
+        return previous;
+      }
+
+      return campusWeather[0].name;
+    });
   }, [campusWeather]);
 
   return (
@@ -203,17 +232,29 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           {/* 1. Header Section */}
           <header className="mb-8">
             <h1 className="text-3xl font-extrabold text-slate-900">Local Risk Assessment</h1>
-            <p className="mt-1 text-sm text-slate-600">As of March 18, 2026 • Batangas State University</p>
+            <p className="mt-1 text-sm text-slate-600">
+              As of{' '}
+              {lastUpdated
+                ? lastUpdated.toLocaleString([], {
+                    month: 'short',
+                    day: '2-digit',
+                    year: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  })
+                : 'Loading live weather'}{' '}
+              • Batangas State University
+            </p>
           </header>
 
           {/* 2. Campus Summary Cards */}
-          <CampusSummary />
+          <CampusSummary campusData={campusWeather} dataSource={isLiveWeather ? 'live' : 'fallback'} />
 
           {/* 3. The Map & Table Grid */}
           <div className="grid grid-cols-12 gap-6">
             {/* Map */}
-            <div className="col-span-12 lg:col-span-7">
-              <div className="min-h-96 rounded-3xl border border-slate-200 bg-gradient-to-br from-white/95 to-cyan-50/40 p-6 shadow-[0_20px_65px_rgba(15,23,42,0.1)] backdrop-blur-sm">
+            <div className="col-span-12 lg:col-span-6">
+              <div className="h-full rounded-3xl border border-slate-200 bg-gradient-to-br from-white/95 to-cyan-50/40 p-6 shadow-[0_20px_65px_rgba(15,23,42,0.1)] backdrop-blur-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-slate-900">Risk Map</h3>
                   <div className="flex gap-2">
@@ -245,7 +286,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     ))}
                   </div>
                 </div>
-                <RiskMap campusWeather={campusWeather} mapMode={mapMode} />
+                <RiskMap
+                  mapMode={mapMode}
+                  onCampusSelect={setSelectedCampusName}
+                />
                 <div className="mt-4 grid grid-cols-3 gap-3">
                   {[
                     { label: 'High Risk', color: 'bg-rose-600' },
@@ -262,7 +306,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </div>
 
             {/* Data Section */}
-            <div className="col-span-12 lg:col-span-5">
+            <div className="col-span-12 lg:col-span-6">
               {/* Current Observations */}
               <div className="h-full rounded-3xl border border-slate-200 bg-gradient-to-br from-white/95 to-sky-50/45 p-6 shadow-[0_20px_65px_rgba(15,23,42,0.1)] backdrop-blur-sm">
                 <div className="mb-4 flex items-center justify-between">
@@ -278,6 +322,31 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   </span>
                 </div>
 
+                <div className="mb-4 rounded-xl border border-slate-200 bg-white/90 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Selected Campus</p>
+                    <p className="text-[10px] font-semibold text-cyan-700">Click a map icon to update</p>
+                  </div>
+                  {selectedCampus ? (
+                    <div className="mt-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-bold text-slate-900">{selectedCampus.name}</p>
+                        <span
+                          className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase ${
+                            selectedCampus.warning
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-emerald-100 text-emerald-700'
+                          }`}
+                        >
+                          {selectedCampus.status}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-xs text-slate-600">No campus selected yet.</p>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-xl border border-slate-200 bg-white/90 p-3">
                     <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Monitored Campuses</p>
@@ -287,79 +356,55 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Total Rainfall</p>
                     <p className="mt-1 text-2xl font-extrabold text-slate-900">{observationSummary.totalRain} mm</p>
                   </div>
-                  <div className="col-span-2 rounded-xl border border-slate-200 bg-white/90 p-3">
+                  <div className="col-span-1 rounded-xl border border-slate-200 bg-white/90 p-2.5">
                     <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Highest Rain Campus</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">
+                    <p className="mt-1 text-xs font-semibold text-slate-900">
                       {observationSummary.topRainCampus?.name ?? 'N/A'}
                     </p>
-                    <p className="text-xs text-slate-600">
-                      {observationSummary.topRainCampus?.rain ?? '0.00'} mm rain, chance{' '}
-                      {observationSummary.topRainCampus?.rainPossibility ?? '0%'}
+                    <p className="text-[11px] text-slate-600">
+                      {observationSummary.topRainCampus?.rain ?? '0.00'} mm rain
                     </p>
                   </div>
-                  <div className="rounded-xl border border-slate-200 bg-white/90 p-3">
-                    <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Avg Humidity</p>
-                    <p className="mt-1 text-2xl font-extrabold text-slate-900">{observationSummary.avgHumidity}%</p>
-                  </div>
-                  <div className="rounded-xl border border-slate-200 bg-white/90 p-3">
+                  <div className="col-span-1 rounded-xl border border-slate-200 bg-white/90 p-2.5">
                     <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Strongest Wind</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">
+                    <p className="mt-1 text-xs font-semibold text-slate-900">
                       {observationSummary.strongestWind?.name ?? 'N/A'}
                     </p>
-                    <p className="text-xs text-slate-600">
+                    <p className="text-[11px] text-slate-600">
                       {observationSummary.strongestWind?.windSpeed ?? '0'} km/h
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-xl border border-slate-200 bg-white/90 p-3">
-                  <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Campus Snapshot</p>
-                  <div className="mt-2 space-y-2">
-                    {campusWeather.slice(0, 4).map((campus) => (
-                      <div key={campus.name} className="flex items-center justify-between rounded-lg border border-cyan-100/70 bg-cyan-50/45 px-2.5 py-2">
-                        <p className="text-xs font-semibold text-slate-700">{campus.name}</p>
-                        <p className="text-xs font-bold text-cyan-700">{campus.rain} mm</p>
+                <div className="mt-4 rounded-xl border border-slate-200 bg-white/90 p-4">
+                  <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Selected Campus Metrics</p>
+                  {selectedCampus ? (
+                    <div className="mt-3 grid grid-cols-2 gap-3">
+                      <div className="rounded-xl border border-cyan-100/80 bg-cyan-50/55 px-3 py-3">
+                        <p className="text-[10px] uppercase tracking-[0.1em] text-slate-500">Temperature</p>
+                        <p className="mt-1 text-xl font-extrabold text-cyan-800">{selectedCampus.heatIndex} degC</p>
                       </div>
-                    ))}
-                  </div>
+                      <div className="rounded-xl border border-cyan-100/80 bg-cyan-50/55 px-3 py-3">
+                        <p className="text-[10px] uppercase tracking-[0.1em] text-slate-500">Wind Speed</p>
+                        <p className="mt-1 text-xl font-extrabold text-cyan-800">{selectedCampus.windSpeed} km/h</p>
+                      </div>
+                      <div className="rounded-xl border border-cyan-100/80 bg-cyan-50/55 px-3 py-3">
+                        <p className="text-[10px] uppercase tracking-[0.1em] text-slate-500">Humidity</p>
+                        <p className="mt-1 text-xl font-extrabold text-cyan-800">{selectedCampus.humidity}%</p>
+                      </div>
+                      <div className="rounded-xl border border-cyan-100/80 bg-cyan-50/55 px-3 py-3">
+                        <p className="text-[10px] uppercase tracking-[0.1em] text-slate-500">Rain Chance</p>
+                        <p className="mt-1 text-xl font-extrabold text-cyan-800">{selectedCampus.rainPossibility}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-xs text-slate-600">Select a campus on the map to view its metrics.</p>
+                  )}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Additional Info Cards */}
-          <div className="mt-6 grid grid-cols-12 gap-6">
-            <div className="col-span-12 lg:col-span-4">
-              <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white/95 to-cyan-50/40 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.09)] backdrop-blur-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-slate-900">Temperature</h4>
-                  <Cloud size={20} className="text-sky-500" />
-                </div>
-                <p className="text-3xl font-bold text-slate-900">28°C</p>
-                <p className="mt-2 text-sm text-slate-600">↑2° from last hour</p>
-              </div>
-            </div>
-            <div className="col-span-12 lg:col-span-4">
-              <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white/95 to-amber-50/40 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.09)] backdrop-blur-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-slate-900">Humidity</h4>
-                  <AlertCircle size={20} className="text-amber-500" />
-                </div>
-                <p className="text-3xl font-bold text-slate-900">72%</p>
-                <p className="mt-2 text-sm text-slate-600">Moderate level</p>
-              </div>
-            </div>
-            <div className="col-span-12 lg:col-span-4">
-              <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white/95 to-teal-50/45 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.09)] backdrop-blur-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-slate-900">Wind Speed</h4>
-                  <TrendingUp size={20} className="text-teal-600" />
-                </div>
-                <p className="text-3xl font-bold text-slate-900">12 km/h</p>
-                <p className="mt-2 text-sm text-slate-600">↓1 km/h trend</p>
-              </div>
-            </div>
-          </div>
         </div>
         )}
       </div>

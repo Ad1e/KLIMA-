@@ -1,7 +1,6 @@
 import {
   MapContainer,
   Marker,
-  Popup,
   TileLayer,
   ZoomControl,
 } from 'react-leaflet';
@@ -10,7 +9,7 @@ import 'leaflet/dist/leaflet.css';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import bsuLogo from './assets/bsu-logo.png';
-import { CAMPUSES, type CampusWeather } from './services/weather';
+import { CAMPUSES } from './services/weather';
 
 const defaultIcon = L.icon({
   iconUrl: markerIcon,
@@ -30,8 +29,8 @@ const bsuCampusIcon = L.icon({
 });
 
 interface RiskMapProps {
-  campusWeather: CampusWeather[];
   mapMode: string;
+  onCampusSelect?: (campusName: string) => void;
 }
 
 const getTileUrl = (mode: string): string => {
@@ -44,14 +43,10 @@ const getTileUrl = (mode: string): string => {
   return 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
 };
 
-const getRiskState = (campus: CampusWeather) => {
-  const rain = Number(campus.rain);
-  if (rain >= 2) return { label: 'Critical', color: '#dc2626' };
-  if (campus.warning) return { label: 'Monitoring', color: '#f59e0b' };
-  return { label: 'Safe', color: '#16a34a' };
-};
-
-export default function RiskMap({ campusWeather, mapMode }: RiskMapProps) {
+export default function RiskMap({
+  mapMode,
+  onCampusSelect,
+}: RiskMapProps) {
   const center: [number, number] = [13.93, 121.02];
   const tileUrl = getTileUrl(mapMode);
 
@@ -71,21 +66,15 @@ export default function RiskMap({ campusWeather, mapMode }: RiskMapProps) {
         <ZoomControl position="bottomright" />
 
         {CAMPUSES.map((campus) => {
-          const weather = campusWeather.find((item) => item.name === campus.name);
-          const risk = weather ? getRiskState(weather) : { label: 'No Data', color: '#64748b' };
-
           return (
-            <Marker key={campus.name} position={[campus.lat, campus.lon]} icon={bsuCampusIcon}>
-              <Popup>
-                <div className="min-w-[180px] space-y-1 text-sm">
-                  <p className="font-bold text-cyan-700">{campus.name}</p>
-                  <p className="text-xs text-slate-600">Status: {risk.label}</p>
-                  <p className="text-xs text-slate-600">Rain: {weather?.rain ?? '0.00'} mm</p>
-                  <p className="text-xs text-slate-600">Humidity: {weather?.humidity ?? '0'}%</p>
-                </div>
-              </Popup>
-
-            </Marker>
+            <Marker
+              key={campus.name}
+              position={[campus.lat, campus.lon]}
+              icon={bsuCampusIcon}
+              eventHandlers={{
+                click: () => onCampusSelect?.(campus.name),
+              }}
+            />
           );
         })}
       </MapContainer>

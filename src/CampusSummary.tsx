@@ -1,11 +1,5 @@
-import { useEffect, useState } from 'react';
 import { AlertCircle, Droplets } from 'lucide-react';
-import {
-  fetchCampusWeather,
-  getFallbackCampusWeather,
-  hasWeatherApiKey,
-  type CampusWeather,
-} from './services/weather';
+import { type CampusWeather } from './services/weather';
 
 const metricItems = [
   { key: 'mslp', label: 'MSLP', unit: '' },
@@ -19,31 +13,12 @@ const metricItems = [
   { key: 'cloudCover', label: 'Cloud Cover', unit: '%' },
 ] as const;
 
-const CampusSummary = () => {
-  const [campusData, setCampusData] = useState<CampusWeather[]>(getFallbackCampusWeather());
-  const [dataSource, setDataSource] = useState<'fallback' | 'live'>(hasWeatherApiKey() ? 'live' : 'fallback');
+interface CampusSummaryProps {
+  campusData: CampusWeather[];
+  dataSource: 'fallback' | 'live';
+}
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadWeather = async () => {
-      try {
-        const data = await fetchCampusWeather();
-        if (!isMounted) return;
-        setCampusData(data);
-        setDataSource(hasWeatherApiKey() ? 'live' : 'fallback');
-      } catch {
-        if (!isMounted) return;
-        setCampusData(getFallbackCampusWeather());
-        setDataSource('fallback');
-      }
-    };
-
-    void loadWeather();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+const CampusSummary = ({ campusData, dataSource }: CampusSummaryProps) => {
 
   return (
     <div>
@@ -124,7 +99,7 @@ const CampusSummary = () => {
               </div>
 
               <span className="block text-center text-[8px] font-medium text-slate-400">
-                Live update cycle: 2 mins
+                Live update cycle: 30 seconds
               </span>
             </div>
           </div>
