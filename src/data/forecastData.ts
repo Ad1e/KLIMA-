@@ -1,14 +1,4 @@
-export interface ForecastPoint {
-  time: string;
-  temp: number;
-  rain: number;
-  wind: number;
-  gust: number;
-  humidity: number;
-  pressure: number;
-  chanceRain: number;
-  condition: 'Partly Cloudy' | 'Light Rain' | 'Moderate Rain' | 'Cloudy';
-}
+import type { ForecastPoint } from '../services/weather';
 
 export const forecastData: ForecastPoint[] = [
   {

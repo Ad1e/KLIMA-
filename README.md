@@ -2,6 +2,14 @@
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
+## Live Weather Forecast Setup
+
+The Detailed Site Analysis forecast view can use live Open-Meteo forecast data.
+
+1. Copy `.env.example` to `.env.local`.
+2. Set `VITE_OPEN_METEO_FORECAST_API_URL` (default: `https://api.open-meteo.com/v1/forecast`).
+3. Keep your existing weather variables if you still use OpenWeather for campus observation cards.
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)

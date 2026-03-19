@@ -1,7 +1,28 @@
+import { fetchWeatherApi } from 'openmeteo';
+
 export interface CampusSeed {
   name: string;
   lat: number;
   lon: number;
+}
+
+export interface ForecastPoint {
+  time: string;
+  temp: number;
+  rain: number;
+  wind: number;
+  gust: number;
+  humidity: number;
+  pressure: number;
+  chanceRain: number;
+  condition: 'Partly Cloudy' | 'Light Rain' | 'Moderate Rain' | 'Cloudy' | 'Thunderstorm';
+}
+
+export interface ForecastPayload {
+  points: ForecastPoint[];
+  currentIsDay: boolean | null;
+  daylightDurationSeconds: number | null;
+  currentWeatherCode: number | null;
 }
 
 export interface CampusWeather {
@@ -114,6 +135,9 @@ const FALLBACK_DATA: CampusWeather[] = [
 
 const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
 const BASE_URL = import.meta.env.VITE_WEATHER_API_URL ?? 'https://api.openweathermap.org/data/2.5/weather';
+const OPEN_METEO_FORECAST_URL =
+  import.meta.env.VITE_OPEN_METEO_FORECAST_API_URL ?? 'https://api.open-meteo.com/v1/forecast';
+const OPEN_METEO_TIMEZONE = import.meta.env.VITE_OPEN_METEO_TIMEZONE ?? 'Asia/Manila';
 
 const asCardinalDirection = (degrees: number): string => {
   const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
@@ -124,6 +148,41 @@ const asCardinalDirection = (degrees: number): string => {
 const computeDewPoint = (tempC: number, humidityPct: number): number => {
   // Quick approximation suitable for dashboard display.
   return tempC - (100 - humidityPct) / 5;
+};
+
+const mapWeatherCodeToCondition = (
+  weatherCode: number,
+): ForecastPoint['condition'] => {
+  if ([95, 96, 99].includes(weatherCode)) {
+    return 'Thunderstorm';
+  }
+
+  if ([63, 65, 82].includes(weatherCode)) {
+    return 'Moderate Rain';
+  }
+
+  if ([51, 53, 55, 56, 57, 61, 80, 81].includes(weatherCode)) {
+    return 'Light Rain';
+  }
+
+  if ([1, 2, 3, 45, 48].includes(weatherCode)) {
+    return 'Cloudy';
+  }
+
+  return 'Partly Cloudy';
+};
+
+const formatHourLabel = (timestamp: Date): string => {
+  return timestamp.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+};
+
+const toNumberArray = (values: Float32Array | null | undefined): number[] => {
+  if (!values) return [];
+  return Array.from(values, (value) => Number(value));
 };
 
 const toCampusWeather = (name: string, apiData: any): CampusWeather => {
@@ -181,4 +240,139 @@ export const fetchCampusWeather = async (): Promise<CampusWeather[]> => {
   );
 
   return responses;
+};
+
+export const fetchOpenMeteoForecast = async (lat: number, lon: number): Promise<ForecastPayload> => {
+  const params = {
+    latitude: lat,
+    longitude: lon,
+    timezone: OPEN_METEO_TIMEZONE,
+    forecast_days: 2,
+    models: 'best_match',
+    current: [
+      'is_day',
+      'rain',
+      'relative_humidity_2m',
+      'temperature_2m',
+      'apparent_temperature',
+      'wind_gusts_10m',
+      'wind_direction_10m',
+      'wind_speed_10m',
+      'weather_code',
+    ],
+    daily: ['weather_code', 'daylight_duration'],
+    hourly: [
+      'temperature_2m',
+      'dew_point_2m',
+      'relative_humidity_2m',
+      'apparent_temperature',
+      'precipitation_probability',
+      'precipitation',
+      'rain',
+      'showers',
+      'cloud_cover',
+      'cloud_cover_low',
+      'cloud_cover_mid',
+      'cloud_cover_high',
+      'visibility',
+      'wind_speed_10m',
+      'wind_speed_80m',
+      'wind_speed_120m',
+      'wind_speed_180m',
+      'wind_direction_10m',
+      'wind_direction_80m',
+      'wind_direction_120m',
+      'wind_direction_180m',
+      'wind_gusts_10m',
+      'temperature_80m',
+      'temperature_120m',
+      'temperature_180m',
+      'weather_code',
+      'surface_pressure',
+    ],
+  };
+
+  const responses = await fetchWeatherApi(OPEN_METEO_FORECAST_URL, params);
+  const response = responses?.[0];
+
+  if (!response) {
+    throw new Error('Open-Meteo forecast request failed');
+  }
+
+  const current = response.current();
+  const hourly = response.hourly();
+  const daily = response.daily();
+
+  if (!hourly) {
+    throw new Error('Open-Meteo hourly data is unavailable');
+  }
+
+  const utcOffsetSeconds = Number(response.utcOffsetSeconds());
+  const startTime = Number(hourly.time());
+  const endTime = Number(hourly.timeEnd());
+  const intervalSeconds = Number(hourly.interval());
+  const itemCount = Math.max(0, Math.floor((endTime - startTime) / intervalSeconds));
+
+  const times = Array.from(
+    { length: itemCount },
+    (_, index) => new Date((startTime + index * intervalSeconds + utcOffsetSeconds) * 1000),
+  );
+
+  // Variable indices match the order in params.hourly.
+  const temps = toNumberArray(hourly.variables(0)?.valuesArray());
+  const humidities = toNumberArray(hourly.variables(2)?.valuesArray());
+  const rainChances = toNumberArray(hourly.variables(4)?.valuesArray());
+  const precipitations = toNumberArray(hourly.variables(5)?.valuesArray());
+  const winds = toNumberArray(hourly.variables(13)?.valuesArray());
+  const gusts = toNumberArray(hourly.variables(21)?.valuesArray());
+  const weatherCodes = toNumberArray(hourly.variables(25)?.valuesArray());
+  const pressures = toNumberArray(hourly.variables(26)?.valuesArray());
+
+  const totalPoints = Math.min(8, Math.floor(times.length / 3));
+
+  if (totalPoints < 2) {
+    throw new Error('Insufficient forecast points from Open-Meteo');
+  }
+
+  const points = Array.from({ length: totalPoints }, (_, index) => {
+    const sourceIndex = index * 3;
+    const rain = Number(precipitations[sourceIndex] ?? 0);
+    const chanceRain = Number(rainChances[sourceIndex] ?? (rain > 0 ? 45 : 20));
+    const weatherCode = Number(weatherCodes[sourceIndex] ?? 0);
+
+    return {
+      time: formatHourLabel(times[sourceIndex]),
+      temp: Number(temps[sourceIndex] ?? 0),
+      rain,
+      wind: Math.round(Number(winds[sourceIndex] ?? 0)),
+      gust: Math.round(Number(gusts[sourceIndex] ?? winds[sourceIndex] ?? 0)),
+      humidity: Math.round(Number(humidities[sourceIndex] ?? 0)),
+      pressure: Number(pressures[sourceIndex] ?? 1010),
+      chanceRain: Math.max(0, Math.min(100, Math.round(chanceRain))),
+      condition: mapWeatherCodeToCondition(weatherCode),
+    };
+  });
+
+  const currentIsDayRaw = current?.variables(0)?.value();
+  const currentWeatherCodeRaw = current?.variables(8)?.value();
+  const daylightDurationRaw = daily?.variables(1)?.valuesArray()?.[0];
+
+  if (currentWeatherCodeRaw !== null && currentWeatherCodeRaw !== undefined && points.length > 0) {
+    points[0] = {
+      ...points[0],
+      condition: mapWeatherCodeToCondition(Number(currentWeatherCodeRaw)),
+    };
+  }
+
+  return {
+    points,
+    currentIsDay:
+      currentIsDayRaw === null || currentIsDayRaw === undefined ? null : Number(currentIsDayRaw) === 1,
+    daylightDurationSeconds:
+      daylightDurationRaw === null || daylightDurationRaw === undefined ? null : Number(daylightDurationRaw),
+    currentWeatherCode:
+      currentWeatherCodeRaw === null || currentWeatherCodeRaw === undefined
+        ? null
+        : Number(currentWeatherCodeRaw),
+  };
 };
