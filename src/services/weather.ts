@@ -139,6 +139,68 @@ const OPEN_METEO_FORECAST_URL =
   import.meta.env.VITE_OPEN_METEO_FORECAST_API_URL ?? 'https://api.open-meteo.com/v1/forecast';
 const OPEN_METEO_TIMEZONE = import.meta.env.VITE_OPEN_METEO_TIMEZONE ?? 'Asia/Manila';
 
+const OPEN_METEO_CURRENT_VARIABLES = [
+  'is_day',
+  'rain',
+  'relative_humidity_2m',
+  'temperature_2m',
+  'apparent_temperature',
+  'wind_gusts_10m',
+  'wind_direction_10m',
+  'wind_speed_10m',
+  'weather_code',
+] as const;
+
+const OPEN_METEO_DAILY_VARIABLES = ['weather_code', 'daylight_duration'] as const;
+
+const OPEN_METEO_HOURLY_VARIABLES = [
+  'temperature_2m',
+  'dew_point_2m',
+  'relative_humidity_2m',
+  'apparent_temperature',
+  'precipitation_probability',
+  'precipitation',
+  'rain',
+  'showers',
+  'cloud_cover',
+  'cloud_cover_low',
+  'cloud_cover_mid',
+  'cloud_cover_high',
+  'visibility',
+  'wind_speed_10m',
+  'wind_speed_80m',
+  'wind_speed_120m',
+  'wind_speed_180m',
+  'wind_direction_10m',
+  'wind_direction_80m',
+  'wind_direction_120m',
+  'wind_direction_180m',
+  'wind_gusts_10m',
+  'temperature_80m',
+  'temperature_120m',
+  'temperature_180m',
+  'weather_code',
+  'surface_pressure',
+] as const;
+
+const OPEN_METEO_HOURLY_INDEX: Record<(typeof OPEN_METEO_HOURLY_VARIABLES)[number], number> =
+  OPEN_METEO_HOURLY_VARIABLES.reduce((acc, key, index) => {
+    acc[key] = index;
+    return acc;
+  }, {} as Record<(typeof OPEN_METEO_HOURLY_VARIABLES)[number], number>);
+
+const OPEN_METEO_CURRENT_INDEX: Record<(typeof OPEN_METEO_CURRENT_VARIABLES)[number], number> =
+  OPEN_METEO_CURRENT_VARIABLES.reduce((acc, key, index) => {
+    acc[key] = index;
+    return acc;
+  }, {} as Record<(typeof OPEN_METEO_CURRENT_VARIABLES)[number], number>);
+
+const OPEN_METEO_DAILY_INDEX: Record<(typeof OPEN_METEO_DAILY_VARIABLES)[number], number> =
+  OPEN_METEO_DAILY_VARIABLES.reduce((acc, key, index) => {
+    acc[key] = index;
+    return acc;
+  }, {} as Record<(typeof OPEN_METEO_DAILY_VARIABLES)[number], number>);
+
 const asCardinalDirection = (degrees: number): string => {
   const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
   const index = Math.round(((degrees % 360) / 45)) % 8;
@@ -173,11 +235,20 @@ const mapWeatherCodeToCondition = (
 };
 
 const formatHourLabel = (timestamp: Date): string => {
-  return timestamp.toLocaleTimeString([], {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
+  try {
+    return timestamp.toLocaleTimeString([], {
+      timeZone: OPEN_METEO_TIMEZONE,
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  } catch {
+    return timestamp.toLocaleTimeString([], {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
 };
 
 const toNumberArray = (values: Float32Array | null | undefined): number[] => {
@@ -249,47 +320,9 @@ export const fetchOpenMeteoForecast = async (lat: number, lon: number): Promise<
     timezone: OPEN_METEO_TIMEZONE,
     forecast_days: 2,
     models: 'best_match',
-    current: [
-      'is_day',
-      'rain',
-      'relative_humidity_2m',
-      'temperature_2m',
-      'apparent_temperature',
-      'wind_gusts_10m',
-      'wind_direction_10m',
-      'wind_speed_10m',
-      'weather_code',
-    ],
-    daily: ['weather_code', 'daylight_duration'],
-    hourly: [
-      'temperature_2m',
-      'dew_point_2m',
-      'relative_humidity_2m',
-      'apparent_temperature',
-      'precipitation_probability',
-      'precipitation',
-      'rain',
-      'showers',
-      'cloud_cover',
-      'cloud_cover_low',
-      'cloud_cover_mid',
-      'cloud_cover_high',
-      'visibility',
-      'wind_speed_10m',
-      'wind_speed_80m',
-      'wind_speed_120m',
-      'wind_speed_180m',
-      'wind_direction_10m',
-      'wind_direction_80m',
-      'wind_direction_120m',
-      'wind_direction_180m',
-      'wind_gusts_10m',
-      'temperature_80m',
-      'temperature_120m',
-      'temperature_180m',
-      'weather_code',
-      'surface_pressure',
-    ],
+    current: OPEN_METEO_CURRENT_VARIABLES,
+    daily: OPEN_METEO_DAILY_VARIABLES,
+    hourly: OPEN_METEO_HOURLY_VARIABLES,
   };
 
   const responses = await fetchWeatherApi(OPEN_METEO_FORECAST_URL, params);
@@ -307,7 +340,6 @@ export const fetchOpenMeteoForecast = async (lat: number, lon: number): Promise<
     throw new Error('Open-Meteo hourly data is unavailable');
   }
 
-  const utcOffsetSeconds = Number(response.utcOffsetSeconds());
   const startTime = Number(hourly.time());
   const endTime = Number(hourly.timeEnd());
   const intervalSeconds = Number(hourly.interval());
@@ -315,18 +347,17 @@ export const fetchOpenMeteoForecast = async (lat: number, lon: number): Promise<
 
   const times = Array.from(
     { length: itemCount },
-    (_, index) => new Date((startTime + index * intervalSeconds + utcOffsetSeconds) * 1000),
+    (_, index) => new Date((startTime + index * intervalSeconds) * 1000),
   );
 
-  // Variable indices match the order in params.hourly.
-  const temps = toNumberArray(hourly.variables(0)?.valuesArray());
-  const humidities = toNumberArray(hourly.variables(2)?.valuesArray());
-  const rainChances = toNumberArray(hourly.variables(4)?.valuesArray());
-  const precipitations = toNumberArray(hourly.variables(5)?.valuesArray());
-  const winds = toNumberArray(hourly.variables(13)?.valuesArray());
-  const gusts = toNumberArray(hourly.variables(21)?.valuesArray());
-  const weatherCodes = toNumberArray(hourly.variables(25)?.valuesArray());
-  const pressures = toNumberArray(hourly.variables(26)?.valuesArray());
+  const temps = toNumberArray(hourly.variables(OPEN_METEO_HOURLY_INDEX.temperature_2m)?.valuesArray());
+  const humidities = toNumberArray(hourly.variables(OPEN_METEO_HOURLY_INDEX.relative_humidity_2m)?.valuesArray());
+  const rainChances = toNumberArray(hourly.variables(OPEN_METEO_HOURLY_INDEX.precipitation_probability)?.valuesArray());
+  const precipitations = toNumberArray(hourly.variables(OPEN_METEO_HOURLY_INDEX.precipitation)?.valuesArray());
+  const winds = toNumberArray(hourly.variables(OPEN_METEO_HOURLY_INDEX.wind_speed_10m)?.valuesArray());
+  const gusts = toNumberArray(hourly.variables(OPEN_METEO_HOURLY_INDEX.wind_gusts_10m)?.valuesArray());
+  const weatherCodes = toNumberArray(hourly.variables(OPEN_METEO_HOURLY_INDEX.weather_code)?.valuesArray());
+  const pressures = toNumberArray(hourly.variables(OPEN_METEO_HOURLY_INDEX.surface_pressure)?.valuesArray());
 
   // Sample every 6 hours and keep enough points for multi-horizon charts.
   const sampledPointCount = Math.floor((times.length - 1) / 6) + 1;
@@ -355,9 +386,9 @@ export const fetchOpenMeteoForecast = async (lat: number, lon: number): Promise<
     };
   });
 
-  const currentIsDayRaw = current?.variables(0)?.value();
-  const currentWeatherCodeRaw = current?.variables(8)?.value();
-  const daylightDurationRaw = daily?.variables(1)?.valuesArray()?.[0];
+  const currentIsDayRaw = current?.variables(OPEN_METEO_CURRENT_INDEX.is_day)?.value();
+  const currentWeatherCodeRaw = current?.variables(OPEN_METEO_CURRENT_INDEX.weather_code)?.value();
+  const daylightDurationRaw = daily?.variables(OPEN_METEO_DAILY_INDEX.daylight_duration)?.valuesArray()?.[0];
 
   if (currentWeatherCodeRaw !== null && currentWeatherCodeRaw !== undefined && points.length > 0) {
     points[0] = {
