@@ -5,7 +5,6 @@ import {
   Activity,
   FileSearch,
   CloudLightning,
-  MapPin,
   HelpCircle,
   LogOut,
   Cloud,
@@ -50,7 +49,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     { id: 'site', label: 'Site Analysis', icon: FileSearch, active: false },
     { id: 'eq', label: 'EQ Analysis', icon: Activity, active: false },
     { id: 'tc', label: 'TC Analysis', icon: CloudLightning, active: false },
-    { id: 'regional', label: 'Regional View', icon: MapPin, active: false },
     { id: 'help', label: 'Help', icon: HelpCircle, active: false },
   ];
 
