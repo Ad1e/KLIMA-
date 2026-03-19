@@ -960,7 +960,7 @@ export default function DetailedSiteAnalysis() {
               />
 
               <ForecastChart
-                title="Wind Speed vs Gust"
+                title="Wind Speed & Gust"
                 subtitle={`Scenario: ${forecastScenario.replace('-', ' ')}`}
                 data={scenarioAdjustedForecast}
                 xKey="time"

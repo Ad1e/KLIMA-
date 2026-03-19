@@ -101,22 +101,23 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   return (
     <div className="flex h-screen overflow-hidden bg-[radial-gradient(circle_at_12%_8%,rgba(45,212,191,0.2),transparent_34%),radial-gradient(circle_at_88%_3%,rgba(56,189,248,0.18),transparent_38%),linear-gradient(165deg,#f4f7fb_0%,#edf3fb_45%,#e8eef8_100%)]">
       {/* Sidebar */}
-      <div className="relative flex h-screen w-72 shrink-0 flex-col rounded-none border-r border-red-950/45 bg-[radial-gradient(circle_at_16%_8%,rgba(251,191,36,0.12),transparent_24%),linear-gradient(180deg,#1a1113_0%,#4a0c12_52%,#140b0d_100%)] text-slate-100 shadow-[12px_0_45px_rgba(34,10,16,0.45)]">
-        <div className="absolute inset-y-0 right-0 w-px bg-gradient-to-b from-rose-300/0 via-rose-300/45 to-rose-300/0" />
+      <div className="relative flex h-screen w-72 shrink-0 flex-col border-r border-[#571010]/35 bg-[linear-gradient(180deg,#4a0303_0%,#7f0d0d_46%,#2a0505_100%)] text-slate-100 shadow-[14px_0_50px_rgba(29,7,7,0.42)]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_8%,rgba(255,215,145,0.12),transparent_26%),radial-gradient(circle_at_88%_12%,rgba(255,188,188,0.16),transparent_36%)]" />
+        <div className="absolute inset-y-0 right-0 w-px bg-gradient-to-b from-rose-200/0 via-rose-200/50 to-rose-200/0" />
         {/* Logo Card */}
-        <div className="border-b border-red-700/35 p-6">
-          <div className="flex items-center gap-3 rounded-none border border-slate-300/25 bg-white/10 p-4 backdrop-blur-md">
-            <img src={bsuLogo} alt="BSU Logo" className="h-10 w-10" />
+        <div className="relative z-10 border-b border-red-300/25 p-6">
+          <div className="flex items-center gap-3 rounded-2xl border border-white/25 bg-white/12 p-4 backdrop-blur-md shadow-[0_12px_35px_rgba(0,0,0,0.2)]">
+            <img src={bsuLogo} alt="BSU Logo" className="h-10 w-10 rounded-xl bg-white/95 p-1" />
             <div>
               <h3 className="font-['Trebuchet_MS',sans-serif] text-base font-black tracking-[0.14em] text-white">KLIMA</h3>
-              <p className="font-['Trebuchet_MS',sans-serif] text-[11px] uppercase tracking-[0.16em] text-rose-100/90">Risk Alert Center</p>
+              <p className="font-['Trebuchet_MS',sans-serif] text-[11px] uppercase tracking-[0.16em] text-rose-50/90">Risk Alert Center</p>
             </div>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="modern-scrollbar-dark flex-1 space-y-2 overflow-y-auto p-4">
-          <p className="px-2 pb-2 font-['Trebuchet_MS',sans-serif] text-[10px] font-bold uppercase tracking-[0.18em] text-rose-100/80">
+        <nav className="modern-scrollbar-dark relative z-10 flex-1 space-y-2 overflow-y-auto px-4 py-5">
+          <p className="px-2 pb-2 font-['Trebuchet_MS',sans-serif] text-[10px] font-bold uppercase tracking-[0.2em] text-rose-100/80">
             Navigation
           </p>
           {navItems.map((item) => {
@@ -126,31 +127,31 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <button
                 key={item.id}
                 onClick={() => setActiveNav(item.id)}
-                className={`group flex w-full items-center gap-3 rounded-none px-4 py-3 transition-all ${
+                className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all ${
                   isActive
-                    ? 'border border-rose-200/40 bg-rose-300/20 text-rose-50 shadow-[0_12px_26px_rgba(127,29,29,0.35)] backdrop-blur-sm'
-                    : 'text-slate-100/90 hover:border hover:border-red-300/25 hover:bg-white/10 hover:text-rose-50'
+                    ? 'border border-rose-100/50 bg-white/18 text-white shadow-[0_12px_28px_rgba(127,29,29,0.36)] backdrop-blur-md'
+                    : 'border border-transparent text-slate-100/90 hover:border-white/25 hover:bg-white/10 hover:text-rose-50'
                 }`}
               >
                 <span
-                  className={`inline-flex h-8 w-8 items-center justify-center rounded-none transition-colors ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-black/10 text-rose-100 group-hover:bg-white/15'
+                  className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-black/15 text-rose-100 group-hover:bg-white/15'
                   }`}
                 >
                   <Icon size={17} />
                 </span>
                 <span className="font-['Trebuchet_MS',sans-serif] text-[13px] font-semibold tracking-[0.02em]">{item.label}</span>
-                {isActive ? <span className="ml-auto h-2 w-2 rounded-none bg-rose-100 shadow-[0_0_0_5px_rgba(255,255,255,0.08)]" /> : null}
+                {isActive ? <span className="ml-auto h-2.5 w-2.5 rounded-full bg-rose-100 shadow-[0_0_0_5px_rgba(255,255,255,0.1)]" /> : null}
               </button>
             );
           })}
         </nav>
 
         {/* Footer */}
-        <div className="space-y-3 border-t border-red-700/35 p-4">
+        <div className="relative z-10 space-y-3 border-t border-red-300/25 p-4">
           <button
             onClick={handleLogout}
-            className="flex w-full items-center justify-center gap-2 rounded-none bg-rose-700 px-4 py-2.5 font-['Trebuchet_MS',sans-serif] text-sm font-semibold tracking-[0.03em] transition-colors hover:bg-rose-800"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#b91c1c] to-[#ef4444] px-4 py-2.5 font-['Trebuchet_MS',sans-serif] text-sm font-semibold tracking-[0.03em] text-white shadow-[0_12px_30px_rgba(239,68,68,0.35)] transition-all hover:brightness-110"
           >
             <LogOut size={16} />
             Logout
