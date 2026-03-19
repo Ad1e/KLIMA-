@@ -174,9 +174,9 @@ const mapWeatherCodeToCondition = (
 
 const formatHourLabel = (timestamp: Date): string => {
   return timestamp.toLocaleTimeString([], {
-    hour: '2-digit',
+    hour: 'numeric',
     minute: '2-digit',
-    hour12: false,
+    hour12: true,
   });
 };
 
@@ -328,14 +328,16 @@ export const fetchOpenMeteoForecast = async (lat: number, lon: number): Promise<
   const weatherCodes = toNumberArray(hourly.variables(25)?.valuesArray());
   const pressures = toNumberArray(hourly.variables(26)?.valuesArray());
 
-  const totalPoints = Math.min(8, Math.floor(times.length / 3));
+  // Sample every 6 hours and keep enough points for multi-horizon charts.
+  const sampledPointCount = Math.floor((times.length - 1) / 6) + 1;
+  const totalPoints = Math.min(9, sampledPointCount);
 
   if (totalPoints < 2) {
     throw new Error('Insufficient forecast points from Open-Meteo');
   }
 
   const points = Array.from({ length: totalPoints }, (_, index) => {
-    const sourceIndex = index * 3;
+    const sourceIndex = index * 6;
     const rain = Number(precipitations[sourceIndex] ?? 0);
     const chanceRain = Number(rainChances[sourceIndex] ?? (rain > 0 ? 45 : 20));
     const weatherCode = Number(weatherCodes[sourceIndex] ?? 0);

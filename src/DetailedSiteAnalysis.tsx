@@ -149,6 +149,22 @@ const parseForecastHour = (timeLabel: string): number | null => {
     return Number.isFinite(hour) ? hour : null;
   }
 
+  const meridiemMatch = timeLabel.match(/^(\d{1,2}):(\d{2})\s*([AP]M)$/i);
+  if (meridiemMatch) {
+    const rawHour = Number(meridiemMatch[1]);
+    const meridiem = meridiemMatch[3].toUpperCase();
+
+    if (!Number.isFinite(rawHour) || rawHour < 1 || rawHour > 12) {
+      return null;
+    }
+
+    if (meridiem === 'AM') {
+      return rawHour % 12;
+    }
+
+    return rawHour % 12 + 12;
+  }
+
   const parsed = new Date(`1970-01-01T${timeLabel}`);
   if (Number.isNaN(parsed.getTime())) {
     return null;
@@ -227,16 +243,6 @@ export default function DetailedSiteAnalysis() {
   const [currentWeatherCode, setCurrentWeatherCode] = useState<number | null>(null);
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      setLastUpdated(new Date());
-    }, 60_000);
-
-    return () => {
-      window.clearInterval(timer);
-    };
-  }, []);
-
-  useEffect(() => {
     let isMounted = true;
 
     const campus = CAMPUSES.find((item) => item.name === selectedCampus);
@@ -268,8 +274,13 @@ export default function DetailedSiteAnalysis() {
 
     void loadForecast();
 
+    const poller = window.setInterval(() => {
+      void loadForecast();
+    }, 30_000);
+
     return () => {
       isMounted = false;
+      window.clearInterval(poller);
     };
   }, [selectedCampus]);
 
@@ -362,7 +373,8 @@ export default function DetailedSiteAnalysis() {
           ? { rain: 0.9, wind: 1.28, gust: 1.35, humidity: 1.02, pressureDelta: -0.7 }
           : { rain: 1, wind: 1, gust: 1, humidity: 1, pressureDelta: 0 };
 
-    const pointsToShow = Math.max(2, Math.min(forecastSeries.length, Math.floor(forecastHorizon / 3)));
+    // Include the starting hour plus each 6-hour step (e.g., 12h => 0, 6, 12 = 3 points).
+    const pointsToShow = Math.max(2, Math.min(forecastSeries.length, Math.floor(forecastHorizon / 6) + 1));
     return forecastSeries.slice(0, pointsToShow).map((point) => ({
       ...point,
       rain: Number((point.rain * multipliers.rain).toFixed(2)),
@@ -386,7 +398,7 @@ export default function DetailedSiteAnalysis() {
 
   const currentWeather = scenarioAdjustedForecast[0];
   const updatedLabel = lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const horizon24Data = scenarioAdjustedForecast.slice(0, Math.min(8, scenarioAdjustedForecast.length));
+  const horizon24Data = scenarioAdjustedForecast.slice(0, Math.min(5, scenarioAdjustedForecast.length));
   const weatherStatus =
     currentWeather.chanceRain >= 70
       ? 'High chance of rainfall and possible operational delays.'
@@ -882,7 +894,7 @@ export default function DetailedSiteAnalysis() {
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Peak Rainfall</p>
                 <p className="mt-2 text-3xl font-black text-blue-700">{forecastKpis.maxRain.toFixed(1)} mm</p>
-                <p className="mt-1 text-xs text-slate-500">Highest expected 3-hour precipitation</p>
+                <p className="mt-1 text-xs text-slate-500">Highest expected 6-hour precipitation</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Peak Wind Gust</p>
