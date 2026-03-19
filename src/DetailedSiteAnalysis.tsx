@@ -580,8 +580,14 @@ export default function DetailedSiteAnalysis() {
         {activeTab === 'synopsis' ? (
           <section className="space-y-6">
             <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.12)]">
-              <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-rose-900 p-5 text-white">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div
+                className={`relative overflow-hidden bg-gradient-to-br p-5 text-white ${weatherSummaryTheme.bg}`}
+              >
+                <div className={`absolute inset-0 ${weatherSummaryTheme.overlay}`} />
+                <div className="absolute -right-8 -top-10 h-24 w-24 rounded-full bg-white/10 blur-xl" />
+                <div className="absolute -bottom-10 -left-8 h-24 w-24 rounded-full bg-white/10 blur-xl" />
+
+                <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-3xl space-y-3">
                     <div className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-1.5">
                       <AlertTriangle size={14} className="text-rose-200" />
