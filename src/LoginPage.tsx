@@ -10,10 +10,15 @@ interface LoginPageProps {
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
   const navigate = useNavigate()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loginError, setLoginError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [isResetOpen, setIsResetOpen] = useState(false)
   const [resetEmail, setResetEmail] = useState('')
   const [resetStatus, setResetStatus] = useState<'idle' | 'sent'>('idle')
   const [emailError, setEmailError] = useState('')
+  const backendBaseUrl = import.meta.env.VITE_BACKEND_API_URL ?? 'http://localhost:4000'
 
   const closeResetModal = () => {
     setIsResetOpen(false)
@@ -27,10 +32,38 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     setIsResetOpen(true)
   }
 
-  const handleSignIn = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    onLogin()
-    navigate('/dashboard')
+
+    const normalizedEmail = email.trim().toLowerCase()
+    if (!normalizedEmail || !password.trim()) {
+      setLoginError('Enter both email and password.')
+      return
+    }
+
+    setIsSubmitting(true)
+    setLoginError('')
+
+    try {
+      const response = await fetch(`${backendBaseUrl}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: normalizedEmail, password }),
+      })
+
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok || !payload?.ok) {
+        setLoginError(payload?.message ?? 'Sign in failed. Check your credentials.')
+        return
+      }
+
+      onLogin()
+      navigate('/dashboard')
+    } catch {
+      setLoginError('Cannot reach backend login service. Check if backend is running.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleResetSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -104,6 +137,8 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                     <Mail className="mr-3 h-5 w-5 text-slate-400" />
                     <input
                       type="email"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
                       placeholder="Enter your email"
                       className="w-full bg-transparent text-slate-800 placeholder:text-slate-400 outline-none"
                     />
@@ -118,11 +153,15 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                     <Lock className="mr-3 h-5 w-5 text-slate-400" />
                     <input
                       type="password"
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
                       placeholder="Enter your password"
                       className="w-full bg-transparent text-slate-800 placeholder:text-slate-400 outline-none"
                     />
                   </div>
                 </div>
+
+                {loginError ? <p className="text-sm text-red-600">{loginError}</p> : null}
 
                 <div className="flex items-center justify-between text-sm">
                   <label className="flex items-center gap-2 text-slate-500">
@@ -143,9 +182,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="group relative flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#b91c1c] to-[#ef4444] px-5 py-4 text-base font-semibold text-white shadow-[0_12px_30px_rgba(239,68,68,0.35)] transition-all duration-200 hover:scale-[1.01] hover:shadow-[0_16px_40px_rgba(239,68,68,0.45)] active:scale-[0.99]"
                 >
-                  Sign In
+                  {isSubmitting ? 'Signing In...' : 'Sign In'}
                   <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
                   <span className="absolute inset-0 rounded-2xl bg-white/10 opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-100" />
                 </button>
