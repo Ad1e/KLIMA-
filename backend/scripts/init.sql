@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
   full_name VARCHAR(150) NOT NULL,
@@ -7,9 +9,11 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Manual admin SQL example:
--- 1) Generate a bcrypt hash in Node:
---    node -e "import bcrypt from 'bcrypt'; bcrypt.hash('AdminPass123!',10).then(console.log)"
--- 2) Use that hash in this INSERT:
--- INSERT INTO users (full_name, email, password_hash, role)
--- VALUES ('System Admin', 'admin@klima.local', '$2b$10$replace_with_real_hash', 'admin');
+INSERT INTO users (full_name, email, password_hash, role)
+VALUES (
+  'System Admin',
+  'admin@klima.local',
+  crypt('AdminPass123!', gen_salt('bf', 10)),
+  'admin'
+)
+ON CONFLICT (email) DO NOTHING;
