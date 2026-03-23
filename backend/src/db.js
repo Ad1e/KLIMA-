@@ -1,19 +1,24 @@
 import dotenv from 'dotenv';
 import pg from 'pg';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+dotenv.config({ path: resolve(__dirname, '../.env') });
+dotenv.config({ path: resolve(__dirname, '../../.env') });
 
 const { Pool } = pg;
+const connectionString = process.env.DATABASE_URL;
 
-const pool = process.env.DATABASE_URL
-  ? new Pool({ connectionString: process.env.DATABASE_URL })
-  : new Pool({
-      host: process.env.PGHOST,
-      port: process.env.PGPORT ? Number(process.env.PGPORT) : undefined,
-      user: process.env.PGUSER,
-      password: process.env.PGPASSWORD,
-      database: process.env.PGDATABASE,
-    });
+if (!connectionString) {
+  throw new Error('Missing DATABASE_URL. Add it in backend/.env or project root .env.');
+}
+
+const pool = new Pool({
+  connectionString,
+});
 
 export default pool;
 export const query = (text, params) => pool.query(text, params);

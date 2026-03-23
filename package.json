@@ -11,7 +11,8 @@
     "pagasa:bulletin": "node scripts/fetch-pagasa-bulletin.mjs",
     "backend:dev": "npm --prefix backend run dev",
     "backend:start": "npm --prefix backend run start",
-    "create-db": "npm --prefix backend run create-db"
+    "create-db": "npm --prefix backend run create-db",
+    "init-db": "npm --prefix backend run init-db"
   },
   "dependencies": {
     "@pagasa-parser/source-pdf": "^1.1.9",

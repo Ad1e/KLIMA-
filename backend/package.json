@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "create-db": "node scripts/create-db.js"
+    "create-db": "node scripts/create-db.js",
+    "init-db": "node scripts/init-db.js",
+    "test-db": "node scripts/test-db.js"
   },
   "dependencies": {
-    "bcryptjs": "^2.4.3",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
