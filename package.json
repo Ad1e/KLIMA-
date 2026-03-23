@@ -7,12 +7,15 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "pagasa:bulletin": "node scripts/fetch-pagasa-bulletin.mjs"
   },
   "dependencies": {
+    "@pagasa-parser/source-pdf": "^1.1.9",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.577.0",
     "openmeteo": "^1.2.3",
+    "pagasa-parser": "^2.2.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-leaflet": "^5.0.0",

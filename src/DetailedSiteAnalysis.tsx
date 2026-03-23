@@ -47,7 +47,7 @@ const bsuCampusIcon = L.icon({
   iconSize: [30, 30],
   iconAnchor: [15, 15],
   popupAnchor: [0, -16],
-  className: 'rounded-full border-2 border-white shadow-[0_6px_18px_rgba(15,23,42,0.35)] bg-white',
+  className: 'rounded-full border-2 border-white shadow-[0_6px_18px_rgba(65,64,66,0.35)] bg-white',
 });
 
 function CampusViewportController() {
@@ -73,12 +73,12 @@ const synopsisActions = [
 const getActionClass = (action: string): string => {
   const normalized = action.toLowerCase();
   if (normalized.includes('resume')) {
-    return 'bg-emerald-500 text-white';
+    return 'bg-[#007e42] text-white';
   }
   if (normalized.includes('avoid') || normalized.includes('caution')) {
-    return 'bg-amber-500 text-white';
+    return 'bg-[#fbaf26] text-white';
   }
-  return 'bg-slate-500 text-white';
+  return 'bg-[#911d1f] text-white';
 };
 
 const getActionTheme = (action: string): { tone: string; ring: string; icon: LucideIcon } => {
@@ -86,31 +86,31 @@ const getActionTheme = (action: string): { tone: string; ring: string; icon: Luc
 
   if (normalized.includes('resume')) {
     return {
-      tone: 'from-emerald-50 to-emerald-100/80 text-emerald-800',
-      ring: 'ring-emerald-200/70',
+      tone: 'from-[#007e42]/16 to-[#009748]/18 text-[#007e42]',
+      ring: 'ring-[#007e42]/28',
       icon: CloudSun,
     };
   }
 
   if (normalized.includes('avoid')) {
     return {
-      tone: 'from-rose-50 to-orange-100/80 text-rose-800',
-      ring: 'ring-rose-200/80',
+      tone: 'from-[#d2232a]/14 to-[#d2232a]/16 text-[#911d1f]',
+      ring: 'ring-[#d2232a]/30',
       icon: AlertTriangle,
     };
   }
 
   if (normalized.includes('caution')) {
     return {
-      tone: 'from-amber-50 to-orange-100/80 text-amber-800',
-      ring: 'ring-amber-200/80',
+      tone: 'from-[#fbaf26]/20 to-[#fbaf26]/22 text-[#fbaf26]',
+      ring: 'ring-[#fbaf26]/34',
       icon: Wind,
     };
   }
 
   return {
-    tone: 'from-slate-50 to-slate-100 text-slate-700',
-    ring: 'ring-slate-200',
+    tone: 'from-white to-[#d2232a]/12 text-[#414042]',
+    ring: 'ring-[#d2232a]/20',
     icon: Sparkles,
   };
 };
@@ -118,27 +118,27 @@ const getActionTheme = (action: string): { tone: string; ring: string; icon: Luc
 const getMetricTone = (severity: Severity): { badge: string; iconWrap: string; value: string; bg: string } => {
   if (severity === 'warning') {
     return {
-      badge: 'bg-orange-100 text-orange-700',
-      iconWrap: 'bg-orange-100 text-orange-700',
-      value: 'text-orange-700',
-      bg: 'from-white to-orange-50/60',
+      badge: 'bg-[#d2232a]/22 text-[#911d1f]',
+      iconWrap: 'bg-[#d2232a]/22 text-[#911d1f]',
+      value: 'text-[#911d1f]',
+      bg: 'from-white to-[#d2232a]/12',
     };
   }
 
   if (severity === 'caution') {
     return {
-      badge: 'bg-amber-100 text-amber-700',
-      iconWrap: 'bg-amber-100 text-amber-700',
-      value: 'text-amber-700',
-      bg: 'from-white to-amber-50/60',
+      badge: 'bg-[#fbaf26]/24 text-[#fbaf26]',
+      iconWrap: 'bg-[#fbaf26]/24 text-[#fbaf26]',
+      value: 'text-[#fbaf26]',
+      bg: 'from-white to-[#fbaf26]/14',
     };
   }
 
   return {
-    badge: 'bg-emerald-100 text-emerald-700',
-    iconWrap: 'bg-emerald-100 text-emerald-700',
-    value: 'text-emerald-700',
-    bg: 'from-white to-emerald-50/60',
+    badge: 'bg-[#009748]/22 text-[#007e42]',
+    iconWrap: 'bg-[#009748]/22 text-[#007e42]',
+    value: 'text-[#007e42]',
+    bg: 'from-white to-[#009748]/12',
   };
 };
 
@@ -210,10 +210,10 @@ function MetricCard({ label, value, icon: Icon, severity }: MetricCardProps) {
 
   return (
     <article
-      className={`h-full rounded-xl border border-slate-200 bg-gradient-to-br p-3 shadow-sm ${tone.bg}`}
+      className={`h-full rounded-xl border border-[#d2232a]/20 bg-gradient-to-br p-3 shadow-sm ${tone.bg}`}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="line-clamp-1 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">{label}</p>
+        <p className="line-clamp-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[#414042]/70">{label}</p>
         <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-bold uppercase ${tone.badge}`}>
           {severity}
         </span>
@@ -475,25 +475,25 @@ export default function DetailedSiteAnalysis() {
         label: 'Rainfall Outlook',
         value: `${forecastKpis.maxRain.toFixed(1)} mm`,
         caption: 'Maximum rainfall within selected horizon',
-        color: 'text-blue-700',
+        color: 'text-[#d2232a]',
       },
       {
         label: 'Wind Exposure',
         value: `${forecastKpis.maxGust} kph`,
         caption: 'Projected highest wind gust',
-        color: 'text-amber-700',
+        color: 'text-[#fbaf26]',
       },
       {
         label: 'Humidity Load',
         value: `${forecastKpis.avgHumidity}%`,
         caption: 'Average moisture concentration',
-        color: 'text-teal-700',
+        color: 'text-[#006193]',
       },
       {
         label: 'Risk Score',
         value: `${forecastKpis.riskScore}`,
         caption: 'Scenario-adjusted impact index',
-        color: 'text-rose-700',
+        color: 'text-[#911d1f]',
       },
     ],
     [forecastKpis],
@@ -505,39 +505,39 @@ export default function DetailedSiteAnalysis() {
         label: 'Live Rainfall',
         value: `${latestObserved.rain.toFixed(2)} mm`,
         caption: 'Most recent measured precipitation',
-        color: 'text-blue-700',
+        color: 'text-[#d2232a]',
       },
       {
         label: 'Rain Probability',
         value: `${latestObserved.chanceRain.toFixed(0)}%`,
         caption: 'Chance of rainfall in current cycle',
-        color: 'text-cyan-700',
+        color: 'text-[#006193]',
       },
       {
         label: 'Wind Gust',
         value: `${latestObserved.gust.toFixed(1)} kph`,
         caption: 'Peak observed gust speed',
-        color: 'text-amber-700',
+        color: 'text-[#fbaf26]',
       },
       {
         label: 'Heat Index',
         value: '36.20 degC',
         caption: 'Thermal stress indicator',
-        color: 'text-rose-700',
+        color: 'text-[#911d1f]',
       },
     ],
     [latestObserved],
   );
 
   return (
-    <div className="min-h-full bg-slate-50 px-6 py-8 lg:px-8">
+    <div className="min-h-full bg-[linear-gradient(180deg,#ffffff_0%,#fff5f6_100%)] px-6 py-8 lg:px-8">
       <div className="mx-auto max-w-[1600px] space-y-6">
         <header className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="space-y-3">
             <select
               value={selectedCampus}
               onChange={(event) => setSelectedCampus(event.target.value)}
-              className="w-fit rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm outline-none transition-colors focus:border-rose-400"
+              className="w-fit rounded-xl border border-[#d2232a]/20 bg-white px-3 py-2 text-xs font-semibold text-[#414042] shadow-sm outline-none transition-colors focus:border-[#d2232a]"
             >
               {SITE_CAMPUSES.map((campus) => (
                 <option key={campus} value={campus}>
@@ -547,15 +547,15 @@ export default function DetailedSiteAnalysis() {
             </select>
 
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-900 lg:text-3xl">
+              <h1 className="text-2xl font-black tracking-tight text-[#414042] lg:text-3xl">
                 Batangas State University - {selectedCampus} Risk Assessment
               </h1>
-              <p className="mt-1 text-sm text-slate-600">Detailed Site Analysis</p>
+              <p className="mt-1 text-sm text-[#414042]/80">Detailed Site Analysis</p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+            <div className="flex rounded-xl border border-[#d2232a]/20 bg-white p-1 shadow-sm">
               {[
                 { key: 'observed' as const, label: 'Observed' },
                 { key: 'forecast' as const, label: 'Forecast' },
@@ -566,8 +566,8 @@ export default function DetailedSiteAnalysis() {
                   onClick={() => setActiveTab(tab.key)}
                   className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-[0.08em] transition-colors ${
                     activeTab === tab.key
-                      ? 'bg-rose-700 text-white'
-                      : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                      ? 'bg-[#911d1f] text-white'
+                      : 'text-[#414042]/75 hover:bg-[#d2232a]/12 hover:text-[#911d1f]'
                   }`}
                 >
                   {tab.label}
@@ -579,74 +579,74 @@ export default function DetailedSiteAnalysis() {
 
         {activeTab === 'synopsis' ? (
           <section className="space-y-6">
-            <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.12)]">
+            <div className="overflow-hidden rounded-3xl border border-[#d2232a]/20 bg-white shadow-[0_18px_50px_rgba(65,64,66,0.12)]">
               <div
                 className={`relative overflow-hidden bg-gradient-to-br p-5 text-white ${weatherSummaryTheme.bg}`}
               >
                 <div className={`absolute inset-0 ${weatherSummaryTheme.overlay}`} />
-                <div className="absolute -right-8 -top-10 h-24 w-24 rounded-full bg-white/10 blur-xl" />
-                <div className="absolute -bottom-10 -left-8 h-24 w-24 rounded-full bg-white/10 blur-xl" />
+                <div className="absolute -right-8 -top-10 h-24 w-24 rounded-full bg-[#006193]/16 blur-xl" />
+                <div className="absolute -bottom-10 -left-8 h-24 w-24 rounded-full bg-[#006193]/16 blur-xl" />
 
                 <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-3xl space-y-3">
-                    <div className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-1.5">
-                      <AlertTriangle size={14} className="text-rose-200" />
-                      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/85">Weather Synopsis</p>
+                    <div className="inline-flex items-center gap-2 rounded-xl border border-[#414042]/40 bg-[#414042]/10 px-3 py-1.5">
+                      <AlertTriangle size={14} className="text-white" />
+                      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/90">Weather Synopsis</p>
                     </div>
 
-                    <p className="text-sm leading-relaxed text-white/90">
+                    <p className="text-sm leading-relaxed text-white/95">
                       {selectedCampus} is currently experiencing a humid and unsettled pattern with intermittent rain
                       cells and shifting easterly to southeasterly winds. Short visibility dips and localized surface
                       runoff are possible during heavier bursts. Keep advisory-level monitoring active, particularly for
                       low-lying walkways and open corridors exposed to gusts.
                     </p>
 
-                    <div className="rounded-2xl border border-white/15 bg-white/10 p-3">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-white/75">Operational Note</p>
-                      <p className="mt-1 text-sm font-semibold leading-relaxed text-white/95">{weatherStatus}</p>
+                    <div className="rounded-2xl border border-[#414042]/35 bg-[#414042]/10 p-3">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-white/82">Operational Note</p>
+                      <p className="mt-1 text-sm font-semibold leading-relaxed text-white">{weatherStatus}</p>
                     </div>
                   </div>
 
                   <div className="grid min-w-[240px] grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-1">
-                    <div className="rounded-xl border border-white/20 bg-white/10 px-3 py-2">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/70">Rain Chance</p>
-                      <p className="mt-1 text-xl font-black text-cyan-200">{currentWeather.chanceRain}%</p>
+                    <div className="rounded-xl border border-[#414042]/40 bg-[#414042]/10 px-3 py-2">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/78">Rain Chance</p>
+                      <p className="mt-1 text-xl font-black text-white">{currentWeather.chanceRain}%</p>
                     </div>
-                    <div className="rounded-xl border border-white/20 bg-white/10 px-3 py-2">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/70">Peak Gust</p>
-                      <p className="mt-1 text-xl font-black text-amber-200">{forecastKpis.maxGust} kph</p>
+                    <div className="rounded-xl border border-[#414042]/40 bg-[#414042]/10 px-3 py-2">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/78">Peak Gust</p>
+                      <p className="mt-1 text-xl font-black text-white">{forecastKpis.maxGust} kph</p>
                     </div>
-                    <div className="rounded-xl border border-white/20 bg-white/10 px-3 py-2">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/70">Risk Score</p>
-                      <p className="mt-1 text-xl font-black text-rose-200">{forecastKpis.riskScore}</p>
+                    <div className="rounded-xl border border-[#414042]/40 bg-[#414042]/10 px-3 py-2">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/78">Risk Score</p>
+                      <p className="mt-1 text-xl font-black text-white">{forecastKpis.riskScore}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 border-t border-slate-200/70 bg-gradient-to-r from-white to-slate-50 p-4 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-3 border-t border-[#d2232a]/15 bg-gradient-to-r from-white to-[#d2232a]/10 p-4 sm:grid-cols-2 xl:grid-cols-4">
                 {synopsisSignals.map((signal) => (
-                  <article key={signal.label} className="rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">{signal.label}</p>
+                  <article key={signal.label} className="rounded-2xl border border-[#d2232a]/20 bg-white p-3 shadow-sm">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#414042]/70">{signal.label}</p>
                     <p className={`mt-1 text-2xl font-black ${signal.color}`}>{signal.value}</p>
-                    <p className="mt-1 text-[11px] font-medium text-slate-500">{signal.caption}</p>
+                    <p className="mt-1 text-[11px] font-medium text-[#414042]/70">{signal.caption}</p>
                   </article>
                 ))}
               </div>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="rounded-3xl border border-[#d2232a]/20 bg-white p-5 shadow-sm">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <Sparkles size={16} className="text-rose-600" />
-                  <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-700">Action Matrix</h2>
+                  <Sparkles size={16} className="text-[#d2232a]" />
+                  <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-[#414042]">Action Matrix</h2>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-600">
+                  <span className="rounded-xl border border-[#d2232a]/20 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#414042]/80">
                     Advisory Level
                   </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-600">
+                  <span className="inline-flex items-center gap-1.5 rounded-xl border border-[#d2232a]/20 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#414042]/80">
                     <RefreshCw size={11} />
                     Updated {updatedLabel}
                   </span>
@@ -661,20 +661,20 @@ export default function DetailedSiteAnalysis() {
                   return (
                     <article
                       key={item.parameter}
-                      className={`rounded-2xl border border-slate-200 bg-gradient-to-br p-4 shadow-sm ring-1 ${theme.tone} ${theme.ring}`}
+                      className={`rounded-2xl border border-[#d2232a]/20 bg-gradient-to-br p-4 shadow-sm ring-1 ${theme.tone} ${theme.ring}`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Parameter</p>
-                          <p className="mt-1 text-sm font-bold text-slate-900">{item.parameter}</p>
+                          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#414042]/70">Parameter</p>
+                          <p className="mt-1 text-sm font-bold text-[#414042]">{item.parameter}</p>
                         </div>
-                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/70 text-slate-700">
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#d2232a]/15 text-[#911d1f]">
                           <Icon size={15} />
                         </span>
                       </div>
 
                       <div className="mt-3 flex items-start gap-2">
-                        <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-rose-500" />
+                        <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#d2232a]" />
                         <span className={`inline-flex rounded-lg px-3 py-1.5 text-xs font-semibold ${getActionClass(item.action)}`}>
                           {item.action}
                         </span>
@@ -687,30 +687,30 @@ export default function DetailedSiteAnalysis() {
           </section>
         ) : activeTab === 'observed' ? (
           <section className="space-y-6">
-            <div className="rounded-3xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 p-4 shadow-sm">
+            <div className="rounded-3xl border border-[#d2232a]/20 bg-gradient-to-r from-white to-[#d2232a]/10 p-4 shadow-sm">
               <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#00818e]/20 text-[#006193]">
                     <Eye size={18} />
                   </div>
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Observed Conditions</p>
-                    <p className="text-sm font-semibold text-slate-700">Live field metrics and map state for {selectedCampus}</p>
+                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#414042]/70">Observed Conditions</p>
+                    <p className="text-sm font-semibold text-[#414042]">Live field metrics and map state for {selectedCampus}</p>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm">
+                  <div className="inline-flex items-center gap-2 rounded-xl border border-[#d2232a]/20 bg-white px-3 py-2 text-xs font-semibold text-[#414042]/80 shadow-sm">
                     <CloudSun size={13} /> {currentWeather.condition}
                   </div>
-                  <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm">
+                  <div className="inline-flex items-center gap-2 rounded-xl border border-[#d2232a]/20 bg-white px-3 py-2 text-xs font-semibold text-[#414042]/80 shadow-sm">
                     <RefreshCw size={13} /> Updated {updatedLabel}
                   </div>
                   <div
                     className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold shadow-sm ${
                       isLiveForecast
-                        ? 'border-cyan-200 bg-cyan-50 text-cyan-700'
-                        : 'border-slate-200 bg-slate-100 text-slate-600'
+                        ? 'border-[#00818e]/38 bg-[#00818e]/16 text-[#006193]'
+                        : 'border-[#d2232a]/20 bg-white text-[#414042]/80'
                     }`}
                   >
                     {isLiveForecast ? 'Live Open-Meteo' : 'Fallback Dataset'}
@@ -721,22 +721,22 @@ export default function DetailedSiteAnalysis() {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
               {observedKpis.map((item) => (
-                <article key={item.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">{item.label}</p>
+                <article key={item.label} className="rounded-2xl border border-[#d2232a]/20 bg-white p-4 shadow-sm">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#414042]/70">{item.label}</p>
                   <p className={`mt-2 text-3xl font-black ${item.color}`}>{item.value}</p>
-                  <p className="mt-1 text-xs text-slate-500">{item.caption}</p>
+                  <p className="mt-1 text-xs text-[#414042]/70">{item.caption}</p>
                 </article>
               ))}
             </div>
 
             <div className="grid grid-cols-12 gap-6">
               <div className="col-span-12 lg:col-span-7">
-                <div className="flex h-[660px] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                  <div className="border-b border-slate-100 bg-gradient-to-r from-white to-slate-50 px-4 py-3">
+                <div className="flex h-[660px] flex-col overflow-hidden rounded-3xl border border-[#d2232a]/20 bg-white shadow-sm">
+                  <div className="border-b border-[#d2232a]/15 bg-gradient-to-r from-white to-[#d2232a]/10 px-4 py-3">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                      <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Campus Map View</p>
-                      <div className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600">
-                        <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                      <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#414042]/70">Campus Map View</p>
+                      <div className="inline-flex items-center gap-2 rounded-lg border border-[#d2232a]/20 bg-white px-2.5 py-1 text-[11px] font-semibold text-[#414042]/80">
+                        <span className="h-2 w-2 rounded-full bg-[#009748]" />
                         Sensor feed online
                       </div>
                     </div>
@@ -758,8 +758,8 @@ export default function DetailedSiteAnalysis() {
                         <Marker key={campus.name} position={[campus.lat, campus.lon]} icon={bsuCampusIcon} zIndexOffset={1000}>
                           <Popup>
                             <div className="space-y-1 text-xs">
-                              <p className="font-semibold text-slate-700">{campus.name}</p>
-                              <p className="text-slate-500">
+                              <p className="font-semibold text-[#414042]">{campus.name}</p>
+                              <p className="text-[#414042]/70">
                                 {campus.lat.toFixed(6)}, {campus.lon.toFixed(6)}
                               </p>
                             </div>
@@ -769,7 +769,7 @@ export default function DetailedSiteAnalysis() {
                       <CircleMarker
                         center={ALANGILAN_CENTER}
                         radius={8}
-                        pathOptions={{ color: '#be123c', fillColor: '#f43f5e', fillOpacity: 0.8, weight: 2 }}
+                        pathOptions={{ color: '#911d1f', fillColor: '#d2232a', fillOpacity: 0.8, weight: 2 }}
                       >
                         <Popup>
                           <p className="text-xs font-semibold">BatStateU Alangilan Campus</p>
@@ -779,25 +779,25 @@ export default function DetailedSiteAnalysis() {
                     </MapContainer>
                   </div>
 
-                  <div className="border-t border-slate-100">
+                  <div className="border-t border-[#d2232a]/15">
                     <button
                       onClick={() => setShowLegend((prev) => !prev)}
-                      className="flex w-full items-center justify-between bg-gradient-to-r from-white to-slate-50 px-4 py-3 text-left"
+                      className="flex w-full items-center justify-between bg-gradient-to-r from-white to-[#d2232a]/10 px-4 py-3 text-left"
                     >
-                      <span className="text-xs font-bold uppercase tracking-[0.12em] text-slate-700">Legend</span>
-                      {showLegend ? <ChevronUp size={15} className="text-slate-500" /> : <ChevronDown size={15} className="text-slate-500" />}
+                      <span className="text-xs font-bold uppercase tracking-[0.12em] text-[#414042]">Legend</span>
+                      {showLegend ? <ChevronUp size={15} className="text-[#414042]/70" /> : <ChevronDown size={15} className="text-[#414042]/70" />}
                     </button>
 
                     {showLegend ? (
-                      <div className="grid grid-cols-1 gap-3 border-t border-slate-100 px-4 py-3 text-xs font-semibold text-slate-700 sm:grid-cols-3">
-                        <div className="flex items-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50 px-2.5 py-2">
-                          <span className="h-3 w-3 rounded-full bg-emerald-500" /> Safe
+                      <div className="grid grid-cols-1 gap-3 border-t border-[#d2232a]/15 px-4 py-3 text-xs font-semibold text-[#414042] sm:grid-cols-3">
+                        <div className="flex items-center gap-2 rounded-lg border border-[#009748]/30 bg-[#009748]/14 px-2.5 py-2">
+                          <span className="h-3 w-3 rounded-full bg-[#009748]" /> Safe
                         </div>
-                        <div className="flex items-center gap-2 rounded-lg border border-amber-100 bg-amber-50 px-2.5 py-2">
-                          <span className="h-3 w-3 rounded-full bg-amber-400" /> Caution
+                        <div className="flex items-center gap-2 rounded-lg border border-[#fbaf26]/30 bg-[#fbaf26]/16 px-2.5 py-2">
+                          <span className="h-3 w-3 rounded-full bg-[#fbaf26]" /> Caution
                         </div>
-                        <div className="flex items-center gap-2 rounded-lg border border-orange-100 bg-orange-50 px-2.5 py-2">
-                          <span className="h-3 w-3 rounded-full bg-orange-500" /> Warning
+                        <div className="flex items-center gap-2 rounded-lg border border-[#d2232a]/30 bg-[#d2232a]/16 px-2.5 py-2">
+                          <span className="h-3 w-3 rounded-full bg-[#d2232a]" /> Warning
                         </div>
                       </div>
                     ) : null}
@@ -806,11 +806,11 @@ export default function DetailedSiteAnalysis() {
               </div>
 
               <div className="col-span-12 lg:col-span-5">
-                <div className="flex h-[660px] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                  <div className="border-b border-slate-100 bg-gradient-to-r from-white to-slate-50 px-4 py-3">
+                <div className="flex h-[660px] flex-col overflow-hidden rounded-3xl border border-[#d2232a]/20 bg-white shadow-sm">
+                  <div className="border-b border-[#d2232a]/15 bg-gradient-to-r from-white to-[#d2232a]/10 px-4 py-3">
                     <div className="flex items-center justify-between">
-                      <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Metric Panel</p>
-                      <span className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-600">
+                      <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#414042]/70">Metric Panel</p>
+                      <span className="rounded-lg border border-[#d2232a]/20 bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[#414042]/80">
                         12 Indicators
                       </span>
                     </div>
@@ -835,20 +835,20 @@ export default function DetailedSiteAnalysis() {
           </section>
         ) : (
           <section className="space-y-6">
-            <div className="rounded-3xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 p-4 shadow-sm">
+            <div className="rounded-3xl border border-[#d2232a]/20 bg-gradient-to-r from-white to-[#d2232a]/10 p-4 shadow-sm">
               <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#d2232a]/20 text-[#911d1f]">
                     <Sparkles size={18} />
                   </div>
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Predictive Controls</p>
-                    <p className="text-sm font-semibold text-slate-700">Tune scenario and horizon for planning simulations</p>
+                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#414042]/70">Predictive Controls</p>
+                    <p className="text-sm font-semibold text-[#414042]">Tune scenario and horizon for planning simulations</p>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+                  <div className="flex rounded-xl border border-[#d2232a]/20 bg-white p-1 shadow-sm">
                     {[
                       { key: 'baseline' as const, label: 'Baseline' },
                       { key: 'rain-heavy' as const, label: 'Rain Heavy' },
@@ -859,8 +859,8 @@ export default function DetailedSiteAnalysis() {
                         onClick={() => setForecastScenario(item.key)}
                         className={`rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] transition-colors ${
                           forecastScenario === item.key
-                            ? 'bg-rose-700 text-white'
-                            : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                            ? 'bg-[#911d1f] text-white'
+                            : 'text-[#414042]/75 hover:bg-[#d2232a]/12 hover:text-[#911d1f]'
                         }`}
                       >
                         {item.label}
@@ -868,15 +868,15 @@ export default function DetailedSiteAnalysis() {
                     ))}
                   </div>
 
-                  <div className="flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+                  <div className="flex rounded-xl border border-[#d2232a]/20 bg-white p-1 shadow-sm">
                     {[6, 12, 24].map((hours) => (
                       <button
                         key={hours}
                         onClick={() => setForecastHorizon(hours as ForecastHorizon)}
                         className={`rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] transition-colors ${
                           forecastHorizon === hours
-                            ? 'bg-sky-700 text-white'
-                            : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                            ? 'bg-[#911d1f] text-white'
+                            : 'text-[#414042]/75 hover:bg-[#d2232a]/12 hover:text-[#911d1f]'
                         }`}
                       >
                         {hours}h
@@ -884,7 +884,7 @@ export default function DetailedSiteAnalysis() {
                     ))}
                   </div>
 
-                  <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm">
+                  <div className="inline-flex items-center gap-2 rounded-xl border border-[#d2232a]/20 bg-white px-3 py-2 text-xs font-semibold text-[#414042]/80 shadow-sm">
                     <RefreshCw size={13} /> Updated {updatedLabel}
                   </div>
                 </div>
@@ -892,61 +892,61 @@ export default function DetailedSiteAnalysis() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Forecast Risk Score</p>
-                <p className="mt-2 text-3xl font-black text-rose-700">{forecastKpis.riskScore}</p>
-                <p className="mt-1 text-xs text-slate-500">Scenario-adjusted storm impact index</p>
+              <div className="rounded-2xl border border-[#d2232a]/20 bg-white p-4 shadow-sm">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#414042]/70">Forecast Risk Score</p>
+                <p className="mt-2 text-3xl font-black text-[#911d1f]">{forecastKpis.riskScore}</p>
+                <p className="mt-1 text-xs text-[#414042]/70">Scenario-adjusted storm impact index</p>
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Peak Rainfall</p>
-                <p className="mt-2 text-3xl font-black text-blue-700">{forecastKpis.maxRain.toFixed(1)} mm</p>
-                <p className="mt-1 text-xs text-slate-500">Highest expected 6-hour precipitation</p>
+              <div className="rounded-2xl border border-[#d2232a]/20 bg-white p-4 shadow-sm">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#414042]/70">Peak Rainfall</p>
+                <p className="mt-2 text-3xl font-black text-[#d2232a]">{forecastKpis.maxRain.toFixed(1)} mm</p>
+                <p className="mt-1 text-xs text-[#414042]/70">Highest expected 6-hour precipitation</p>
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Peak Wind Gust</p>
-                <p className="mt-2 inline-flex items-center gap-2 text-3xl font-black text-amber-700">
+              <div className="rounded-2xl border border-[#d2232a]/20 bg-white p-4 shadow-sm">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#414042]/70">Peak Wind Gust</p>
+                <p className="mt-2 inline-flex items-center gap-2 text-3xl font-black text-[#fbaf26]">
                   <TrendingUp size={22} /> {forecastKpis.maxGust} kph
                 </p>
-                <p className="mt-1 text-xs text-slate-500">Maximum projected gust for selected horizon</p>
+                <p className="mt-1 text-xs text-[#414042]/70">Maximum projected gust for selected horizon</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="rounded-3xl border border-[#d2232a]/20 bg-white p-5 shadow-sm">
                 <div className="mb-3 flex items-center justify-between">
-                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Weather Summary</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#414042]/70">Weather Summary</p>
                   <WeatherSummaryIcon size={18} className={weatherSummaryTheme.iconClass} />
                 </div>
 
                 <div
-                  className={`relative overflow-hidden rounded-2xl bg-gradient-to-br p-4 text-white shadow-[0_12px_30px_rgba(15,23,42,0.22)] ${weatherSummaryTheme.bg}`}
+                  className={`relative overflow-hidden rounded-2xl bg-gradient-to-br p-4 text-white shadow-[0_12px_30px_rgba(65,64,66,0.22)] ${weatherSummaryTheme.bg}`}
                 >
                   <div className={`absolute inset-0 ${weatherSummaryTheme.overlay}`} />
-                  <div className="absolute -right-8 -top-10 h-24 w-24 rounded-full bg-white/10 blur-xl" />
-                  <div className="absolute -bottom-10 -left-8 h-24 w-24 rounded-full bg-white/10 blur-xl" />
+                  <div className="absolute -right-8 -top-10 h-24 w-24 rounded-full bg-[#006193]/16 blur-xl" />
+                  <div className="absolute -bottom-10 -left-8 h-24 w-24 rounded-full bg-[#006193]/16 blur-xl" />
 
                   <div className="relative z-10">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/80">Current Condition</p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/85">Current Condition</p>
                   <p className="mt-2 text-4xl font-black">{currentWeather.temp.toFixed(1)} degC</p>
-                  <p className="mt-1 text-sm font-semibold text-white/90">{currentWeather.condition}</p>
-                  <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-white/75">{weatherSummaryTheme.label}</p>
+                  <p className="mt-1 text-sm font-semibold text-white/95">{currentWeather.condition}</p>
+                  <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-white/82">{weatherSummaryTheme.label}</p>
 
                   <div className="mt-4 grid grid-cols-2 gap-2">
-                    <div className="rounded-lg bg-white/10 px-2 py-2">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-white/70">Rain Chance</p>
+                    <div className="rounded-lg bg-[#414042]/10 px-2 py-2">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-white/78">Rain Chance</p>
                       <p className="text-sm font-black">{currentWeather.chanceRain}%</p>
                     </div>
-                    <div className="rounded-lg bg-white/10 px-2 py-2">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-white/70">Wind Gust</p>
+                    <div className="rounded-lg bg-[#414042]/10 px-2 py-2">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-white/78">Wind Gust</p>
                       <p className="text-sm font-black">{currentWeather.gust} kph</p>
                     </div>
                   </div>
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Operational Note</p>
-                  <p className="mt-1 text-sm font-semibold leading-relaxed text-slate-700">{weatherStatus}</p>
+                <div className="mt-4 rounded-xl border border-[#d2232a]/20 bg-white p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#414042]/70">Operational Note</p>
+                  <p className="mt-1 text-sm font-semibold leading-relaxed text-[#414042]">{weatherStatus}</p>
                 </div>
               </div>
 
@@ -956,7 +956,7 @@ export default function DetailedSiteAnalysis() {
                 data={scenarioAdjustedForecast}
                 xKey="time"
                 unit="mm"
-                series={[{ key: 'rain', label: 'Rainfall', color: '#2563eb' }]}
+                series={[{ key: 'rain', label: 'Rainfall', color: '#fbaf26' }]}
               />
 
               <ForecastChart
@@ -966,8 +966,8 @@ export default function DetailedSiteAnalysis() {
                 xKey="time"
                 unit="kph"
                 series={[
-                  { key: 'wind', label: 'Wind Speed', color: '#0ea5e9' },
-                  { key: 'gust', label: 'Wind Gust', color: '#f97316' },
+                  { key: 'wind', label: 'Wind Speed', color: '#fbaf26' },
+                  { key: 'gust', label: 'Wind Gust', color: '#911d1f' },
                 ]}
               />
             </div>
@@ -980,7 +980,7 @@ export default function DetailedSiteAnalysis() {
                 xKey="time"
                 unit="mm"
                 chartType="area"
-                series={[{ key: 'rain', label: '24h Rainfall', color: '#2563eb' }]}
+                series={[{ key: 'rain', label: '24h Rainfall', color: '#fbaf26' }]}
               />
 
               <ForecastChart
@@ -990,8 +990,8 @@ export default function DetailedSiteAnalysis() {
                 xKey="time"
                 unit="kph"
                 series={[
-                  { key: 'wind', label: 'Wind Speed', color: '#0ea5e9' },
-                  { key: 'gust', label: 'Wind Gust', color: '#f97316' },
+                  { key: 'wind', label: 'Wind Speed', color: '#fbaf26' },
+                  { key: 'gust', label: 'Wind Gust', color: '#911d1f' },
                 ]}
               />
             </div>
@@ -1005,7 +1005,7 @@ export default function DetailedSiteAnalysis() {
                 unit="%"
                 chartType="area"
                 yDomain={[65, 95]}
-                series={[{ key: 'humidity', label: 'Humidity', color: '#14b8a6' }]}
+                series={[{ key: 'humidity', label: 'Humidity', color: '#009748' }]}
               />
               <ForecastChart
                 title="Atmospheric Pressure Trend"
@@ -1015,7 +1015,7 @@ export default function DetailedSiteAnalysis() {
                 unit="hPa"
                 chartType="area"
                 yDomain={[1006, 1014]}
-                series={[{ key: 'pressure', label: 'Pressure', color: '#0f766e' }]}
+                series={[{ key: 'pressure', label: 'Pressure', color: '#009748' }]}
               />
             </div>
           </section>
@@ -1024,3 +1024,6 @@ export default function DetailedSiteAnalysis() {
     </div>
   );
 }
+
+
+

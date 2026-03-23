@@ -32,8 +32,8 @@ function CustomTooltip({ active, payload, label, unit }: any) {
   if (!active || !payload || payload.length === 0) return null;
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-lg">
-      <p className="text-xs font-bold text-slate-700">{label}</p>
+    <div className="rounded-lg border border-[#006193]/35 bg-[#414042] px-3 py-2 shadow-lg">
+      <p className="text-xs font-bold text-white">{label}</p>
       <div className="mt-1 space-y-1">
         {payload.map((entry: any) => (
           <p key={entry.name} className="text-[11px] font-semibold" style={{ color: entry.color }}>
@@ -62,10 +62,10 @@ export default function ForecastChart({
   };
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-3xl border border-[#006193]/35 bg-[#414042]/96 p-5 shadow-sm">
       <div className="mb-3">
-        <h3 className="text-sm font-bold text-slate-800">{title}</h3>
-        {subtitle ? <p className="text-xs text-slate-500">{subtitle}</p> : null}
+        <h3 className="text-sm font-bold text-white">{title}</h3>
+        {subtitle ? <p className="text-xs text-white/75">{subtitle}</p> : null}
       </div>
 
       <div className="h-[240px] w-full">
@@ -80,10 +80,10 @@ export default function ForecastChart({
                   </linearGradient>
                 ))}
               </defs>
-              <CartesianGrid strokeDasharray="3 6" vertical={false} stroke="#e5e7eb" opacity={0.35} />
-              <XAxis dataKey={xKey} tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 6" vertical={false} stroke="#414042" opacity={0.18} />
+              <XAxis dataKey={xKey} tick={{ fontSize: 11, fill: '#414042' }} axisLine={false} tickLine={false} />
               <YAxis
-                tick={{ fontSize: 11, fill: '#64748b' }}
+                tick={{ fontSize: 11, fill: '#414042' }}
                 axisLine={false}
                 tickLine={false}
                 width={36}
@@ -107,10 +107,10 @@ export default function ForecastChart({
             </AreaChart>
           ) : (
             <LineChart {...commonProps}>
-              <CartesianGrid strokeDasharray="3 6" vertical={false} stroke="#e5e7eb" opacity={0.35} />
-              <XAxis dataKey={xKey} tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 6" vertical={false} stroke="#414042" opacity={0.18} />
+              <XAxis dataKey={xKey} tick={{ fontSize: 11, fill: '#414042' }} axisLine={false} tickLine={false} />
               <YAxis
-                tick={{ fontSize: 11, fill: '#64748b' }}
+                tick={{ fontSize: 11, fill: '#414042' }}
                 axisLine={false}
                 tickLine={false}
                 width={36}
@@ -137,3 +137,4 @@ export default function ForecastChart({
     </div>
   );
 }
+

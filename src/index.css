@@ -15,14 +15,14 @@ body,
 body {
   margin: 0;
   font-family: 'Manrope', 'Segoe UI', sans-serif;
-  background: #0f172a;
+  background: #ffffff;
   overflow: hidden;
 }
 
 /* Modern scrollbars for dashboard content areas */
 .modern-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(71, 85, 105, 0.6) rgba(226, 232, 240, 0.45);
+  scrollbar-color: rgba(145, 29, 31, 0.75) rgba(255, 245, 246, 0.75);
 }
 
 .modern-scrollbar::-webkit-scrollbar {
@@ -31,24 +31,24 @@ body {
 }
 
 .modern-scrollbar::-webkit-scrollbar-track {
-  background: linear-gradient(180deg, rgba(241, 245, 249, 0.75), rgba(226, 232, 240, 0.72));
+  background: linear-gradient(180deg, rgba(255, 245, 246, 0.86), rgba(255, 236, 238, 0.8));
   border-radius: 999px;
 }
 
 .modern-scrollbar::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(71, 85, 105, 0.85), rgba(51, 65, 85, 0.85));
-  border: 2px solid rgba(241, 245, 249, 0.85);
+  background: linear-gradient(180deg, rgba(210, 35, 42, 0.9), rgba(145, 29, 31, 0.88));
+  border: 2px solid rgba(255, 245, 246, 0.88);
   border-radius: 999px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(0, 97, 147, 0.2);
 }
 
 .modern-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(51, 65, 85, 0.95), rgba(30, 41, 59, 0.95));
+  background: linear-gradient(180deg, rgba(210, 35, 42, 0.96), rgba(145, 29, 31, 0.92));
 }
 
 .modern-scrollbar-dark {
   scrollbar-width: thin;
-  scrollbar-color: rgba(251, 113, 133, 0.55) rgba(127, 29, 29, 0.18);
+  scrollbar-color: rgba(210, 35, 42, 0.7) rgba(145, 29, 31, 0.28);
 }
 
 .modern-scrollbar-dark::-webkit-scrollbar {
@@ -57,12 +57,13 @@ body {
 }
 
 .modern-scrollbar-dark::-webkit-scrollbar-track {
-  background: rgba(69, 10, 10, 0.35);
+  background: rgba(145, 29, 31, 0.35);
   border-radius: 999px;
 }
 
 .modern-scrollbar-dark::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(251, 113, 133, 0.85), rgba(225, 29, 72, 0.85));
-  border: 2px solid rgba(69, 10, 10, 0.45);
+  background: linear-gradient(180deg, rgba(210, 35, 42, 0.9), rgba(145, 29, 31, 0.88));
+  border: 2px solid rgba(145, 29, 31, 0.45);
   border-radius: 999px;
 }
+

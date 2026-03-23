@@ -128,25 +128,25 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }, [campusWeather]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[radial-gradient(circle_at_12%_8%,rgba(45,212,191,0.2),transparent_34%),radial-gradient(circle_at_88%_3%,rgba(56,189,248,0.18),transparent_38%),linear-gradient(165deg,#f4f7fb_0%,#edf3fb_45%,#e8eef8_100%)]">
+    <div className="flex h-screen overflow-hidden bg-[radial-gradient(circle_at_12%_8%,rgba(0,129,142,0.12),transparent_36%),radial-gradient(circle_at_88%_3%,rgba(0,97,147,0.1),transparent_40%),linear-gradient(165deg,#ffffff_0%,#fff5f6_55%,#ffeef0_100%)]">
       {/* Sidebar */}
-      <div className="relative flex h-screen w-72 shrink-0 flex-col border-r border-[#571010]/35 bg-[linear-gradient(180deg,#4a0303_0%,#7f0d0d_46%,#2a0505_100%)] text-slate-100 shadow-[14px_0_50px_rgba(29,7,7,0.42)]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_8%,rgba(255,215,145,0.12),transparent_26%),radial-gradient(circle_at_88%_12%,rgba(255,188,188,0.16),transparent_36%)]" />
-        <div className="absolute inset-y-0 right-0 w-px bg-gradient-to-b from-rose-200/0 via-rose-200/50 to-rose-200/0" />
+      <div className="relative flex h-screen w-72 shrink-0 flex-col border-r border-[#d2232a]/40 bg-[linear-gradient(180deg,#911d1f_0%,#d2232a_46%,#414042_100%)] text-white shadow-[14px_0_50px_rgba(65,64,66,0.42)]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_8%,rgba(251,175,38,0.14),transparent_26%),radial-gradient(circle_at_88%_12%,rgba(210,35,42,0.18),transparent_36%)]" />
+        <div className="absolute inset-y-0 right-0 w-px bg-gradient-to-b from-[#414042]/0 via-[#414042]/60 to-[#414042]/0" />
         {/* Logo Card */}
-        <div className="relative z-10 border-b border-red-300/25 p-6">
-          <div className="flex items-center gap-3 rounded-2xl border border-white/25 bg-white/12 p-4 backdrop-blur-md shadow-[0_12px_35px_rgba(0,0,0,0.2)]">
-            <img src={bsuLogo} alt="BSU Logo" className="h-10 w-10 rounded-xl bg-white/95 p-1" />
+        <div className="relative z-10 border-b border-[#d2232a]/35 p-6">
+          <div className="flex items-center gap-3 rounded-2xl border border-[#414042]/35 bg-[#414042]/12 p-4 backdrop-blur-md shadow-[0_12px_35px_rgba(65,64,66,0.25)]">
+            <img src={bsuLogo} alt="BSU Logo" className="h-10 w-10 rounded-xl bg-[#414042]/96 p-1" />
             <div>
               <h3 className="font-['Trebuchet_MS',sans-serif] text-base font-black tracking-[0.14em] text-white">KLIMA</h3>
-              <p className="font-['Trebuchet_MS',sans-serif] text-[11px] uppercase tracking-[0.16em] text-rose-50/90">Risk Alert Center</p>
+              <p className="font-['Trebuchet_MS',sans-serif] text-[11px] uppercase tracking-[0.16em] text-[#fbaf26]/95">Risk Alert Center</p>
             </div>
           </div>
         </div>
 
         {/* Navigation */}
         <nav className="modern-scrollbar-dark relative z-10 flex-1 space-y-2 overflow-y-auto px-4 py-5">
-          <p className="px-2 pb-2 font-['Trebuchet_MS',sans-serif] text-[10px] font-bold uppercase tracking-[0.2em] text-rose-100/80">
+          <p className="px-2 pb-2 font-['Trebuchet_MS',sans-serif] text-[10px] font-bold uppercase tracking-[0.2em] text-white/85">
             Navigation
           </p>
           {navItems.map((item) => {
@@ -158,29 +158,29 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 onClick={() => setActiveNav(item.id)}
                 className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all ${
                   isActive
-                    ? 'border border-rose-100/50 bg-white/18 text-white shadow-[0_12px_28px_rgba(127,29,29,0.36)] backdrop-blur-md'
-                    : 'border border-transparent text-slate-100/90 hover:border-white/25 hover:bg-white/10 hover:text-rose-50'
+                    ? 'border border-[#fbaf26]/55 bg-[#414042]/18 text-white shadow-[0_12px_28px_rgba(145,29,31,0.36)] backdrop-blur-md'
+                    : 'border border-transparent text-white/90 hover:border-[#fbaf26]/35 hover:bg-[#414042]/10 hover:text-[#fbaf26]'
                 }`}
               >
                 <span
                   className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-black/15 text-rose-100 group-hover:bg-white/15'
+                    isActive ? 'bg-[#414042]/20 text-white' : 'bg-[#414042]/28 text-white group-hover:bg-[#414042]/18'
                   }`}
                 >
                   <Icon size={17} />
                 </span>
                 <span className="font-['Trebuchet_MS',sans-serif] text-[13px] font-semibold tracking-[0.02em]">{item.label}</span>
-                {isActive ? <span className="ml-auto h-2.5 w-2.5 rounded-full bg-rose-100 shadow-[0_0_0_5px_rgba(255,255,255,0.1)]" /> : null}
+                {isActive ? <span className="ml-auto h-2.5 w-2.5 rounded-full bg-[#fbaf26] shadow-[0_0_0_5px_rgba(251,175,38,0.25)]" /> : null}
               </button>
             );
           })}
         </nav>
 
         {/* Footer */}
-        <div className="relative z-10 space-y-3 border-t border-red-300/25 p-4">
+        <div className="relative z-10 space-y-3 border-t border-[#d2232a]/35 p-4">
           <button
             onClick={handleLogout}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#b91c1c] to-[#ef4444] px-4 py-2.5 font-['Trebuchet_MS',sans-serif] text-sm font-semibold tracking-[0.03em] text-white shadow-[0_12px_30px_rgba(239,68,68,0.35)] transition-all hover:brightness-110"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#911d1f] to-[#d2232a] px-4 py-2.5 font-['Trebuchet_MS',sans-serif] text-sm font-semibold tracking-[0.03em] text-white shadow-[0_12px_30px_rgba(210,35,42,0.35)] transition-all hover:brightness-110"
           >
             <LogOut size={16} />
             Logout
@@ -189,30 +189,30 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       </div>
 
       {/* Main Content */}
-      <div className="modern-scrollbar h-screen flex-1 overflow-y-auto bg-[radial-gradient(circle_at_18%_14%,rgba(45,212,191,0.16),transparent_32%),radial-gradient(circle_at_84%_12%,rgba(14,165,233,0.16),transparent_40%)]">
+      <div className="modern-scrollbar h-screen flex-1 overflow-y-auto bg-[radial-gradient(circle_at_18%_14%,rgba(0,129,142,0.1),transparent_34%),radial-gradient(circle_at_84%_12%,rgba(210,35,42,0.08),transparent_42%),linear-gradient(180deg,#ffffff_0%,#fff7f8_100%)]">
         {/* Header */}
-        <div className="sticky top-0 z-20 border-b border-slate-200/75 bg-white/82 p-6 backdrop-blur-lg">
+        <div className="sticky top-0 z-20 border-b border-[#d2232a]/25 bg-white/92 p-6 backdrop-blur-lg">
           <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="h-3 w-3 animate-pulse rounded-full bg-emerald-500"></div>
+              <div className="h-3 w-3 animate-pulse rounded-full bg-[#007e42]"></div>
               <div>
-                <p className="text-sm font-semibold text-slate-900">System Status</p>
-                <p className="text-xs text-slate-600">All field sensors operational</p>
+                <p className="text-sm font-semibold text-[#414042]">System Status</p>
+                <p className="text-xs text-[#414042]/80">All field sensors operational</p>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button className="rounded-none border border-slate-200 bg-white p-2 text-slate-600 transition-colors hover:bg-cyan-50 hover:text-cyan-700">
+            <button className="rounded-none border border-[#d2232a]/25 bg-white p-2 text-[#414042]/80 transition-colors hover:bg-[#d2232a]/10 hover:text-[#911d1f]">
               <Bell size={20} />
             </button>
-            <div className="flex items-center gap-3 rounded-none border border-slate-200 bg-white px-3 py-2 shadow-sm">
-              <div className="flex h-8 w-8 items-center justify-center rounded-none bg-gradient-to-br from-cyan-500 to-sky-700">
+            <div className="flex items-center gap-3 rounded-none border border-[#d2232a]/25 bg-white px-3 py-2 shadow-sm">
+              <div className="flex h-8 w-8 items-center justify-center rounded-none bg-gradient-to-br from-[#006193] to-[#00818e]">
                 <User size={16} className="text-white" />
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-900">Admin</p>
-                <p className="text-xs text-slate-600">Operator</p>
+                <p className="text-sm font-medium text-[#414042]">Admin</p>
+                <p className="text-xs text-[#414042]/80">Operator</p>
               </div>
             </div>
           </div>
@@ -231,8 +231,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <div className="p-8">
           {/* 1. Header Section */}
           <header className="mb-8">
-            <h1 className="text-3xl font-extrabold text-slate-900">Local Risk Assessment</h1>
-            <p className="mt-1 text-sm text-slate-600">
+            <h1 className="text-3xl font-extrabold text-[#414042]">Local Risk Assessment</h1>
+            <p className="mt-1 text-sm text-[#414042]/80">
               As of{' '}
               {lastUpdated
                 ? lastUpdated.toLocaleString([], {
@@ -254,9 +254,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <div className="grid grid-cols-12 gap-6">
             {/* Map */}
             <div className="col-span-12 lg:col-span-6">
-              <div className="h-full rounded-3xl border border-slate-200 bg-gradient-to-br from-white/95 to-cyan-50/40 p-6 shadow-[0_20px_65px_rgba(15,23,42,0.1)] backdrop-blur-sm">
+              <div className="h-full rounded-3xl border border-[#d2232a]/20 bg-gradient-to-br from-white/96 to-[#d2232a]/8 p-6 shadow-[0_20px_65px_rgba(65,64,66,0.12)] backdrop-blur-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-slate-900">Risk Map</h3>
+                  <h3 className="text-lg font-bold text-[#414042]">Risk Map</h3>
                   <div className="flex gap-2">
                     {[
                       {
@@ -276,8 +276,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         onClick={() => setMapMode(mode.key)}
                         className={`px-3 py-1 text-xs rounded-md transition-colors ${
                           mapMode === mode.key
-                            ? 'bg-sky-700 text-white'
-                            : 'border border-slate-200 bg-white text-slate-700 hover:bg-cyan-50 hover:text-cyan-800'
+                            ? 'bg-[#006193] text-white'
+                            : 'border border-[#d2232a]/25 bg-white text-[#414042] hover:bg-[#d2232a]/10 hover:text-[#911d1f]'
                         }`}
                       >
                         {mode.icon}
@@ -292,13 +292,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 />
                 <div className="mt-4 grid grid-cols-3 gap-3">
                   {[
-                    { label: 'High Risk', color: 'bg-rose-600' },
-                    { label: 'Medium Risk', color: 'bg-amber-500' },
-                    { label: 'Low Risk', color: 'bg-emerald-500' },
+                    { label: 'High Risk', color: 'bg-[#d2232a]' },
+                    { label: 'Medium Risk', color: 'bg-[#fbaf26]' },
+                    { label: 'Low Risk', color: 'bg-[#009748]' },
                   ].map((item) => (
                     <div key={item.label} className="flex items-center gap-2">
                       <div className={`h-3 w-3 rounded-full ${item.color}`}></div>
-                      <span className="text-xs text-slate-700">{item.label}</span>
+                      <span className="text-xs text-[#414042]">{item.label}</span>
                     </div>
                   ))}
                 </div>
@@ -308,34 +308,34 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             {/* Data Section */}
             <div className="col-span-12 lg:col-span-6">
               {/* Current Observations */}
-              <div className="h-full rounded-3xl border border-slate-200 bg-gradient-to-br from-white/95 to-sky-50/45 p-6 shadow-[0_20px_65px_rgba(15,23,42,0.1)] backdrop-blur-sm">
+              <div className="h-full rounded-3xl border border-[#d2232a]/20 bg-gradient-to-br from-white/96 to-[#911d1f]/8 p-6 shadow-[0_20px_65px_rgba(65,64,66,0.12)] backdrop-blur-sm">
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-slate-900">Current Observations</h3>
+                  <h3 className="text-lg font-bold text-[#414042]">Current Observations</h3>
                   <span
                     className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase ${
                       isLiveWeather
-                        ? 'border-cyan-200 bg-cyan-50 text-cyan-700'
-                        : 'border-slate-200 bg-slate-100 text-slate-600'
+                        ? 'border-[#00818e]/45 bg-[#00818e]/16 text-[#006193]'
+                        : 'border-[#d2232a]/25 bg-white text-[#414042]/80'
                     }`}
                   >
                     {isLiveWeather ? 'Live API' : 'Fallback'}
                   </span>
                 </div>
 
-                <div className="mb-4 rounded-xl border border-slate-200 bg-white/90 p-3">
+                <div className="mb-4 rounded-xl border border-[#d2232a]/20 bg-white/92 p-3">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Selected Campus</p>
-                    <p className="text-[10px] font-semibold text-cyan-700">Click a map icon to update</p>
+                    <p className="text-[10px] uppercase tracking-[0.12em] text-[#414042]/80">Selected Campus</p>
+                    <p className="text-[10px] font-semibold text-[#006193]">Click a map icon to update</p>
                   </div>
                   {selectedCampus ? (
                     <div className="mt-2">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-bold text-slate-900">{selectedCampus.name}</p>
+                        <p className="text-sm font-bold text-[#414042]">{selectedCampus.name}</p>
                         <span
                           className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase ${
                             selectedCampus.warning
-                              ? 'bg-amber-100 text-amber-700'
-                              : 'bg-emerald-100 text-emerald-700'
+                              ? 'bg-[#fbaf26]/30 text-[#fbaf26]'
+                              : 'bg-[#009748]/25 text-[#007e42]'
                           }`}
                         >
                           {selectedCampus.status}
@@ -343,62 +343,62 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       </div>
                     </div>
                   ) : (
-                    <p className="mt-2 text-xs text-slate-600">No campus selected yet.</p>
+                    <p className="mt-2 text-xs text-[#414042]/80">No campus selected yet.</p>
                   )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-slate-200 bg-white/90 p-3">
-                    <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Monitored Campuses</p>
-                    <p className="mt-1 text-2xl font-extrabold text-slate-900">{observationSummary.monitoredCount}</p>
+                  <div className="rounded-xl border border-[#d2232a]/20 bg-white/92 p-3">
+                    <p className="text-[10px] uppercase tracking-[0.12em] text-[#414042]/80">Monitored Campuses</p>
+                    <p className="mt-1 text-2xl font-extrabold text-[#414042]">{observationSummary.monitoredCount}</p>
                   </div>
-                  <div className="rounded-xl border border-slate-200 bg-white/90 p-3">
-                    <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Total Rainfall</p>
-                    <p className="mt-1 text-2xl font-extrabold text-slate-900">{observationSummary.totalRain} mm</p>
+                  <div className="rounded-xl border border-[#d2232a]/20 bg-white/92 p-3">
+                    <p className="text-[10px] uppercase tracking-[0.12em] text-[#414042]/80">Total Rainfall</p>
+                    <p className="mt-1 text-2xl font-extrabold text-[#414042]">{observationSummary.totalRain} mm</p>
                   </div>
-                  <div className="col-span-1 rounded-xl border border-slate-200 bg-white/90 p-2.5">
-                    <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Highest Rain Campus</p>
-                    <p className="mt-1 text-xs font-semibold text-slate-900">
+                  <div className="col-span-1 rounded-xl border border-[#d2232a]/20 bg-white/92 p-2.5">
+                    <p className="text-[10px] uppercase tracking-[0.12em] text-[#414042]/80">Highest Rain Campus</p>
+                    <p className="mt-1 text-xs font-semibold text-[#414042]">
                       {observationSummary.topRainCampus?.name ?? 'N/A'}
                     </p>
-                    <p className="text-[11px] text-slate-600">
+                    <p className="text-[11px] text-[#414042]/80">
                       {observationSummary.topRainCampus?.rain ?? '0.00'} mm rain
                     </p>
                   </div>
-                  <div className="col-span-1 rounded-xl border border-slate-200 bg-white/90 p-2.5">
-                    <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Strongest Wind</p>
-                    <p className="mt-1 text-xs font-semibold text-slate-900">
+                  <div className="col-span-1 rounded-xl border border-[#d2232a]/20 bg-white/92 p-2.5">
+                    <p className="text-[10px] uppercase tracking-[0.12em] text-[#414042]/80">Strongest Wind</p>
+                    <p className="mt-1 text-xs font-semibold text-[#414042]">
                       {observationSummary.strongestWind?.name ?? 'N/A'}
                     </p>
-                    <p className="text-[11px] text-slate-600">
+                    <p className="text-[11px] text-[#414042]/80">
                       {observationSummary.strongestWind?.windSpeed ?? '0'} km/h
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-xl border border-slate-200 bg-white/90 p-4">
-                  <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Selected Campus Metrics</p>
+                <div className="mt-4 rounded-xl border border-[#d2232a]/20 bg-white/92 p-4">
+                  <p className="text-[10px] uppercase tracking-[0.12em] text-[#414042]/80">Selected Campus Metrics</p>
                   {selectedCampus ? (
                     <div className="mt-3 grid grid-cols-2 gap-3">
-                      <div className="rounded-xl border border-cyan-100/80 bg-cyan-50/55 px-3 py-3">
-                        <p className="text-[10px] uppercase tracking-[0.1em] text-slate-500">Temperature</p>
-                        <p className="mt-1 text-xl font-extrabold text-cyan-800">{selectedCampus.heatIndex} degC</p>
+                      <div className="rounded-xl border border-[#00818e]/30 bg-[#00818e]/14 px-3 py-3">
+                        <p className="text-[10px] uppercase tracking-[0.1em] text-[#414042]/80">Temperature</p>
+                        <p className="mt-1 text-xl font-extrabold text-[#006193]">{selectedCampus.heatIndex} degC</p>
                       </div>
-                      <div className="rounded-xl border border-cyan-100/80 bg-cyan-50/55 px-3 py-3">
-                        <p className="text-[10px] uppercase tracking-[0.1em] text-slate-500">Wind Speed</p>
-                        <p className="mt-1 text-xl font-extrabold text-cyan-800">{selectedCampus.windSpeed} km/h</p>
+                      <div className="rounded-xl border border-[#00818e]/30 bg-[#00818e]/14 px-3 py-3">
+                        <p className="text-[10px] uppercase tracking-[0.1em] text-[#414042]/80">Wind Speed</p>
+                        <p className="mt-1 text-xl font-extrabold text-[#006193]">{selectedCampus.windSpeed} km/h</p>
                       </div>
-                      <div className="rounded-xl border border-cyan-100/80 bg-cyan-50/55 px-3 py-3">
-                        <p className="text-[10px] uppercase tracking-[0.1em] text-slate-500">Humidity</p>
-                        <p className="mt-1 text-xl font-extrabold text-cyan-800">{selectedCampus.humidity}%</p>
+                      <div className="rounded-xl border border-[#00818e]/30 bg-[#00818e]/14 px-3 py-3">
+                        <p className="text-[10px] uppercase tracking-[0.1em] text-[#414042]/80">Humidity</p>
+                        <p className="mt-1 text-xl font-extrabold text-[#006193]">{selectedCampus.humidity}%</p>
                       </div>
-                      <div className="rounded-xl border border-cyan-100/80 bg-cyan-50/55 px-3 py-3">
-                        <p className="text-[10px] uppercase tracking-[0.1em] text-slate-500">Rain Chance</p>
-                        <p className="mt-1 text-xl font-extrabold text-cyan-800">{selectedCampus.rainPossibility}</p>
+                      <div className="rounded-xl border border-[#00818e]/30 bg-[#00818e]/14 px-3 py-3">
+                        <p className="text-[10px] uppercase tracking-[0.1em] text-[#414042]/80">Rain Chance</p>
+                        <p className="mt-1 text-xl font-extrabold text-[#006193]">{selectedCampus.rainPossibility}</p>
                       </div>
                     </div>
                   ) : (
-                    <p className="mt-2 text-xs text-slate-600">Select a campus on the map to view its metrics.</p>
+                    <p className="mt-2 text-xs text-[#414042]/80">Select a campus on the map to view its metrics.</p>
                   )}
                 </div>
               </div>

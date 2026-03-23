@@ -25,7 +25,7 @@ const bsuCampusIcon = L.icon({
   iconSize: [32, 32],
   iconAnchor: [16, 16],
   popupAnchor: [0, -18],
-  className: 'rounded-full border-2 border-white shadow-[0_8px_20px_rgba(15,23,42,0.35)] bg-white',
+  className: 'rounded-full border-2 border-white shadow-[0_8px_20px_rgba(65,64,66,0.35)] bg-white',
 });
 
 interface RiskMapProps {
@@ -51,7 +51,7 @@ export default function RiskMap({
   const tileUrl = getTileUrl(mapMode);
 
   return (
-    <div className="relative h-[450px] w-full overflow-hidden rounded-xl border border-slate-200/90 bg-slate-800 shadow-inner">
+    <div className="relative h-[450px] w-full overflow-hidden rounded-xl border border-[#d2232a]/25 bg-white shadow-inner">
       <MapContainer
         center={center}
         zoom={9}
@@ -79,15 +79,15 @@ export default function RiskMap({
         })}
       </MapContainer>
 
-      <div className="absolute right-4 top-4 z-[1000] space-y-2 rounded-xl border border-slate-200 bg-white p-3 text-[10px] font-bold shadow-lg">
+      <div className="absolute right-4 top-4 z-[1000] space-y-2 rounded-xl border border-[#d2232a]/25 bg-white p-3 text-[10px] font-bold text-[#414042] shadow-lg">
         <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-emerald-500" /> SAFE
+          <div className="h-2 w-2 rounded-full bg-[#009748]" /> SAFE
         </div>
         <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-amber-500" /> MONITORING
+          <div className="h-2 w-2 rounded-full bg-[#fbaf26]" /> MONITORING
         </div>
         <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-red-600" /> CRITICAL
+          <div className="h-2 w-2 rounded-full bg-[#d2232a]" /> CRITICAL
         </div>
       </div>
     </div>

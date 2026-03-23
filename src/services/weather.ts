@@ -460,3 +460,489 @@ export const fetchOpenMeteoForecast = async (lat: number, lon: number): Promise<
         : Number(currentWeatherCodeRaw),
   };
 };
+
+export interface CycloneTrackPoint {
+  lat: number;
+  lon: number;
+  windKph: number;
+  label: string;
+  timestampIso: string;
+}
+
+export interface LiveTyphoonFeed {
+  stormName: string;
+  sourceLabel: string;
+  pagasaTrack: CycloneTrackPoint[];
+  jtwcTrack: CycloneTrackPoint[];
+  updatedAtIso: string;
+  hasActivePhilippineTyphoon: boolean;
+  pagasa: {
+    stormName: string;
+    source: string;
+    advisoryFromIso: string | null;
+    advisoryToIso: string | null;
+    alertLevel: string;
+    maxWindKph: number | null;
+    detailsSummary: string;
+  };
+  jtwc: {
+    stormName: string;
+    source: string;
+    advisoryFromIso: string | null;
+    advisoryToIso: string | null;
+    alertLevel: string;
+    maxWindKph: number | null;
+    detailsSummary: string;
+  };
+  recentPhilippineTyphoons: Array<{
+    name: string;
+    source: string;
+    fromIso: string | null;
+    toIso: string | null;
+    alertLevel: string;
+    maxWindKph: number | null;
+    isActive: boolean;
+  }>;
+}
+
+interface PagasaCycloneDatResult {
+  stormName: string;
+  track: CycloneTrackPoint[];
+  latestTimestampIso: string | null;
+  isActive: boolean;
+}
+
+interface GdacsFeature {
+  geometry?: {
+    type?: string;
+    coordinates?: [number, number];
+  };
+  properties?: {
+    eventtype?: string;
+    source?: string;
+    name?: string;
+    alertlevel?: string;
+    episodealertlevel?: string;
+    glide?: string;
+    country?: string;
+    iscurrent?: boolean | string;
+    fromdate?: string;
+    todate?: string;
+    affectedcountries?: Array<{ iso2?: string; iso3?: string; countryname?: string }>;
+    severitydata?: { severity?: number | string; severitytext?: string };
+    url?: {
+      details?: string;
+    };
+    episodes?: Array<{
+      details?: string;
+    }>;
+  };
+}
+
+const GDACS_TYHOON_EVENTS_URL =
+  import.meta.env.VITE_GDACS_TYHOON_EVENTS_API_URL ??
+  'https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventtype=TC';
+const PAGASA_CYCLONE_DAT_URL =
+  import.meta.env.VITE_PAGASA_CYCLONE_DAT_URL ??
+  'https://pubfiles.pagasa.dost.gov.ph/tamss/weather/cyclone.dat';
+
+const PH_ISO2 = 'PH';
+const PH_ISO3 = 'PHL';
+const ACTIVE_TO_DATE_MAX_AGE_MS = 72 * 60 * 60 * 1000;
+const ACTIVE_FROM_DATE_MAX_AGE_MS = 10 * 24 * 60 * 60 * 1000;
+
+const toBoolean = (value: unknown): boolean => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') return value.toLowerCase() === 'true';
+  return false;
+};
+
+const toNumber = (value: unknown, fallback: number): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const parseGdacsFeatures = (payload: unknown): GdacsFeature[] => {
+  if (!payload || typeof payload !== 'object') return [];
+
+  const featureCollection = payload as { features?: unknown };
+  if (Array.isArray(featureCollection.features)) {
+    return featureCollection.features as GdacsFeature[];
+  }
+
+  if (Array.isArray(payload)) {
+    return payload as GdacsFeature[];
+  }
+
+  const singleFeature = payload as GdacsFeature;
+  if (singleFeature?.properties?.eventtype) {
+    return [singleFeature];
+  }
+
+  return [];
+};
+
+const isPhilippinesRelevant = (feature: GdacsFeature): boolean => {
+  const props = feature.properties;
+  if (!props) return false;
+
+  const countries = props.affectedcountries ?? [];
+  const affected = countries.some((country) => {
+    const iso2 = (country.iso2 ?? '').toUpperCase();
+    const iso3 = (country.iso3 ?? '').toUpperCase();
+    return iso2 === PH_ISO2 || iso3 === PH_ISO3;
+  });
+
+  if (affected) return true;
+
+  const countryText = `${props.country ?? ''} ${props.glide ?? ''}`.toUpperCase();
+  return countryText.includes('PHILIPPINES') || countryText.includes(PH_ISO3);
+};
+
+const isLikelyActive = (feature: GdacsFeature): boolean => {
+  const props = feature.properties;
+  if (!props) return false;
+  if (toBoolean(props.iscurrent)) return true;
+
+  const now = Date.now();
+  const from = Date.parse(props.fromdate ?? '');
+  const to = Date.parse(props.todate ?? '');
+  const withinRecentWindow = Number.isFinite(from) && now - from <= ACTIVE_FROM_DATE_MAX_AGE_MS;
+  const notTooOld = Number.isFinite(to) ? now - to <= ACTIVE_TO_DATE_MAX_AGE_MS : withinRecentWindow;
+
+  return withinRecentWindow || notTooOld;
+};
+
+const sortByRecency = (a: GdacsFeature, b: GdacsFeature): number => {
+  const aDate = Date.parse(a.properties?.fromdate ?? '') || 0;
+  const bDate = Date.parse(b.properties?.fromdate ?? '') || 0;
+  return bDate - aDate;
+};
+
+const buildLabel = (index: number, total: number, timestampIso: string): string => {
+  if (index === total - 1) return 'Current';
+
+  const date = new Date(timestampIso);
+  if (Number.isNaN(date.getTime())) {
+    return `${Math.max(0, total - index - 1) * 6}h Ago`;
+  }
+
+  return date.toLocaleString([], {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const parseStormNameFromHeader = (headerLine: string): string => {
+  const cleaned = headerLine.trim();
+  if (!cleaned) return 'PAGASA Tropical Cyclone';
+  const braceStart = cleaned.indexOf('{');
+  if (braceStart < 0) return cleaned;
+  return cleaned.slice(0, braceStart).trim() || 'PAGASA Tropical Cyclone';
+};
+
+const mapPagasaClassToWindKph = (classification: string): number => {
+  const key = classification.trim().toUpperCase();
+  if (key === 'LPA') return 28;
+  if (key === 'TD') return 50;
+  if (key === 'TS') return 80;
+  if (key === 'STS') return 105;
+  if (key === 'TY') return 140;
+  if (key === 'STY') return 190;
+  return 70;
+};
+
+const parsePagasaCycloneDat = (text: string): PagasaCycloneDatResult | null => {
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  if (lines.length < 2) return null;
+
+  const stormName = parseStormNameFromHeader(lines[0]);
+  const rawTrack = lines.slice(1).map((line) => {
+    const parts = line.split(',').map((part) => part.trim());
+    if (parts.length < 5) return null;
+
+    const classification = parts[0] ?? 'TS';
+    const datePart = parts[1] ?? '';
+    const timePart = parts[2] ?? '00:00';
+    const lat = Number(parts[3]);
+    const lon = Number(parts[4]);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+
+    const timestampIso = new Date(`${datePart}T${timePart}:00+08:00`).toISOString();
+    return {
+      lat,
+      lon,
+      windKph: mapPagasaClassToWindKph(classification),
+      label: 'Point',
+      timestampIso,
+    } satisfies CycloneTrackPoint;
+  }).filter((point): point is CycloneTrackPoint => point !== null);
+
+  if (rawTrack.length < 2) return null;
+
+  const track = rawTrack
+    .sort((a, b) => Date.parse(a.timestampIso) - Date.parse(b.timestampIso))
+    .map((point, index, arr) => ({
+      ...point,
+      label: buildLabel(index, arr.length, point.timestampIso),
+    }));
+
+  const latestTimestampIso = track[track.length - 1]?.timestampIso ?? null;
+  const latestMs = latestTimestampIso ? Date.parse(latestTimestampIso) : NaN;
+  const isActive = Number.isFinite(latestMs) && Date.now() - latestMs <= ACTIVE_TO_DATE_MAX_AGE_MS;
+
+  return {
+    stormName,
+    track,
+    latestTimestampIso,
+    isActive,
+  };
+};
+
+const fetchPagasaCycloneDat = async (): Promise<PagasaCycloneDatResult | null> => {
+  try {
+    const response = await fetch(PAGASA_CYCLONE_DAT_URL);
+    if (!response.ok) return null;
+    const text = await response.text();
+    return parsePagasaCycloneDat(text);
+  } catch {
+    return null;
+  }
+};
+
+const parseTrackPointFromFeature = (feature: GdacsFeature): CycloneTrackPoint | null => {
+  const coords = feature.geometry?.coordinates;
+  if (!coords || coords.length < 2) return null;
+
+  const lon = toNumber(coords[0], NaN);
+  const lat = toNumber(coords[1], NaN);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+
+  const props = feature.properties ?? {};
+  const windKph = Math.max(20, Math.round(toNumber(props.severitydata?.severity, 80)));
+  const timestampIso = props.fromdate ?? new Date().toISOString();
+
+  return {
+    lat,
+    lon,
+    windKph,
+    label: 'Point',
+    timestampIso,
+  };
+};
+
+const toTyphoonInfo = (feature: GdacsFeature | undefined, fallbackName: string, fallbackSource: string) => {
+  const props = feature?.properties;
+  const severityRaw = props?.severitydata?.severity;
+  const severity = Number(severityRaw);
+
+  return {
+    stormName: props?.name ?? fallbackName,
+    source: props?.source ?? fallbackSource,
+    advisoryFromIso: props?.fromdate ?? null,
+    advisoryToIso: props?.todate ?? null,
+    alertLevel: props?.alertlevel ?? props?.episodealertlevel ?? 'N/A',
+    maxWindKph: Number.isFinite(severity) ? Math.round(severity) : null,
+    detailsSummary: props?.severitydata?.severitytext ?? 'No detailed summary available.',
+  };
+};
+
+const toRecentTyphoonItem = (feature: GdacsFeature) => {
+  const props = feature.properties;
+  const severity = Number(props?.severitydata?.severity);
+
+  return {
+    name: props?.name ?? 'Unnamed Tropical Cyclone',
+    source: props?.source ?? 'GDACS',
+    fromIso: props?.fromdate ?? null,
+    toIso: props?.todate ?? null,
+    alertLevel: props?.alertlevel ?? props?.episodealertlevel ?? 'N/A',
+    maxWindKph: Number.isFinite(severity) ? Math.round(severity) : null,
+    isActive: isLikelyActive(feature),
+  };
+};
+
+const fetchJson = async (url: string): Promise<unknown> => {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Request failed: ${response.status}`);
+  }
+  return response.json();
+};
+
+const buildTrackFromEvent = async (eventFeature: GdacsFeature): Promise<CycloneTrackPoint[]> => {
+  const detailUrl = eventFeature.properties?.url?.details;
+  if (!detailUrl) {
+    const point = parseTrackPointFromFeature(eventFeature);
+    return point ? [point] : [];
+  }
+
+  const detailPayload = await fetchJson(detailUrl);
+  const detailFeatures = parseGdacsFeatures(detailPayload);
+  const detail = detailFeatures[0] ?? (detailPayload as GdacsFeature);
+
+  const episodeUrls = (detail?.properties?.episodes ?? [])
+    .map((episode) => episode.details)
+    .filter((url): url is string => Boolean(url))
+    .slice(-8);
+
+  if (episodeUrls.length === 0) {
+    const point = parseTrackPointFromFeature(detail ?? eventFeature);
+    return point ? [point] : [];
+  }
+
+  const episodePayloads = await Promise.all(
+    episodeUrls.map(async (url) => {
+      try {
+        return await fetchJson(url);
+      } catch {
+        return null;
+      }
+    }),
+  );
+
+  const rawPoints = episodePayloads
+    .filter((payload): payload is unknown => payload !== null)
+    .map((payload) => parseGdacsFeatures(payload)[0] ?? (payload as GdacsFeature))
+    .map((feature) => parseTrackPointFromFeature(feature))
+    .filter((point): point is CycloneTrackPoint => point !== null)
+    .sort((a, b) => Date.parse(a.timestampIso) - Date.parse(b.timestampIso));
+
+  return rawPoints.map((point, index) => ({
+    ...point,
+    label: buildLabel(index, rawPoints.length, point.timestampIso),
+  }));
+};
+
+const fallbackTrack = (
+  points: Array<{ lat: number; lon: number; windKph: number; label: string }>,
+): CycloneTrackPoint[] => {
+  const now = Date.now();
+  return points.map((point, index) => ({
+    ...point,
+    timestampIso: new Date(now - (points.length - index - 1) * 6 * 60 * 60 * 1000).toISOString(),
+  }));
+};
+
+const FALLBACK_PAGASA_TRACK = fallbackTrack([
+  { lat: 13.0, lon: 125.0, windKph: 65, label: '24h Ago' },
+  { lat: 13.45, lon: 123.1, windKph: 72, label: '12h Ago' },
+  { lat: 13.82, lon: 121.25, windKph: 78, label: 'Current' },
+]);
+
+const FALLBACK_JTWC_TRACK = fallbackTrack([
+  { lat: 13.2, lon: 125.2, windKph: 62, label: '24h Ago' },
+  { lat: 13.7, lon: 123.35, windKph: 70, label: '12h Ago' },
+  { lat: 14.02, lon: 121.62, windKph: 76, label: 'Current' },
+]);
+
+export const fetchLiveTyphoonFeed = async (): Promise<LiveTyphoonFeed> => {
+  const pagasaDat = await fetchPagasaCycloneDat();
+  const payload = await fetchJson(GDACS_TYHOON_EVENTS_URL);
+  const allFeatures = parseGdacsFeatures(payload)
+    .filter((feature) => (feature.properties?.eventtype ?? '').toUpperCase() === 'TC');
+
+  const relevant = allFeatures.filter((feature) => isPhilippinesRelevant(feature));
+  const recentPhilippineTyphoons = [...relevant]
+    .sort(sortByRecency)
+    .slice(0, 8)
+    .map((feature) => toRecentTyphoonItem(feature));
+
+  if (pagasaDat) {
+    recentPhilippineTyphoons.unshift({
+      name: pagasaDat.stormName,
+      source: 'PAGASA cyclone.dat',
+      fromIso: pagasaDat.track[0]?.timestampIso ?? null,
+      toIso: pagasaDat.latestTimestampIso,
+      alertLevel: pagasaDat.isActive ? 'Monitoring' : 'Inactive',
+      maxWindKph: Math.max(...pagasaDat.track.map((point) => point.windKph)),
+      isActive: pagasaDat.isActive,
+    });
+  }
+  const activeRelevant = relevant.filter((feature) => isLikelyActive(feature));
+  const hasActivePhilippineTyphoon = activeRelevant.length > 0;
+  const candidatePool = (hasActivePhilippineTyphoon ? activeRelevant : relevant).sort(sortByRecency);
+
+  const jtwcEvent =
+    candidatePool.find((feature) => (feature.properties?.source ?? '').toUpperCase().includes('JTWC')) ??
+    candidatePool[0];
+  const pagasaEvent =
+    candidatePool.find((feature) => (feature.properties?.source ?? '').toUpperCase().includes('PAGASA')) ??
+    jtwcEvent;
+
+  if (!jtwcEvent) {
+    return {
+      stormName: 'No Active Philippine Typhoon Advisory',
+      sourceLabel: 'Fallback Dataset',
+      pagasaTrack: pagasaDat?.track && pagasaDat.track.length >= 2 ? pagasaDat.track : FALLBACK_PAGASA_TRACK,
+      jtwcTrack: FALLBACK_JTWC_TRACK,
+      updatedAtIso: new Date().toISOString(),
+      hasActivePhilippineTyphoon: Boolean(pagasaDat?.isActive),
+      pagasa: {
+        stormName: pagasaDat?.stormName ?? 'No active PAGASA advisory',
+        source: 'PAGASA cyclone.dat',
+        advisoryFromIso: pagasaDat?.track?.[0]?.timestampIso ?? null,
+        advisoryToIso: pagasaDat?.latestTimestampIso ?? null,
+        alertLevel: pagasaDat?.isActive ? 'Monitoring' : 'Inactive',
+        maxWindKph: pagasaDat?.track?.length ? Math.max(...pagasaDat.track.map((point) => point.windKph)) : null,
+        detailsSummary: pagasaDat
+          ? 'PAGASA cyclone.dat trajectory feed parsed successfully.'
+          : 'No active Philippines-relevant tropical cyclone advisory was detected.',
+      },
+      jtwc: {
+        stormName: 'No active JTWC advisory',
+        source: 'JTWC',
+        advisoryFromIso: null,
+        advisoryToIso: null,
+        alertLevel: 'N/A',
+        maxWindKph: null,
+        detailsSummary: 'No active Philippines-relevant tropical cyclone advisory was detected.',
+      },
+      recentPhilippineTyphoons,
+    };
+  }
+
+  const [pagasaTrackRaw, jtwcTrackRaw] = await Promise.all([
+    pagasaEvent ? buildTrackFromEvent(pagasaEvent) : Promise.resolve([]),
+    buildTrackFromEvent(jtwcEvent),
+  ]);
+
+  const pagasaTrack = pagasaTrackRaw.length >= 2 ? pagasaTrackRaw : FALLBACK_PAGASA_TRACK;
+  const jtwcTrack = jtwcTrackRaw.length >= 2 ? jtwcTrackRaw : FALLBACK_JTWC_TRACK;
+  const stormName = hasActivePhilippineTyphoon
+    ? jtwcEvent.properties?.name ?? 'Tropical Cyclone'
+    : 'No Active Philippine Typhoon Advisory';
+  const pagasaInfo = pagasaDat
+    ? {
+        stormName: pagasaDat.stormName,
+        source: 'PAGASA cyclone.dat',
+        advisoryFromIso: pagasaDat.track[0]?.timestampIso ?? null,
+        advisoryToIso: pagasaDat.latestTimestampIso,
+        alertLevel: pagasaDat.isActive ? 'Monitoring' : 'Inactive',
+        maxWindKph: Math.max(...pagasaDat.track.map((point) => point.windKph)),
+        detailsSummary: pagasaDat.isActive
+          ? 'Active PAGASA trajectory detected from cyclone.dat feed.'
+          : 'Latest PAGASA trajectory is not currently active based on timestamp.',
+      }
+    : toTyphoonInfo(pagasaEvent, stormName, 'PAGASA');
+  const jtwcInfo = toTyphoonInfo(jtwcEvent, stormName, 'JTWC');
+
+  return {
+    stormName,
+    sourceLabel: jtwcEvent.properties?.source ?? 'GDACS',
+    pagasaTrack: pagasaDat?.track && pagasaDat.track.length >= 2 ? pagasaDat.track : pagasaTrack,
+    jtwcTrack,
+    updatedAtIso: new Date().toISOString(),
+    hasActivePhilippineTyphoon: hasActivePhilippineTyphoon || Boolean(pagasaDat?.isActive),
+    pagasa: pagasaInfo,
+    jtwc: jtwcInfo,
+    recentPhilippineTyphoons,
+  };
+};
