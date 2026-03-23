@@ -347,7 +347,7 @@ export default function TropicalCycloneAnalysis({
             <div className={`rounded-lg border px-2.5 py-1.5 text-[10px] font-semibold ${feedFreshness.chipClass}`}>
               <div className="flex items-center gap-1.5">
                 <span className={`h-1.5 w-1.5 rounded-full ${feedFreshness.dotClass}`} />
-                Feed Sync: {feedFreshness.label}
+                Data Pull: {feedFreshness.label}
               </div>
               <p className="mt-0.5 text-[10px] opacity-85">{feedFreshness.age}</p>
             </div>
@@ -396,7 +396,7 @@ export default function TropicalCycloneAnalysis({
         </div>
       </header>
 
-      <div className="grid grid-cols-12 gap-6">
+      <div className="mt-2 grid grid-cols-12 gap-6">
         <div className="col-span-12 lg:col-span-8">
           <div className="relative overflow-hidden rounded-3xl border border-[#d2232a]/20 bg-gradient-to-br from-white/95 to-[#d2232a]/10 p-2 shadow-[0_20px_65px_rgba(65,64,66,0.12)]">
             <div className="absolute left-6 top-6 z-[1000] flex gap-2 rounded-full border border-[#d2232a]/20 bg-white/92 p-1 backdrop-blur-md">
@@ -420,9 +420,17 @@ export default function TropicalCycloneAnalysis({
               ))}
             </div>
 
-            <div className="h-[520px] w-full overflow-hidden rounded-2xl">
-              <MapContainer center={mapCenter} zoom={6} zoomControl={false} style={{ height: '100%', width: '100%' }}>
-                <TileLayer url={mapTileUrl} attribution="&copy; OpenStreetMap contributors" />
+            <div className="h-[620px] w-full overflow-hidden rounded-2xl">
+              <MapContainer
+                center={mapCenter}
+                zoom={6}
+                minZoom={2}
+                maxBounds={[[-85, -180], [85, 180]]}
+                maxBoundsViscosity={1.0}
+                zoomControl={false}
+                style={{ height: '100%', width: '100%' }}
+              >
+                <TileLayer url={mapTileUrl} attribution="&copy; OpenStreetMap contributors" noWrap />
 
                 {hasRenderableActiveTrack && (trackMode === 'pagasa' || trackMode === 'multi') && (
                   <>
@@ -514,25 +522,14 @@ export default function TropicalCycloneAnalysis({
               </MapContainer>
             </div>
 
-            {!hasRenderableActiveTrack ? (
-              <div className="pointer-events-none absolute inset-0 z-[900] flex items-center justify-center">
-                <div className="rounded-2xl border border-[#d2232a]/20 bg-white/92 px-4 py-3 text-center shadow-lg backdrop-blur-sm">
-                  <p className="text-xs font-bold uppercase tracking-[0.1em] text-[#911d1f]">No active incoming typhoon</p>
-                  <p className="mt-1 text-[11px] font-semibold text-[#414042]/80">
-                    Map tracks are hidden to avoid showing stale historical paths.
-                  </p>
-                </div>
+            <div className="absolute bottom-4 left-4 z-[1000] max-w-[260px] rounded-xl border border-[#d2232a]/20 bg-white p-2.5 shadow-xl">
+              <h4 className="mb-1.5 text-[9px] font-black uppercase tracking-[0.1em] text-[#414042]/80">Track Comparison</h4>
+              <div className="space-y-1.5 text-[9px] font-bold text-[#414042]">
+                <div className="flex items-center gap-1.5"><span className="h-1 w-4 rounded bg-[#d2232a]" /> PAGASA Projection {isLiveLoading ? '(loading)' : '(live/fallback)'}</div>
+                <div className="flex items-center gap-1.5"><span className="h-1 w-4 rounded bg-[#006193]" /> JTWC Projection {isLiveLoading ? '(loading)' : '(live/fallback)'}</div>
+                <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full border border-[#414042]/35 bg-white" /> BSU Campuses</div>
               </div>
-            ) : null}
-
-            <div className="absolute bottom-6 left-6 z-[1000] rounded-2xl border border-[#d2232a]/20 bg-white p-4 shadow-2xl">
-              <h4 className="mb-2 text-[10px] font-black uppercase tracking-[0.12em] text-[#414042]/80">Track Comparison</h4>
-              <div className="space-y-2 text-[10px] font-bold text-[#414042]">
-                <div className="flex items-center gap-2"><span className="h-1.5 w-6 rounded bg-[#d2232a]" /> PAGASA Projection {isLiveLoading ? '(loading)' : '(live/fallback)'}</div>
-                <div className="flex items-center gap-2"><span className="h-1.5 w-6 rounded bg-[#006193]" /> JTWC Projection {isLiveLoading ? '(loading)' : '(live/fallback)'}</div>
-                <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-full border border-[#414042]/35 bg-white" /> BSU Campuses</div>
-              </div>
-              <div className="mt-3 space-y-1 border-t border-[#d2232a]/15 pt-2 text-[10px] font-semibold text-[#414042]/80">
+              <div className="mt-2 space-y-1 border-t border-[#d2232a]/15 pt-1.5 text-[9px] font-semibold text-[#414042]/80">
                 <p>
                   PAGASA PH approach: {hasRenderableActiveTrack ? pagasaApproach.etaLabel : 'No active projected approach'}
                   {Number.isFinite(pagasaApproach.closestDistanceKm)
@@ -550,8 +547,8 @@ export default function TropicalCycloneAnalysis({
           </div>
         </div>
 
-        <div className="col-span-12 lg:col-span-4">
-          <div className="rounded-3xl border border-[#d2232a]/20 bg-white/95 p-4 shadow-[0_18px_55px_rgba(65,64,66,0.1)]">
+        <div className="col-span-12 space-y-4 lg:col-span-4 lg:flex lg:h-[620px] lg:flex-col lg:overflow-hidden">
+          <div className="rounded-3xl border border-[#d2232a]/20 bg-white/95 p-4 shadow-[0_18px_55px_rgba(65,64,66,0.1)] lg:shrink-0">
             <div className="mb-3 flex items-center justify-between gap-2">
               <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-[#414042]">Incoming Typhoon Brief</h3>
               <span className={`rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase ${hasActiveTyphoon ? 'bg-[#d2232a]/18 text-[#911d1f]' : 'bg-[#fbaf26]/22 text-[#9a6a00]'}`}>
@@ -560,6 +557,15 @@ export default function TropicalCycloneAnalysis({
             </div>
 
             <div className="space-y-2.5 text-[11px] text-[#414042]/85">
+              {!hasRenderableActiveTrack ? (
+                <div className="rounded-xl border border-[#d2232a]/20 bg-[#fff5f6] p-2.5">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#911d1f]">No active incoming typhoon</p>
+                  <p className="mt-1 text-[10px] font-semibold text-[#414042]/80">
+                    Map tracks are currently hidden to avoid displaying stale historical paths as incoming.
+                  </p>
+                </div>
+              ) : null}
+
               <div className="rounded-xl border border-[#d2232a]/20 bg-gradient-to-br from-white to-[#d2232a]/10 p-2.5">
                 <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#911d1f]">PAGASA Name</p>
                 <p className="mt-1 text-sm font-black text-[#414042]">{pagasaInfo.stormName}</p>
@@ -578,30 +584,30 @@ export default function TropicalCycloneAnalysis({
                 <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#414042]/75">Advisory Detail</p>
                 <p className="mt-1 leading-relaxed">{trackMode === 'jtwc' ? jtwcInfo.detailsSummary : pagasaInfo.detailsSummary}</p>
               </div>
-
-              <div className="rounded-xl border border-[#414042]/16 bg-white p-2.5">
-                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#414042]/75">Recent PH Typhoons</p>
-                {previousTyphoons.length > 0 ? (
-                  <div className="modern-scrollbar mt-2 max-h-[150px] space-y-1 overflow-y-auto pr-1">
-                    {previousTyphoons.slice(0, 6).map((item, index) => (
-                      <div key={`${item.name}-${item.fromIso ?? index}`} className="rounded-lg border border-[#d2232a]/12 bg-[#fff7f8] px-2 py-1.5">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="truncate text-[10px] font-bold text-[#414042]">{item.name}</p>
-                          <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold ${item.isActive ? 'bg-[#009748]/16 text-[#007e42]' : 'bg-[#414042]/10 text-[#414042]/75'}`}>
-                            {item.isActive ? 'active' : 'previous'}
-                          </span>
-                        </div>
-                        <p className="mt-0.5 text-[9px] text-[#414042]/70">
-                          {item.source} • {formatAdvisoryWindow(item.fromIso, item.toIso)}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-2 text-[10px] text-[#414042]/65">No recent Philippine typhoon records from current feed.</p>
-                )}
-              </div>
             </div>
+          </div>
+
+          <div className="rounded-3xl border border-[#d2232a]/20 bg-white/95 p-4 shadow-[0_18px_55px_rgba(65,64,66,0.1)] lg:flex-1 lg:min-h-0 lg:overflow-hidden">
+            <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-[#414042]">Previous Philippines Typhoons</h3>
+            {previousTyphoons.length > 0 ? (
+              <div className="modern-scrollbar mt-3 h-[220px] space-y-1 overflow-y-auto pr-1 lg:h-full">
+                {previousTyphoons.slice(0, 8).map((item, index) => (
+                  <div key={`${item.name}-${item.fromIso ?? index}`} className="rounded-lg border border-[#d2232a]/12 bg-[#fff7f8] px-2 py-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="truncate text-[10px] font-bold text-[#414042]">{item.name}</p>
+                      <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold ${item.isActive ? 'bg-[#009748]/16 text-[#007e42]' : 'bg-[#414042]/10 text-[#414042]/75'}`}>
+                        {item.isActive ? 'active' : 'previous'}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-[9px] text-[#414042]/70">
+                      {item.source} • {formatAdvisoryWindow(item.fromIso, item.toIso)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 text-[10px] text-[#414042]/65">No recent Philippine typhoon records from current feed.</p>
+            )}
           </div>
         </div>
       </div>
