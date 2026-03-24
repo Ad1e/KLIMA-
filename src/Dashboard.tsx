@@ -1,19 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  Activity,
-  FileSearch,
-  CloudLightning,
-  HelpCircle,
-  LogOut,
-  Eye,
-  Layers,
-  Bell,
-  User,
-} from 'lucide-react';
+import { LayoutDashboard, Activity, FileSearch, CloudLightning, HelpCircle, LogOut } from 'lucide-react';
 import bsuLogo from './assets/bsu-logo.png';
-import CampusSummary from './CampusSummary';
+import CampusSummary, { getCardStatus } from './CampusSummary';
+import type { RiskLevel } from './CampusSummary';
 import RiskMap from './RiskMap';
 import EarthquakeAnalysis from './EarthquakeAnalysis';
 import TropicalCycloneAnalysis from './TropicalCycloneAnalysis';
@@ -138,7 +128,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <div className="flex items-center gap-3 rounded-2xl border border-[#414042]/35 bg-[#414042]/12 p-4 backdrop-blur-md shadow-[0_12px_35px_rgba(65,64,66,0.25)]">
             <img src={bsuLogo} alt="BSU Logo" className="h-10 w-10 rounded-xl bg-[#414042]/96 p-1" />
             <div>
-              <h3 className="font-['Trebuchet_MS',sans-serif] text-base font-black tracking-[0.14em] text-white">KLIMA</h3>
+              <h3 className="font-['Trebuchet_MS',sans-serif] text-base font-black tracking-[0.14em] text-white">BatstateU</h3>
               <p className="font-['Trebuchet_MS',sans-serif] text-[11px] uppercase tracking-[0.16em] text-[#fbaf26]/95">Risk Alert Center</p>
             </div>
           </div>
@@ -202,20 +192,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <button className="rounded-none border border-[#d2232a]/25 bg-white p-2 text-[#414042]/80 transition-colors hover:bg-[#d2232a]/10 hover:text-[#911d1f]">
-              <Bell size={20} />
-            </button>
-            <div className="flex items-center gap-3 rounded-none border border-[#d2232a]/25 bg-white px-3 py-2 shadow-sm">
-              <div className="flex h-8 w-8 items-center justify-center rounded-none bg-gradient-to-br from-[#006193] to-[#00818e]">
-                <User size={16} className="text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-[#414042]">Admin</p>
-                <p className="text-xs text-[#414042]/80">Operator</p>
-              </div>
-            </div>
-          </div>
           </div>
         </div>
 
@@ -257,38 +233,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <div className="h-full rounded-3xl border border-[#d2232a]/20 bg-gradient-to-br from-white/96 to-[#d2232a]/8 p-6 shadow-[0_20px_65px_rgba(65,64,66,0.12)] backdrop-blur-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-[#414042]">Risk Map</h3>
-                  <div className="flex gap-2">
-                    {[
-                      {
-                        key: 'street' as const,
-                        label: 'Street',
-                        icon: <Eye size={14} className="inline mr-1" />,
-                      },
-                      {
-                        key: 'satellite' as const,
-                        label: 'Satellite',
-                        icon: <Layers size={14} className="inline mr-1" />,
-                      },
-                      { key: 'dark' as const, label: 'Dark', icon: null },
-                    ].map((mode) => (
-                      <button
-                        key={mode.key}
-                        onClick={() => setMapMode(mode.key)}
-                        className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                          mapMode === mode.key
-                            ? 'bg-[#006193] text-white'
-                            : 'border border-[#d2232a]/25 bg-white text-[#414042] hover:bg-[#d2232a]/10 hover:text-[#911d1f]'
-                        }`}
-                      >
-                        {mode.icon}
-                        {mode.label}
-                      </button>
-                    ))}
-                  </div>
                 </div>
                 <RiskMap
                   mapMode={mapMode}
                   onCampusSelect={setSelectedCampusName}
+                  campusRisks={campusWeather.map(c => ({ name: c.name, level: getCardStatus(c).level }))}
+                  isLive={isLiveWeather}
                 />
                 <div className="mt-4 grid grid-cols-3 gap-3">
                   {[
@@ -380,22 +330,29 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <p className="text-[10px] uppercase tracking-[0.12em] text-[#414042]/80">Selected Campus Metrics</p>
                   {selectedCampus ? (
                     <div className="mt-3 grid grid-cols-2 gap-3">
-                      <div className="rounded-xl border border-[#00818e]/30 bg-[#00818e]/14 px-3 py-3">
-                        <p className="text-[10px] uppercase tracking-[0.1em] text-[#414042]/80">Temperature</p>
-                        <p className="mt-1 text-xl font-extrabold text-[#006193]">{selectedCampus.heatIndex} degC</p>
-                      </div>
-                      <div className="rounded-xl border border-[#00818e]/30 bg-[#00818e]/14 px-3 py-3">
-                        <p className="text-[10px] uppercase tracking-[0.1em] text-[#414042]/80">Wind Speed</p>
-                        <p className="mt-1 text-xl font-extrabold text-[#006193]">{selectedCampus.windSpeed} km/h</p>
-                      </div>
-                      <div className="rounded-xl border border-[#00818e]/30 bg-[#00818e]/14 px-3 py-3">
-                        <p className="text-[10px] uppercase tracking-[0.1em] text-[#414042]/80">Humidity</p>
-                        <p className="mt-1 text-xl font-extrabold text-[#006193]">{selectedCampus.humidity}%</p>
-                      </div>
-                      <div className="rounded-xl border border-[#00818e]/30 bg-[#00818e]/14 px-3 py-3">
-                        <p className="text-[10px] uppercase tracking-[0.1em] text-[#414042]/80">Rain Chance</p>
-                        <p className="mt-1 text-xl font-extrabold text-[#006193]">{selectedCampus.rainPossibility}</p>
-                      </div>
+                      {[
+                        { key: 'heatIndex', label: 'Temperature', unit: '°C', value: selectedCampus.heatIndex },
+                        { key: 'windSpeed', label: 'Wind Speed', unit: 'km/h', value: selectedCampus.windSpeed },
+                        { key: 'humidity', label: 'Humidity', unit: '%', value: selectedCampus.humidity },
+                        { key: 'rain', label: 'Rainfall', unit: 'mm', value: selectedCampus.rain },
+                      ].map(metric => {
+                        const risk: RiskLevel = getCardStatus({ ...selectedCampus, [metric.key]: metric.value }).level;
+                        const colorMap: Record<RiskLevel, string> = {
+                          safe: 'border-[#009748]/30 bg-[#009748]/10 text-[#007e42]',
+                          monitor: 'border-[#fbaf26]/35 bg-[#fbaf26]/10 text-[#92610a]',
+                          caution: 'border-[#ffe066]/35 bg-[#ffe066]/10 text-[#bfa600]',
+                          warning: 'border-[#ff922b]/35 bg-[#ff922b]/10 text-[#b85c00]',
+                          danger: 'border-[#d2232a]/30 bg-[#d2232a]/8 text-[#911d1f]',
+                          risk: 'border-[#d2232a]/30 bg-[#d2232a]/8 text-[#911d1f]',
+                        };
+                        return (
+                          <div key={metric.key} className={`rounded-xl border px-3 py-3 ${colorMap[risk]}`}>
+                            <p className="text-[10px] uppercase tracking-[0.1em] text-[#414042]/80">{metric.label}</p>
+                            <p className="mt-1 text-xl font-extrabold">{metric.value} {metric.unit}</p>
+                            <span className="text-[10px] font-bold uppercase tracking-wider">{risk}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
                     <p className="mt-2 text-xs text-[#414042]/80">Select a campus on the map to view its metrics.</p>

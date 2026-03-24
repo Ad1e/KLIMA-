@@ -182,3 +182,30 @@
     border-right-color: var(--border);
   }
 }
+
+.form-box {
+  position: absolute;
+  right: 0;
+  width: 50%;
+  height: 100%;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+  text-align: center;
+  padding: 40px;
+  z-index: 1;
+  transition: 0.6s ease-in-out 1.2s, visibility 0s 1s;
+}
+
+@media (max-width: 1024px) {
+  .form-box {
+    position: static;
+    width: 100%;
+    height: auto;
+    padding: 0;
+    background: transparent;
+    transition: none;
+  }
+}

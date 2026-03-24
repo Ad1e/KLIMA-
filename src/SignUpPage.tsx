@@ -1,10 +1,14 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, Eye, EyeOff, Lock, Mail, User } from 'lucide-react'
-import bsuEntrance from './assets/bsu-entrance.jpg'
+import { Eye, EyeOff } from 'lucide-react'
+import authBg from './assets/auth-bg.jpg'
 import bsuLogo from './assets/bsu-logo.png'
 
-export default function SignUpPage() {
+interface SignUpPageProps {
+  onSignUp: () => void
+}
+
+export default function SignUpPage({ onSignUp }: SignUpPageProps) {
   const navigate = useNavigate()
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -20,24 +24,27 @@ export default function SignUpPage() {
   const handleSignUp = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    const normalizedFullName = fullName.trim()
+    const trimmedFullName = fullName.trim()
     const normalizedEmail = email.trim().toLowerCase()
+    const trimmedPassword = password.trim()
 
-    if (!normalizedFullName || !normalizedEmail || !password.trim()) {
-      setSignUpError('Enter full name, email, and password.')
-      setSignUpSuccess('')
+    if (!trimmedFullName) {
+      setSignUpError('Full name is required.')
       return
     }
 
-    if (password.length < 6) {
-      setSignUpError('Password must be at least 6 characters.')
-      setSignUpSuccess('')
+    if (!normalizedEmail) {
+      setSignUpError('Email is required.')
       return
     }
 
-    if (password !== confirmPassword) {
+    if (trimmedPassword.length < 6) {
+      setSignUpError('Password must be at least 6 characters long.')
+      return
+    }
+
+    if (trimmedPassword !== confirmPassword.trim()) {
       setSignUpError('Passwords do not match.')
-      setSignUpSuccess('')
       return
     }
 
@@ -50,171 +57,169 @@ export default function SignUpPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          full_name: normalizedFullName,
+          full_name: trimmedFullName,
           email: normalizedEmail,
-          password,
+          password: trimmedPassword,
         }),
       })
 
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok || !payload?.ok) {
-        setSignUpError(payload?.message ?? 'Sign up failed. Please try again.')
-        return
-      }
+      const data = await response.json()
 
-      setSignUpSuccess('Account created successfully. You can now sign in.')
-      setTimeout(() => {
-        navigate('/')
-      }, 1000)
+      if (response.ok) {
+        setSignUpSuccess('Account created successfully! Redirecting...')
+        setTimeout(() => {
+          localStorage.setItem('user', JSON.stringify(data.user))
+          localStorage.setItem('token', data.token)
+          onSignUp()
+          navigate('/dashboard')
+        }, 1000)
+      } else {
+        setSignUpError(data.message || 'Sign up failed. Please try again.')
+      }
     } catch {
-      setSignUpError('Cannot reach backend register service. Check if backend is running.')
+      setSignUpError('Cannot connect to the server. Please check your connection.')
     } finally {
       setIsSubmitting(false)
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#fff3f3] p-6">
-      <div className="grid h-[90vh] w-full max-w-7xl grid-cols-1 overflow-hidden rounded-[32px] bg-white shadow-2xl lg:grid-cols-2">
-        <div className="relative hidden items-center justify-center overflow-hidden bg-[linear-gradient(135deg,#4a0303_0%,#8a1111_42%,#cf2a2a_100%)] lg:flex">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(255,255,255,0.22),transparent_35%),radial-gradient(circle_at_85%_15%,rgba(255,189,189,0.22),transparent_30%),radial-gradient(circle_at_70%_75%,rgba(255,226,150,0.2),transparent_34%)]" />
-          <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.14)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.14)_1px,transparent_1px)] [background-size:44px_44px]" />
+    <div className="relative min-h-screen overflow-hidden bg-white">
+      <img
+        src={authBg}
+        alt="Background"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
 
-          <div className="relative z-10 w-full max-w-md px-8 text-white">
-            <div className="mx-auto flex h-44 w-44 items-center justify-center rounded-[2rem] border border-white/30 bg-white/15 p-4 shadow-[0_20px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-              <img
-                src={bsuLogo}
-                alt="School logo"
-                className="h-full w-full rounded-2xl object-contain"
-              />
+      <div className="absolute inset-0 bg-gradient-to-r from-slate-900/45 via-slate-900/25 to-transparent" />
+
+      <div className="relative z-10 flex items-center justify-between border-b border-white/15 bg-white/5 px-8 py-6 backdrop-blur-md">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 backdrop-blur-md border border-white/20 transition hover:bg-white/15">
+            <img src={bsuLogo} alt="Logo" className="h-9 w-9 object-contain" />
+          </div>
+          <div>
+            <span className="block text-lg font-black text-white tracking-[-0.01em]">BatstateU</span>
+            <span className="block text-[10px] uppercase tracking-[0.15em] text-white/60">Risk Intelligence</span>
+          </div>
+        </div>
+        <button className="rounded-xl bg-white px-8 py-2.5 text-sm font-bold text-slate-900 shadow-[0_12px_32px_rgba(255,255,255,0.2)] transition hover:bg-white/95 hover:shadow-[0_16px_40px_rgba(255,255,255,0.3)]">
+          Get in touch
+        </button>
+      </div>
+
+      <div className="relative z-10 flex min-h-[calc(100vh-80px)] items-center justify-between gap-12 px-8 sm:px-12 md:px-16 lg:px-20 py-12">
+        <div className="max-w-2xl text-white flex-1">
+          <div className="space-y-6">
+            <div>
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.4em] text-white/70 drop-shadow-lg">Platform Overview</p>
+              <h1 className="text-6xl sm:text-7xl md:text-8xl font-black leading-[0.95] tracking-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
+                EXPLORE
+                <br />
+                HORIZONS
+              </h1>
             </div>
-
-            <div className="mt-8 rounded-3xl border border-white/25 bg-white/10 px-7 py-6 text-center backdrop-blur-md">
-              <h2 className="mt-3 text-white">
-                <span className="block text-5xl font-extrabold tracking-[0.06em]">KLIMA</span>
-                <span className="mt-1 block text-xl font-semibold tracking-[0.02em] text-white/90">
-                  Local Risk Assessment
-                </span>
-              </h2>
-              <p className="mt-3 text-sm text-white/85">Batangas State University</p>
+            <p className="max-w-lg text-lg text-white/90 font-light leading-relaxed drop-shadow-md">
+              Join thousands accessing real-time risk assessments and intelligent insights for your area.
+            </p>
+            <div className="flex gap-4 pt-4">
+              <div className="h-1 w-12 bg-gradient-to-r from-blue-400 to-transparent rounded-full" />
             </div>
           </div>
         </div>
 
-        <div className="relative flex items-center justify-center overflow-hidden px-6 py-10 sm:px-10">
-          <img
-            src={bsuEntrance}
-            alt="Batangas State University entrance"
-            className="absolute inset-0 h-full w-full object-cover object-center"
-          />
-          <div className="absolute inset-0 bg-black/10" />
+        <div className="w-full max-w-sm shrink-0 flex-shrink-0 min-h-[540px]">
+          <div className="rounded-2xl border border-white/25 bg-white/97 backdrop-blur-xl shadow-[0_40px_80px_rgba(0,0,0,0.35),0_0_1px_rgba(255,255,255,0.5)] p-10 pb-12">
+            <div className="mb-8">
+              <h2 className="text-2xl font-black text-slate-900 tracking-[-0.01em]">Create Account</h2>
+              <p className="mt-2 text-sm text-slate-500 font-medium">Join us to start exploring risk data</p>
+            </div>
 
-          <div className="relative z-10 w-full max-w-md overflow-hidden rounded-[28px] border border-white/50 bg-white p-8 shadow-[0_18px_60px_rgba(15,23,42,0.12)] sm:p-10">
-            <div className="absolute inset-0 bg-white/90" />
-
-            <div className="relative z-10">
-              <div className="mb-8">
-                <h1 className="text-4xl font-bold tracking-tight text-slate-900">Sign Up</h1>
+            <form className="space-y-5" onSubmit={handleSignUp}>
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-[0.1em]">Full Name</label>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Your full name"
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 transition focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                />
               </div>
 
-              <form className="space-y-5 pb-1" onSubmit={handleSignUp}>
-                <div className="group relative">
-                  <label className="absolute -top-2.5 left-4 bg-white px-2 text-xs font-medium text-slate-500 transition-all group-focus-within:text-indigo-600">
-                    Full Name
-                  </label>
-                  <div className="flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm transition-all duration-200 group-focus-within:border-indigo-500 group-focus-within:shadow-[0_0_0_6px_rgba(99,102,241,0.08)]">
-                    <User className="mr-3 h-5 w-5 text-slate-400" />
-                    <input
-                      type="text"
-                      value={fullName}
-                      onChange={(event) => setFullName(event.target.value)}
-                      placeholder="Enter your full name"
-                      className="w-full bg-transparent text-slate-800 placeholder:text-slate-400 outline-none"
-                    />
-                  </div>
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-[0.1em]">Email Address</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 transition focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-[0.1em]">Password</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 transition focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-600"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
+              </div>
 
-                <div className="group relative">
-                  <label className="absolute -top-2.5 left-4 bg-white px-2 text-xs font-medium text-slate-500 transition-all group-focus-within:text-indigo-600">
-                    Email
-                  </label>
-                  <div className="flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm transition-all duration-200 group-focus-within:border-indigo-500 group-focus-within:shadow-[0_0_0_6px_rgba(99,102,241,0.08)]">
-                    <Mail className="mr-3 h-5 w-5 text-slate-400" />
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                      placeholder="Enter your email"
-                      className="w-full bg-transparent text-slate-800 placeholder:text-slate-400 outline-none"
-                    />
-                  </div>
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-[0.1em]">Confirm Password</label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 transition focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-600"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
+              </div>
 
-                <div className="group relative">
-                  <label className="absolute -top-2.5 left-4 bg-white px-2 text-xs font-medium text-slate-500 transition-all group-focus-within:text-indigo-600">
-                    Password
-                  </label>
-                  <div className="flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm transition-all duration-200 group-focus-within:border-indigo-500 group-focus-within:shadow-[0_0_0_6px_rgba(99,102,241,0.08)]">
-                    <Lock className="mr-3 h-5 w-5 text-slate-400" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                      placeholder="Create a password"
-                      className="w-full bg-transparent pr-10 text-slate-800 placeholder:text-slate-400 outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((value) => !value)}
-                      className="ml-2 text-slate-500 transition hover:text-slate-700"
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    >
-                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
-                  </div>
-                </div>
+              {signUpError ? <p className="text-sm text-rose-600 font-medium">{signUpError}</p> : null}
+              {signUpSuccess ? <p className="text-sm text-emerald-700 font-medium">{signUpSuccess}</p> : null}
 
-                <div className="group relative">
-                  <label className="absolute -top-2.5 left-4 bg-white px-2 text-xs font-medium text-slate-500 transition-all group-focus-within:text-indigo-600">
-                    Confirm Password
-                  </label>
-                  <div className="flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm transition-all duration-200 group-focus-within:border-indigo-500 group-focus-within:shadow-[0_0_0_6px_rgba(99,102,241,0.08)]">
-                    <Lock className="mr-3 h-5 w-5 text-slate-400" />
-                    <input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      value={confirmPassword}
-                      onChange={(event) => setConfirmPassword(event.target.value)}
-                      placeholder="Confirm your password"
-                      className="w-full bg-transparent pr-10 text-slate-800 placeholder:text-slate-400 outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword((value) => !value)}
-                      className="ml-2 text-slate-500 transition hover:text-slate-700"
-                      aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
-                    >
-                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
-                  </div>
-                </div>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3.5 text-sm font-bold text-white shadow-[0_16px_32px_rgba(37,99,235,0.3)] transition hover:shadow-[0_20px_40px_rgba(37,99,235,0.4)] hover:brightness-105 disabled:opacity-60 uppercase tracking-[0.05em]"
+              >
+                {isSubmitting ? 'Creating Account...' : 'CREATE ACCOUNT'}
+              </button>
+            </form>
 
-                {signUpError ? <p className="text-sm text-red-600">{signUpError}</p> : null}
-                {signUpSuccess ? <p className="text-sm text-emerald-700">{signUpSuccess}</p> : null}
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="group relative flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#b91c1c] to-[#ef4444] px-5 py-4 text-base font-semibold text-white shadow-[0_12px_30px_rgba(239,68,68,0.35)] transition-all duration-200 hover:scale-[1.01] hover:shadow-[0_16px_40px_rgba(239,68,68,0.45)] active:scale-[0.99]"
-                >
-                  {isSubmitting ? 'Creating Account...' : 'Create Account'}
-                  <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-                  <span className="absolute inset-0 rounded-2xl bg-white/10 opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-100" />
-                </button>
-              </form>
-
-              <p className="mt-6 text-center text-sm text-slate-600">
+            <div className="flex flex-col gap-4 mt-6">
+              <div className="flex items-center gap-4">
+                <div className="h-px flex-1 bg-white/10" />
+                <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">or</span>
+                <div className="h-px flex-1 bg-white/10" />
+              </div>
+              {/* Google sign up removed as requested */}
+              <p className="text-center text-sm text-slate-600 font-medium">
                 Already have an account?{' '}
-                <Link to="/" className="font-semibold text-red-700 hover:text-red-800">
+                <Link to="/" className="font-bold text-blue-600 hover:text-blue-700 transition">
                   Sign In
                 </Link>
               </p>

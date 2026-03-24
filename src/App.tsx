@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState } from 'react';
-import LoginPage from './LoginPage';
-import SignUpPage from './SignUpPage';
+import AuthPage from './AuthPage';
 import Dashboard from './Dashboard';
 
 export default function App() {
@@ -12,11 +11,11 @@ export default function App() {
       <Routes>
         <Route 
           path="/" 
-          element={isLoggedIn ? <Navigate to="/dashboard" /> : <LoginPage onLogin={() => setIsLoggedIn(true)} />} 
+          element={isLoggedIn ? <Navigate to="/dashboard" /> : <AuthPage onLogin={() => setIsLoggedIn(true)} onSignUp={() => setIsLoggedIn(true)} />} 
         />
         <Route
           path="/signup"
-          element={isLoggedIn ? <Navigate to="/dashboard" /> : <SignUpPage />}
+          element={isLoggedIn ? <Navigate to="/dashboard" /> : <AuthPage onLogin={() => setIsLoggedIn(true)} onSignUp={() => setIsLoggedIn(true)} />}
         />
         <Route 
           path="/dashboard" 

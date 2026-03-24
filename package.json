@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@pagasa-parser/source-pdf": "^1.1.9",
+    "framer-motion": "^12.38.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.577.0",
     "openmeteo": "^1.2.3",

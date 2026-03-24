@@ -1,0 +1,24 @@
+To do List
+Summary:
+Redesign the “Local Risk Assessment” campus summary cards for clarity, visual hierarchy, and quick scanning. Focus on a modern, readable, and less crowded layout that uses color to instantly communicate campus status.
+
+Color Rules (Kulay):
+- Safe = green
+- Monitoring = orange
+- Risk/Warning = red
+Apply these colors to the status badge, card accent/border, summary banner, and any indicator icons.
+
+Visual Representation:
+- Each card shows:
+  1. Campus name
+  2. Status badge (colored by status)
+  3. Short description sentence
+  4. 3–5 key metrics (e.g., Rainfall, Humidity, Wind, Visibility, Temperature)
+  5. Secondary metrics in a lighter, less prominent section
+  6. Bottom summary banner (e.g., “No warning”, “Monitoring required”)
+- Use strong spacing, large text for important info, minimal borders, and a modern, soft card style.
+- The card’s accent/border and status badge/banner use the status color for instant recognition.
+- Safe cards feel calm, monitoring cards are noticeable but not alarming, and risk cards are attention-grabbing.
+
+Description:
+The campus card layout is designed for instant readability and status recognition. The most important information (campus name, status, and a short description) is visually dominant. Key metrics are easy to scan, while technical details are de-emphasized. The card’s color accent and status badge/banner reflect the campus condition, making it easy for users to identify safe, monitoring, or risky campuses at a glance. The overall style is modern, soft, and consistent with BatStateU’s red risk-alert theme.
