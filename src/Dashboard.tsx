@@ -306,24 +306,68 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     <p className="text-[10px] uppercase tracking-[0.12em] text-[#414042]/80">Total Rainfall</p>
                     <p className="mt-1 text-2xl font-extrabold text-[#414042]">{observationSummary.totalRain} mm</p>
                   </div>
-                  <div className="col-span-1 rounded-xl border border-[#d2232a]/20 bg-white/92 p-2.5">
-                    <p className="text-[10px] uppercase tracking-[0.12em] text-[#414042]/80">Highest Rain Campus</p>
-                    <p className="mt-1 text-xs font-semibold text-[#414042]">
-                      {observationSummary.topRainCampus?.name ?? 'N/A'}
-                    </p>
-                    <p className="text-[11px] text-[#414042]/80">
-                      {observationSummary.topRainCampus?.rain ?? '0.00'} mm rain
-                    </p>
-                  </div>
-                  <div className="col-span-1 rounded-xl border border-[#d2232a]/20 bg-white/92 p-2.5">
-                    <p className="text-[10px] uppercase tracking-[0.12em] text-[#414042]/80">Strongest Wind</p>
-                    <p className="mt-1 text-xs font-semibold text-[#414042]">
-                      {observationSummary.strongestWind?.name ?? 'N/A'}
-                    </p>
-                    <p className="text-[11px] text-[#414042]/80">
-                      {observationSummary.strongestWind?.windSpeed ?? '0'} km/h
-                    </p>
-                  </div>
+                  {/* Campuses Exceeding Any Risk Threshold */}
+                  {(() => {
+                    // List of metrics to check
+                    const METRICS = [
+                      { key: 'rain', label: 'Rainfall', unit: 'mm', threshold: 30 },
+                      { key: 'windSpeed', label: 'Wind Speed', unit: 'km/h', threshold: 60 },
+                      { key: 'heatIndex', label: 'Temperature', unit: '°C', threshold: 39 },
+                      { key: 'humidity', label: 'Humidity', unit: '%', threshold: 90 },
+                      { key: 'dewPoint', label: 'Dew Point', unit: '°C', threshold: 28 },
+                      { key: 'windGust', label: 'Wind Gust', unit: 'km/h', threshold: 80 },
+                      { key: 'visibility', label: 'Visibility', unit: 'km', threshold: 2, inverted: true },
+                    ] as const;
+
+                    type MetricKey = 'rain' | 'windSpeed' | 'heatIndex' | 'humidity' | 'dewpoint' | 'windGust' | 'visibility';
+                    const getMetricValue = (campus: CampusWeather, key: MetricKey): number | undefined => {
+                      if (key === 'rain') return Number(campus.rain);
+                      if (key === 'windSpeed') return Number(campus.windSpeed);
+                      if (key === 'heatIndex') return Number(campus.heatIndex);
+                      if (key === 'humidity') return Number(campus.humidity);
+                      if (key === 'dewpoint') return Number(campus.dewpoint);
+                      if (key === 'windGust') return Number(campus.windGust);
+                      if (key === 'visibility') return Number(campus.visibility);
+                      return undefined;
+                    };
+                    // Find all campuses with any metric exceeding its risk threshold
+                    const exceeded = campusWeather.flatMap(campus => {
+                      const exceededMetrics = METRICS.filter(metric => {
+                        const value = getMetricValue(campus, metric.key as MetricKey);
+                        if (value === undefined || isNaN(value)) return false;
+                        if ('inverted' in metric && metric.inverted) return value < metric.threshold;
+                        return value >= metric.threshold;
+                      });
+                      if (exceededMetrics.length === 0) return [];
+                      return [{ campus, exceededMetrics }];
+                    });
+                    if (exceeded.length === 0) return null;
+                    const colorMap = {
+                      safe: 'border-[#009748]/30 bg-[#009748]/10 text-[#007e42]',
+                      monitor: 'border-[#ffd600]/35 bg-[#ffd600]/10 text-[#bfa600]', // strong yellow
+                      caution: 'border-[#ffe066]/35 bg-[#ffe066]/10 text-[#bfa600]',
+                      warning: 'border-[#ff922b]/35 bg-[#ff922b]/10 text-[#b85c00]',
+                      danger: 'border-[#d2232a]/30 bg-[#d2232a]/8 text-[#911d1f]',
+                      risk: 'border-[#d2232a]/30 bg-[#d2232a]/8 text-[#911d1f]',
+                    };
+                    return exceeded.map(({ campus, exceededMetrics }) => {
+                      const risk = getCardStatus(campus).level;
+                      return (
+                        <div key={campus.name + '-exceeded'} className={`col-span-1 rounded-xl border p-2.5 ${colorMap[risk]}`}>
+                          <p className="text-[10px] uppercase tracking-[0.12em]">Exceeded</p>
+                          <p className="mt-1 text-xs font-semibold">{campus.name}</p>
+                          <ul className="text-[11px] ml-2 list-disc">
+                            {exceededMetrics.map(metric => (
+                              <li key={metric.key}>
+                                {metric.label}: {getMetricValue(campus, metric.key as MetricKey)} {metric.unit}
+                              </li>
+                            ))}
+                          </ul>
+                          <span className="text-[10px] font-bold uppercase tracking-wider">{risk}</span>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
 
                 <div className="mt-4 rounded-xl border border-[#d2232a]/20 bg-white/92 p-4">

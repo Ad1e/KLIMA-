@@ -8,6 +8,7 @@ interface LoginPageProps {
   onLogin: () => void;
 }
 
+
 export default function LoginPage({ onLogin }: LoginPageProps) {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -20,6 +21,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const [resetEmail, setResetEmail] = useState('');
   const [resetStatus, setResetStatus] = useState<'idle' | 'sent'>('idle');
   const [emailError, setEmailError] = useState('');
+
+  // Track focus state for email and password
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
 
   const backendBaseUrl = import.meta.env.VITE_BACKEND_API_URL ?? 'http://localhost:4000';
 
@@ -128,12 +133,14 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   id="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full rounded-xl border border-white/20 bg-white/5 px-4 pb-2.5 pt-6 text-sm text-white transition-all duration-300 focus:border-[#d2232a] focus:bg-white/10 focus:outline-none focus:ring-1 focus:ring-[#d2232a] peer"
+                  onFocus={() => setEmailFocused(true)}
+                  onBlur={() => setEmailFocused(false)}
+                  className="block w-full rounded-xl border border-white/20 px-4 pb-2.5 pt-6 text-sm transition-all duration-300 focus:border-[#d2232a] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#d2232a] peer bg-white text-black placeholder-black"
                   placeholder=" "
                 />
                 <label
                   htmlFor="email"
-                  className="absolute start-4 top-4 z-10 origin-[0] -translate-y-3 scale-75 transform text-sm text-white/60 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-3 peer-focus:scale-75 peer-focus:text-[#d2232a]"
+                  className="absolute start-4 top-4 z-10 origin-[0] -translate-y-3 scale-75 transform text-sm text-black duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-3 peer-focus:scale-75 peer-focus:text-[#d2232a]"
                 >
                   Email Address
                 </label>
@@ -145,19 +152,21 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full rounded-xl border border-white/20 bg-white/5 px-4 pb-2.5 pt-6 text-sm text-white transition-all duration-300 focus:border-[#d2232a] focus:bg-white/10 focus:outline-none focus:ring-1 focus:ring-[#d2232a] peer pr-12"
+                  onFocus={() => setPasswordFocused(true)}
+                  onBlur={() => setPasswordFocused(false)}
+                  className="block w-full rounded-xl border border-white/20 px-4 pb-2.5 pt-6 text-sm transition-all duration-300 focus:border-[#d2232a] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#d2232a] peer pr-12 bg-white text-black placeholder-black"
                   placeholder=" "
                 />
                 <label
                   htmlFor="password"
-                  className="absolute start-4 top-4 z-10 origin-[0] -translate-y-3 scale-75 transform text-sm text-white/60 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-3 peer-focus:scale-75 peer-focus:text-[#d2232a]"
+                  className="absolute start-4 top-4 z-10 origin-[0] -translate-y-3 scale-75 transform text-sm text-black duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-3 peer-focus:scale-75 peer-focus:text-[#d2232a]"
                 >
                   Password
                 </label>
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-white focus:outline-none"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-700 transition-colors hover:text-[#d2232a] focus:outline-none"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import TypingAnimation from './components/TypingAnimation'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff } from 'lucide-react'
@@ -180,14 +181,12 @@ export default function AuthPage({ onLogin, onSignUp }: AuthPageProps) {
       <div className="relative z-10 flex min-h-[calc(100vh-100px)] flex-col lg:flex-row items-center justify-between gap-12 px-8 py-12 sm:px-12 lg:px-20">
         {/* Left side - Hero content */}
         <div className="w-full flex-1 max-w-2xl text-center lg:text-left">
-          <p className="mb-4 text-sm font-bold uppercase tracking-[0.3em] text-white/80">Platform Overview</p>
-          <h1 className="text-5xl sm:text-7xl font-black leading-[1.1] text-white tracking-tight mb-6">
+          <p className="mb-4 text-2xl sm:text-3xl font-extrabold uppercase tracking-[0.3em] text-white/90">Platform Overview</p>
+          <h1 className="text-6xl sm:text-8xl font-black leading-[1.1] text-white tracking-tight mb-8">
             Explore <br className="hidden lg:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#d2232a] to-[#911d1f]">
-              Horizons
-            </span>
+            <TypingAnimation />
           </h1>
-          <p className="mx-auto lg:mx-0 max-w-lg text-lg text-white/80 font-light leading-relaxed">
+          <p className="mx-auto lg:mx-0 max-w-2xl text-2xl text-white/90 font-medium leading-relaxed">
             Access real-time risk assessments and make informed decisions with our comprehensive intelligence platform.
           </p>
         </div>

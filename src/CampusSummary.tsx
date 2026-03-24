@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import bsuLogo from './assets/bsu-logo.png';
 import {
   CloudRain,
@@ -29,7 +30,7 @@ export interface CampusWeather {
   rainPossibility: string;
   visibility?: number | string;
   heatIndex: number | string;
-  dewPoint?: number | string;
+  dewpoint?: number | string;
   windDirection?: string;
   cloudCover?: string;
   warning: boolean;
@@ -50,21 +51,21 @@ const THRESHOLDS = {
   windGust: { monitor: 50, risk: 80, unit: 'km/h', label: 'Wind Gust', icon: Zap, desc: 'Normal: <50km/h, Monitor: 50–80km/h, Risk: >80km/h' },
   // Four-level threshold for heatIndex
   heatIndex: {
-    caution: 32, // yellow
+    monitor: 32, // yellow
     warning: 36, // orange
     danger: 39, // red
     unit: '°C',
     label: 'Temperature',
     icon: Thermometer,
-    desc: 'Normal: <32°C, Caution: 32–36°C, Warning: 36–39°C, Danger: ≥39°C',
+    desc: 'Normal: <32°C, Monitor: 32–36°C, Warning: 36–39°C, Danger: ≥39°C',
   },
-  dewPoint: { monitor: 24, risk: 28, unit: '°C', label: 'Dew Point', icon: Droplets, desc: 'Normal: <24°C, Monitor: 24–28°C, Risk: >28°C' },
+  dewpoint: { monitor: 24, risk: 28, unit: '°C', label: 'Dew Point', icon: Droplets, desc: 'Normal: <24°C, Monitor: 24–28°C, Risk: >28°C' },
   visibility: { monitor: 5, risk: 2, unit: 'km', label: 'Visibility', icon: Eye, invertedLow: true, desc: 'Normal: >5km, Monitor: 2–5km, Risk: <2km' },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-export type RiskLevel = 'safe' | 'caution' | 'warning' | 'danger' | 'monitor' | 'risk';
+export type RiskLevel = 'safe' | 'monitor' | 'warning' | 'danger' | 'risk';
 
 export function getRiskLevel(value: number | string, key: keyof typeof THRESHOLDS): RiskLevel {
   const v = Number(value);
@@ -74,7 +75,7 @@ export function getRiskLevel(value: number | string, key: keyof typeof THRESHOLD
     const hi = t as typeof THRESHOLDS['heatIndex'];
     if (v >= hi.danger) return 'danger';
     if (v >= hi.warning) return 'warning';
-    if (v >= hi.caution) return 'caution';
+    if (v >= hi.monitor) return 'monitor';
     return 'safe';
   }
   if ('invertedLow' in t && (t as any).invertedLow) {
@@ -94,11 +95,11 @@ export function getCardStatus(campus: CampusWeather): { level: RiskLevel; reason
     ['windSpeed', campus.windSpeed],
     ['windGust', campus.windGust],
     ['heatIndex', campus.heatIndex],
-    ['dewPoint', campus.dewPoint],
+    ['dewpoint', campus.dewpoint],
     ['visibility', campus.visibility],
   ];
   // Priority order from highest to lowest
-  const priority: RiskLevel[] = ['danger', 'risk', 'warning', 'monitor', 'caution', 'safe'];
+  const priority: RiskLevel[] = ['danger', 'risk', 'warning', 'monitor', 'safe'];
   let found: Partial<Record<RiskLevel, string[]>> = {};
   for (const [key, val] of checks) {
     if (val === undefined || val === null) continue;
@@ -188,15 +189,15 @@ const STATUS_CONFIG = {
     emoji: '⚠️',
     banner: 'Monitoring required. Stay alert.',
     message: 'Some metrics need attention.',
-    gradient: 'from-[#fffbeb] via-white to-[#fef3c7]',
-    border: 'border-[#fbaf26]/40',
-    badgeBg: 'bg-[#fbaf26]/14 border-[#fbaf26]/50',
-    badgeText: 'text-[#92610a]',
-    bannerBg: 'bg-[#fbaf26]/12 border-[#fbaf26]/35',
-    bannerText: 'text-[#92610a]',
-    glow: 'shadow-[0_0_0_1px_rgba(251,175,38,0.2),0_20px_60px_rgba(251,175,38,0.12)]',
-    accent: '#fbaf26',
-    dot: 'bg-[#fbaf26]',
+    gradient: 'from-[#fffde7] via-white to-[#fff176]', // stronger yellow
+    border: 'border-[#ffd600]/40',
+    badgeBg: 'bg-[#ffd600]/14 border-[#ffd600]/50',
+    badgeText: 'text-[#bfa600]',
+    bannerBg: 'bg-[#ffd600]/12 border-[#ffd600]/35',
+    bannerText: 'text-[#bfa600]',
+    glow: 'shadow-[0_0_0_1px_rgba(255,214,0,0.2),0_20px_60px_rgba(255,214,0,0.12)]',
+    accent: '#ffd600',
+    dot: 'bg-[#ffd600]',
   },
   risk: {
     label: 'Risk',
@@ -220,16 +221,41 @@ const STATUS_CONFIG = {
 
 function Tooltip({ text }: { text: string }) {
   const [show, setShow] = useState(false);
+  const iconRef = useRef<HTMLSpanElement>(null);
+  const [tooltipPos, setTooltipPos] = useState<{top: number, left: number} | null>(null);
+
+  useLayoutEffect(() => {
+    if (show && iconRef.current) {
+      const rect = iconRef.current.getBoundingClientRect();
+      setTooltipPos({
+        top: rect.top + window.scrollY - 8, // adjust as needed
+        left: rect.left + window.scrollX + 24 // adjust as needed
+      });
+    }
+  }, [show]);
+
   return (
-    <span className="relative inline-flex" onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
+    <span
+      ref={iconRef}
+      className="relative inline-flex"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
       <Info size={11} className="cursor-help text-[#414042]/40 hover:text-[#006193] transition-colors" aria-label="Threshold info" />
-      {show && (
+      {show && tooltipPos && createPortal(
         <span
           role="tooltip"
-          className="pointer-events-none absolute -top-1 left-4 z-50 w-52 rounded-xl border border-[#414042]/15 bg-white/98 px-3 py-2 text-[10px] leading-relaxed text-[#414042] shadow-xl backdrop-blur-md"
+          style={{
+            position: 'absolute',
+            top: tooltipPos.top,
+            left: tooltipPos.left,
+            zIndex: 9999,
+          }}
+          className="pointer-events-none w-52 rounded-xl border border-[#414042]/15 bg-white/98 px-3 py-2 text-[10px] leading-relaxed text-[#414042] shadow-xl backdrop-blur-md"
         >
           {text}
-        </span>
+        </span>,
+        document.body
       )}
     </span>
   );
@@ -273,7 +299,7 @@ function MetricRow({ metricKey, value }: MetricRowProps) {
             {risk}
           </span>
         )}
-        <span className={`text-xs font-bold ${isAlert ? '' : 'text-[#414042]'}`}>
+        <span className={`text-xs font-bold ${isAlert ? '' : 'text-black'}`}>
           {value !== undefined ? `${value}${t.unit}` : '—'}
         </span>
       </div>
@@ -290,7 +316,7 @@ function CampusCard({ campus }: { campus: CampusWeather }) {
   const StatusIcon = cfg.icon;
 
   const primaryMetrics: Array<keyof typeof THRESHOLDS> = ['rain', 'humidity', 'windSpeed', 'heatIndex'];
-  const secondaryMetrics: Array<keyof typeof THRESHOLDS> = ['windGust', 'visibility', 'dewPoint'];
+  const secondaryMetrics: Array<keyof typeof THRESHOLDS> = ['windGust', 'visibility', 'dewpoint'];
 
   const getValue = (key: keyof typeof THRESHOLDS): number | string | undefined => {
     const map: Record<keyof typeof THRESHOLDS, number | string | undefined> = {
@@ -299,7 +325,7 @@ function CampusCard({ campus }: { campus: CampusWeather }) {
       windSpeed: campus.windSpeed,
       windGust: campus.windGust,
       heatIndex: campus.heatIndex,
-      dewPoint: campus.dewPoint,
+      dewpoint: campus.dewpoint,
       visibility: campus.visibility,
     };
     return map[key];
@@ -366,17 +392,17 @@ function CampusCard({ campus }: { campus: CampusWeather }) {
           <div className="flex flex-col items-center rounded-lg border border-[#414042]/10 bg-white/60 py-1.5 px-2 text-center">
             <TrendingUp size={11} className="mb-0.5 text-[#414042]/50" aria-hidden="true" />
             <span className="text-[9px] text-[#414042]/60">Rain %</span>
-            <span className="text-[11px] font-bold text-[#414042]">{campus.rainPossibility ?? '—'}</span>
+            <span className="text-[11px] font-bold text-black">{campus.rainPossibility ?? '—'}</span>
           </div>
           <div className="flex flex-col items-center rounded-lg border border-[#414042]/10 bg-white/60 py-1.5 px-2 text-center">
             <Compass size={11} className="mb-0.5 text-[#414042]/50" aria-hidden="true" />
             <span className="text-[9px] text-[#414042]/60">Wind Dir</span>
-            <span className="text-[11px] font-bold text-[#414042]">{campus.windDirection ?? '—'}</span>
+            <span className="text-[11px] font-bold text-black">{campus.windDirection ?? '—'}</span>
           </div>
           <div className="flex flex-col items-center rounded-lg border border-[#414042]/10 bg-white/60 py-1.5 px-2 text-center">
             <Cloud size={11} className="mb-0.5 text-[#414042]/50" aria-hidden="true" />
             <span className="text-[9px] text-[#414042]/60">Cloud</span>
-            <span className="text-[11px] font-bold text-[#414042]">{campus.cloudCover ?? '—'}</span>
+            <span className="text-[11px] font-bold text-black">{campus.cloudCover ?? '—'}</span>
           </div>
         </div>
 
@@ -492,10 +518,11 @@ export default function CampusSummary({ campusData, dataSource }: CampusSummaryP
       <SummaryStatsBar campusData={campusData} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-        {campusData.map(campus => (
-          <CampusCard key={campus.name} campus={campus} />
+        {campusData.map((campus, idx) => (
+          <CampusCard key={campus.name + '-' + idx} campus={campus} />
         ))}
       </div>
     </section>
   );
 }
+  
