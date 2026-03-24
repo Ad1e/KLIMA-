@@ -23,6 +23,29 @@ import {
 } from 'lucide-react';
 import bsuLogo from './assets/bsu-logo.png';
 import ForecastChart from './components/ForecastChart';
+import { getRiskLevel } from './CampusSummary';
+
+// Risk color mapping function
+const RISK_COLORS: Record<string, string> = {
+  safe: '#009748',
+  monitor: '#fbaf26',
+  warning: '#ff922b',
+  risk: '#ff922b',
+  danger: '#d2232a',
+};
+
+function getRiskColor(data: any[], key: string): string {
+  // Find the highest risk level in the data for this metric
+  let maxLevel: string = 'safe';
+  const levels = ['safe', 'monitor', 'warning', 'risk', 'danger'];
+  for (const point of data) {
+    const level = getRiskLevel(point[key], key as any);
+    if (levels.indexOf(level) > levels.indexOf(maxLevel)) {
+      maxLevel = level;
+    }
+  }
+  return RISK_COLORS[maxLevel] || '#009748';
+}
 import { CAMPUSES, fetchOpenMeteoForecast } from './services/weather';
 import { forecastData } from './data/forecastData';
 
@@ -950,14 +973,22 @@ export default function DetailedSiteAnalysis() {
                 </div>
               </div>
 
+
               <ForecastChart
                 title="Rainfall Forecast"
                 subtitle={`Next ${forecastHorizon} hours (mm)`}
                 data={scenarioAdjustedForecast}
                 xKey="time"
                 unit="mm"
-                series={[{ key: 'rain', label: 'Rainfall', color: '#fbaf26' }]}
+                series={[
+                  {
+                    key: 'rain',
+                    label: 'Rainfall',
+                    color: getRiskColor(scenarioAdjustedForecast, 'rain'),
+                  },
+                ]}
               />
+
 
               <ForecastChart
                 title="Wind Speed & Gust"
@@ -966,13 +997,22 @@ export default function DetailedSiteAnalysis() {
                 xKey="time"
                 unit="kph"
                 series={[
-                  { key: 'wind', label: 'Wind Speed', color: '#fbaf26' },
-                  { key: 'gust', label: 'Wind Gust', color: '#911d1f' },
+                  {
+                    key: 'wind',
+                    label: 'Wind Speed',
+                    color: getRiskColor(scenarioAdjustedForecast, 'wind'),
+                  },
+                  {
+                    key: 'gust',
+                    label: 'Wind Gust',
+                    color: getRiskColor(scenarioAdjustedForecast, 'gust'),
+                  },
                 ]}
               />
             </div>
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+
               <ForecastChart
                 title="Rainfall Outlook (24h)"
                 subtitle="Expected rainfall trend for the next 24 hours"
@@ -980,8 +1020,15 @@ export default function DetailedSiteAnalysis() {
                 xKey="time"
                 unit="mm"
                 chartType="area"
-                series={[{ key: 'rain', label: '24h Rainfall', color: '#fbaf26' }]}
+                series={[
+                  {
+                    key: 'rain',
+                    label: '24h Rainfall',
+                    color: getRiskColor(horizon24Data, 'rain'),
+                  },
+                ]}
               />
+
 
               <ForecastChart
                 title="Wind Speed and Gust Outlook (24h)"
@@ -990,8 +1037,16 @@ export default function DetailedSiteAnalysis() {
                 xKey="time"
                 unit="kph"
                 series={[
-                  { key: 'wind', label: 'Wind Speed', color: '#fbaf26' },
-                  { key: 'gust', label: 'Wind Gust', color: '#911d1f' },
+                  {
+                    key: 'wind',
+                    label: 'Wind Speed',
+                    color: getRiskColor(horizon24Data, 'wind'),
+                  },
+                  {
+                    key: 'gust',
+                    label: 'Wind Gust',
+                    color: getRiskColor(horizon24Data, 'gust'),
+                  },
                 ]}
               />
             </div>
@@ -1005,7 +1060,13 @@ export default function DetailedSiteAnalysis() {
                 unit="%"
                 chartType="area"
                 yDomain={[65, 95]}
-                series={[{ key: 'humidity', label: 'Humidity', color: '#009748' }]}
+                series={[
+                  {
+                    key: 'humidity',
+                    label: 'Humidity',
+                    color: getRiskColor(scenarioAdjustedForecast, 'humidity'),
+                  },
+                ]}
               />
               <ForecastChart
                 title="Atmospheric Pressure Trend"
@@ -1015,7 +1076,13 @@ export default function DetailedSiteAnalysis() {
                 unit="hPa"
                 chartType="area"
                 yDomain={[1006, 1014]}
-                series={[{ key: 'pressure', label: 'Pressure', color: '#009748' }]}
+                series={[
+                  {
+                    key: 'pressure',
+                    label: 'Pressure',
+                    color: getRiskColor(scenarioAdjustedForecast, 'pressure'),
+                  },
+                ]}
               />
             </div>
           </section>
