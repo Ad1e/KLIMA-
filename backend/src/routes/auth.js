@@ -5,7 +5,7 @@ import pool from '../db.js';
 const router = Router();
 
 router.post('/register', async (req, res) => {
-  const fullName = String(req.body?.full_name ?? '').trim();
+  const fullName = String(req.body?.full_name ?? req.body?.fullName ?? '').trim();
   const email = String(req.body?.email ?? '').trim().toLowerCase();
   const password = String(req.body?.password ?? '');
 
