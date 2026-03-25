@@ -117,7 +117,7 @@ export function getCardStatus(campus: CampusWeather): { level: RiskLevel; reason
 
 // ─── Status Config ────────────────────────────────────────────────────────────
 
-const STATUS_CONFIG = {
+export const STATUS_CONFIG = {
   safe: {
     label: 'Normal',
     icon: CheckCircle2,

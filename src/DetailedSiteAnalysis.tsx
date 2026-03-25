@@ -22,31 +22,68 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import bsuLogo from './assets/bsu-logo.png';
-import ForecastChart from './components/ForecastChart';
-import { getRiskLevel } from './CampusSummary';
-
-// Risk color mapping function
-const RISK_COLORS: Record<string, string> = {
-  safe: '#009748',
-  monitor: '#fbaf26',
-  warning: '#ff922b',
-  risk: '#ff922b',
-  danger: '#d2232a',
+// Map tile URLs for different modes
+const TILES = {
+  street:    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+  satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  dark:      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
 };
 
-function getRiskColor(data: any[], key: string): string {
-  // Find the highest risk level in the data for this metric
-  let maxLevel: string = 'safe';
-  const levels = ['safe', 'monitor', 'warning', 'risk', 'danger'];
-  for (const point of data) {
-    const level = getRiskLevel(point[key], key as any);
-    if (levels.indexOf(level) > levels.indexOf(maxLevel)) {
-      maxLevel = level;
-    }
-  }
-  return RISK_COLORS[maxLevel] || '#009748';
+const MAP_MODES = [
+  { key: 'street', label: 'Street', icon: <Eye size={12} /> },
+  { key: 'satellite', label: 'Satellite', icon: <MoonStar size={12} /> },
+  { key: 'dark', label: 'Dark', icon: <Flame size={12} /> },
+];
+
+type MapMode = 'street' | 'satellite' | 'dark';
+
+// Risk ring config (simplified from RiskMap)
+const RISK_RING: Record<string, { color: string; glow: string }> = {
+  safe:    { color: '#009748', glow: '0 0 8px 2px #00974855' },
+  monitor: { color: '#fbaf26', glow: '0 0 8px 2px #fbaf2655' },
+  warning: { color: '#ff922b', glow: '0 0 8px 2px #ff922b55' },
+  danger:  { color: '#d2232a', glow: '0 0 10px 3px #d2232a77' },
+  risk:    { color: '#d2232a', glow: '0 0 10px 3px #d2232a77' },
+};
+
+function createRiskIcon(level: string, selected: boolean): L.DivIcon {
+  const cfg = RISK_RING[level] || RISK_RING.safe;
+  const size = selected ? 44 : 36;
+  const border = selected ? 4 : 2.5;
+  const glow = selected ? `0 0 16px 4px ${cfg.color}77` : cfg.glow;
+  return L.divIcon({
+    html: `
+      <div style="
+        width: ${size}px;
+        height: ${size}px;
+        border-radius: 50%;
+        background: white;
+        border: ${border}px solid ${cfg.color};
+        box-shadow: ${glow};
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;">
+        <img src='${bsuLogo}' alt='BSU' style="width: ${size - 8}px; height: ${size - 8}px; object-fit: contain; border-radius: 50%;" />
+      </div>
+    `,
+    className: '',
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -size / 2],
+  });
 }
-import { CAMPUSES, fetchOpenMeteoForecast } from './services/weather';
+import ForecastChart from './components/ForecastChart';
+import type { RiskLevel } from './CampusSummary';
+
+
+// CampusSummary color config
+import { STATUS_CONFIG, getCardStatus } from './CampusSummary';
+
+
+import { CAMPUSES, fetchOpenMeteoForecast, getFallbackCampusWeather } from './services/weather';
+import type { CampusWeather } from './services/weather';
 import { forecastData } from './data/forecastData';
 
 type AnalysisTab = 'observed' | 'forecast' | 'synopsis';
@@ -65,13 +102,7 @@ interface MetricCardProps {
 const SITE_CAMPUSES = [...CAMPUSES.map((campus) => campus.name)];
 const ALANGILAN_CENTER: [number, number] = [13.784295, 121.07428];
 
-const bsuCampusIcon = L.icon({
-  iconUrl: bsuLogo,
-  iconSize: [30, 30],
-  iconAnchor: [15, 15],
-  popupAnchor: [0, -16],
-  className: 'rounded-full border-2 border-white shadow-[0_6px_18px_rgba(65,64,66,0.35)] bg-white',
-});
+
 
 function CampusViewportController() {
   const map = useMap();
@@ -138,32 +169,7 @@ const getActionTheme = (action: string): { tone: string; ring: string; icon: Luc
   };
 };
 
-const getMetricTone = (severity: Severity): { badge: string; iconWrap: string; value: string; bg: string } => {
-  if (severity === 'warning') {
-    return {
-      badge: 'bg-[#d2232a]/22 text-[#911d1f]',
-      iconWrap: 'bg-[#d2232a]/22 text-[#911d1f]',
-      value: 'text-[#911d1f]',
-      bg: 'from-white to-[#d2232a]/12',
-    };
-  }
 
-  if (severity === 'caution') {
-    return {
-      badge: 'bg-[#fbaf26]/24 text-[#fbaf26]',
-      iconWrap: 'bg-[#fbaf26]/24 text-[#fbaf26]',
-      value: 'text-[#fbaf26]',
-      bg: 'from-white to-[#fbaf26]/14',
-    };
-  }
-
-  return {
-    badge: 'bg-[#009748]/22 text-[#007e42]',
-    iconWrap: 'bg-[#009748]/22 text-[#007e42]',
-    value: 'text-[#007e42]',
-    bg: 'from-white to-[#009748]/12',
-  };
-};
 
 const parseForecastHour = (timeLabel: string): number | null => {
   const simpleMatch = timeLabel.match(/^(\d{1,2}):(\d{2})$/);
@@ -229,22 +235,23 @@ const getBackgroundFromData = (isDay: number, weatherCode: number): WeatherBackg
 };
 
 function MetricCard({ label, value, icon: Icon, severity }: MetricCardProps) {
-  const tone = getMetricTone(severity);
-
+  // Use CampusSummary logic for color
+  let risk: RiskLevel = 'safe';
+  if (severity === 'warning') risk = 'warning';
+  else if (severity === 'caution') risk = 'monitor';
+  else risk = 'safe';
+  const cfg = STATUS_CONFIG[risk];
   return (
     <article
-      className={`h-full rounded-xl border border-[#d2232a]/20 bg-gradient-to-br p-3 shadow-sm ${tone.bg}`}
+      className={`h-full rounded-xl border ${cfg.border} bg-gradient-to-br ${cfg.gradient} ${cfg.glow} p-3 shadow-sm`}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="line-clamp-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[#414042]/70">{label}</p>
-        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-bold uppercase ${tone.badge}`}>
-          {severity}
-        </span>
+        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-bold uppercase ${cfg.badgeBg} ${cfg.badgeText}`}>{cfg.label}</span>
       </div>
-
       <div className="flex items-end justify-between gap-2">
-        <p className={`text-lg font-black leading-none ${tone.value}`}>{value}</p>
-        <span className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${tone.iconWrap}`}>
+        <p className={`text-lg font-black leading-none ${cfg.badgeText}`}>{value}</p>
+        <span className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${cfg.badgeBg} ${cfg.badgeText}`}>
           <Icon size={14} />
         </span>
       </div>
@@ -253,6 +260,8 @@ function MetricCard({ label, value, icon: Icon, severity }: MetricCardProps) {
 }
 
 export default function DetailedSiteAnalysis() {
+  const [mapMode, setMapMode] = useState<MapMode>('street');
+  const [selectedCampusMarker, setSelectedCampusMarker] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<AnalysisTab>('observed');
   const [selectedCampus, setSelectedCampus] = useState(SITE_CAMPUSES[0]);
   const [showLegend, setShowLegend] = useState(true);
@@ -765,30 +774,71 @@ export default function DetailedSiteAnalysis() {
                     </div>
                   </div>
 
-                  <div className="min-h-0 flex-1">
+                  <div className="min-h-0 flex-1 relative">
                     <MapContainer
                       center={ALANGILAN_CENTER}
                       zoom={9}
                       zoomControl={false}
                       style={{ height: '100%', width: '100%' }}
                     >
+                      {/* Map mode buttons inside map box, top left */}
+                      <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 1000 }}>
+                        <div className="flex gap-2 rounded-full border border-[#d2232a]/20 bg-white/92 p-1 backdrop-blur-md">
+                          {MAP_MODES.map((mode) => (
+                            <button
+                              key={mode.key}
+                              onClick={() => setMapMode(mode.key as MapMode)}
+                              className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[10px] font-bold transition-colors ${
+                                mapMode === mode.key
+                                  ? 'bg-[#911d1f] text-white'
+                                  : 'text-[#911d1f] hover:bg-[#d2232a]/10'
+                              }`}
+                            >
+                              {mode.icon} {mode.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                       <CampusViewportController />
                       <TileLayer
-                        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                        attribution="&copy; Esri"
+                        url={TILES[mapMode]}
+                        attribution="&copy; Esri & OpenStreetMap contributors"
                       />
-                      {CAMPUSES.map((campus) => (
-                        <Marker key={campus.name} position={[campus.lat, campus.lon]} icon={bsuCampusIcon} zIndexOffset={1000}>
-                          <Popup>
-                            <div className="space-y-1 text-xs">
-                              <p className="font-semibold text-[#414042]">{campus.name}</p>
-                              <p className="text-[#414042]/70">
-                                {campus.lat.toFixed(6)}, {campus.lon.toFixed(6)}
-                              </p>
-                            </div>
-                          </Popup>
-                        </Marker>
-                      ))}
+                      {/* Use fallback data to get CampusWeather for risk logic */}
+                      {(() => {
+                        const fallbackData = getFallbackCampusWeather();
+                        return CAMPUSES.map((campus) => {
+                          const fallback = fallbackData.find((c) => c.name === campus.name);
+                          const campusWeather: CampusWeather = fallback || {
+                            name: campus.name,
+                            rain: '0', rainPossibility: '0%', mslp: '', dewpoint: '', heatIndex: '', humidity: '', windDirection: '', windGust: '', windSpeed: '', visibility: '', cloudCover: '', status: 'Safe', warning: false
+                          };
+                          const { level } = getCardStatus(campusWeather);
+                          return (
+                            <Marker
+                              key={campus.name}
+                              position={[campus.lat, campus.lon]}
+                              icon={createRiskIcon(level, selectedCampusMarker === campus.name)}
+                              eventHandlers={{
+                                click: (e) => {
+                                  setSelectedCampusMarker(campus.name);
+                                  // Zoom transition
+                                  const map = e.target._map;
+                                  map.flyTo([campus.lat, campus.lon], 13, { duration: 1.1, easeLinearity: 0.4 });
+                                },
+                              }}
+                              zIndexOffset={1000}
+                            >
+                              <Popup>
+                                <div className="space-y-1 text-xs">
+                                  <p className="font-semibold text-[#414042]">{campus.name}</p>
+                                  <p className="text-[#414042]/70">{campus.lat.toFixed(6)}, {campus.lon.toFixed(6)}</p>
+                                </div>
+                              </Popup>
+                            </Marker>
+                          );
+                        });
+                      })()}
                       <CircleMarker
                         center={ALANGILAN_CENTER}
                         radius={8}
@@ -984,7 +1034,7 @@ export default function DetailedSiteAnalysis() {
                   {
                     key: 'rain',
                     label: 'Rainfall',
-                    color: getRiskColor(scenarioAdjustedForecast, 'rain'),
+                    color: '#009748',
                   },
                 ]}
               />
@@ -1000,12 +1050,12 @@ export default function DetailedSiteAnalysis() {
                   {
                     key: 'wind',
                     label: 'Wind Speed',
-                    color: getRiskColor(scenarioAdjustedForecast, 'wind'),
+                    color: '#009748',
                   },
                   {
                     key: 'gust',
                     label: 'Wind Gust',
-                    color: getRiskColor(scenarioAdjustedForecast, 'gust'),
+                    color: '#009748',
                   },
                 ]}
               />
@@ -1024,7 +1074,7 @@ export default function DetailedSiteAnalysis() {
                   {
                     key: 'rain',
                     label: '24h Rainfall',
-                    color: getRiskColor(horizon24Data, 'rain'),
+                    color: '#009748',
                   },
                 ]}
               />
@@ -1040,12 +1090,12 @@ export default function DetailedSiteAnalysis() {
                   {
                     key: 'wind',
                     label: 'Wind Speed',
-                    color: getRiskColor(horizon24Data, 'wind'),
+                    color: '#009748',
                   },
                   {
                     key: 'gust',
                     label: 'Wind Gust',
-                    color: getRiskColor(horizon24Data, 'gust'),
+                    color: '#009748',
                   },
                 ]}
               />
@@ -1064,7 +1114,7 @@ export default function DetailedSiteAnalysis() {
                   {
                     key: 'humidity',
                     label: 'Humidity',
-                    color: getRiskColor(scenarioAdjustedForecast, 'humidity'),
+                    color: '#009748',
                   },
                 ]}
               />
@@ -1080,7 +1130,7 @@ export default function DetailedSiteAnalysis() {
                   {
                     key: 'pressure',
                     label: 'Pressure',
-                    color: getRiskColor(scenarioAdjustedForecast, 'pressure'),
+                    color: '#009748',
                   },
                 ]}
               />
