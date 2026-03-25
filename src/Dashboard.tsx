@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Activity, FileSearch, CloudLightning, HelpCircle, LogOut } from 'lucide-react';
+import { LayoutDashboard, Activity, FileSearch, CloudLightning, HelpCircle, LogOut, Clock } from 'lucide-react';
 import bsuLogo from './assets/bsu-logo.png';
 import CampusSummary, { getCardStatus } from './CampusSummary';
 import type { RiskLevel } from './CampusSummary';
@@ -9,6 +9,7 @@ import EarthquakeAnalysis from './EarthquakeAnalysis';
 import TropicalCycloneAnalysis from './TropicalCycloneAnalysis';
 import DetailedSiteAnalysis from './DetailedSiteAnalysis';
 import HelpSection from './help.tsx';
+import Historical from './Historical';
 import {
   fetchCampusWeather,
   getFallbackCampusWeather,
@@ -38,6 +39,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     { id: 'site', label: 'Site Analysis', icon: FileSearch, active: false },
     { id: 'eq', label: 'EQ Analysis', icon: Activity, active: false },
     { id: 'tc', label: 'TC Analysis', icon: CloudLightning, active: false },
+    { id: 'historical', label: 'Historical', icon: Clock, active: false },
     { id: 'help', label: 'Help', icon: HelpCircle, active: false },
   ];
 
@@ -201,6 +203,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <EarthquakeAnalysis mapMode={mapMode} onMapModeChange={setMapMode} />
         ) : activeNav === 'tc' ? (
           <TropicalCycloneAnalysis mapMode={mapMode} onMapModeChange={setMapMode} />
+        ) : activeNav === 'historical' ? (
+          <Historical />
         ) : activeNav === 'help' ? (
           <HelpSection />
         ) : (
