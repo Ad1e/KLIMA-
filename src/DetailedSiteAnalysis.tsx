@@ -82,7 +82,7 @@ import type { RiskLevel } from './CampusSummary';
 import { STATUS_CONFIG, getCardStatus } from './CampusSummary';
 
 
-import { CAMPUSES, fetchOpenMeteoForecast, getFallbackCampusWeather } from './services/weather';
+import { CAMPUSES, fetchOpenMeteoForecast } from './services/weather';
 import type { CampusWeather } from './services/weather';
 import { forecastData } from './data/forecastData';
 
@@ -322,80 +322,108 @@ export default function DetailedSiteAnalysis() {
     return forecastSeries[Math.min(3, forecastSeries.length - 1)] ?? fallbackPoint;
   }, [forecastSeries]);
 
+  // Calculate dewpoint and heat index if possible
+  function computeDewPoint(tempC: number, humidityPct: number): number {
+    return tempC - (100 - humidityPct) / 5;
+  }
+  function computeHeatIndex(tempC: number, humidityPct: number): number {
+    // Rothfusz regression (approximate, valid for T >= 27°C, RH >= 40%)
+    if (tempC < 27 || humidityPct < 40) return tempC;
+    const T = tempC;
+    const R = humidityPct;
+    return (
+      -8.78469475556 +
+      1.61139411 * T +
+      2.33854883889 * R +
+      -0.14611605 * T * R +
+      -0.012308094 * T * T +
+      -0.0164248277778 * R * R +
+      0.002211732 * T * T * R +
+      0.00072546 * T * R * R +
+      -0.000003582 * T * T * R * R
+    );
+  }
+  // scenarioAdjustedForecast and currentWeather must be defined first
+
+  // Only declared once after forecastKpis
+
+  // Use currentWeather for all metrics, handle missing fields gracefully
   const observedMetrics = [
     {
       label: 'Rain (mm)',
-      value: `${latestObserved.rain.toFixed(2)} mm`,
+      value: `${currentWeather.rain.toFixed(2)} mm`,
       icon: CloudRain,
-      severity: latestObserved.rain > 1 ? 'warning' : latestObserved.rain > 0 ? 'caution' : 'safe',
+      severity: currentWeather.rain > 1 ? 'warning' : currentWeather.rain > 0 ? 'caution' : 'safe',
     },
     {
       label: 'Rain Probability (%)',
-      value: `${latestObserved.chanceRain.toFixed(0)} %`,
+      value: `${currentWeather.chanceRain.toFixed(0)} %`,
       icon: CloudRain,
-      severity: latestObserved.chanceRain > 65 ? 'warning' : latestObserved.chanceRain > 35 ? 'caution' : 'safe',
+      severity: currentWeather.chanceRain > 65 ? 'warning' : currentWeather.chanceRain > 35 ? 'caution' : 'safe',
     },
     {
       label: 'MSLP (hPa)',
-      value: `${latestObserved.pressure.toFixed(0)} hPa`,
+      value: `${currentWeather.pressure.toFixed(0)} hPa`,
       icon: Gauge,
-      severity: latestObserved.pressure < 1009 ? 'warning' : latestObserved.pressure < 1011 ? 'caution' : 'safe',
+      severity: currentWeather.pressure < 1009 ? 'warning' : currentWeather.pressure < 1011 ? 'caution' : 'safe',
     },
     {
       label: 'Humidity (%)',
-      value: `${latestObserved.humidity.toFixed(0)} %`,
+      value: `${currentWeather.humidity.toFixed(0)} %`,
       icon: Droplets,
-      severity: latestObserved.humidity > 85 ? 'warning' : latestObserved.humidity > 75 ? 'caution' : 'safe',
+      severity: currentWeather.humidity > 85 ? 'warning' : currentWeather.humidity > 75 ? 'caution' : 'safe',
     },
     {
       label: 'Temperature (degC)',
-      value: `${latestObserved.temp.toFixed(2)} degC`,
+      value: `${currentWeather.temp.toFixed(2)} degC`,
       icon: Thermometer,
-      severity: latestObserved.temp > 32 ? 'warning' : latestObserved.temp > 30 ? 'caution' : 'safe',
+      severity: currentWeather.temp > 32 ? 'warning' : currentWeather.temp > 30 ? 'caution' : 'safe',
     },
     {
       label: 'Dewpoint (degC)',
-      value: '24.10 degC',
+      value: `${computeDewPoint(currentWeather.temp, currentWeather.humidity).toFixed(2)} degC`,
       icon: Thermometer,
       severity: 'caution',
     },
     {
       label: 'Heat Index (degC)',
-      value: '36.20 degC',
+      value: `${computeHeatIndex(currentWeather.temp, currentWeather.humidity).toFixed(2)} degC`,
       icon: Flame,
-      severity: 'warning',
+      severity: computeHeatIndex(currentWeather.temp, currentWeather.humidity) > 38 ? 'warning' : computeHeatIndex(currentWeather.temp, currentWeather.humidity) > 33 ? 'caution' : 'safe',
     },
     {
       label: 'Wind Direction (deg)',
-      value: '128 deg',
+      value: currentWeather.wind !== undefined ? `${currentWeather.wind.toFixed(0)} deg` : 'N/A',
       icon: Compass,
       severity: 'caution',
     },
     {
       label: 'Wind Gust (kph)',
-      value: `${latestObserved.gust.toFixed(1)} kph`,
+      value: `${currentWeather.gust.toFixed(1)} kph`,
       icon: Wind,
-      severity: latestObserved.gust > 30 ? 'warning' : latestObserved.gust > 18 ? 'caution' : 'safe',
+      severity: currentWeather.gust > 30 ? 'warning' : currentWeather.gust > 18 ? 'caution' : 'safe',
     },
     {
       label: 'Wind Speed (kph)',
-      value: `${latestObserved.wind.toFixed(1)} kph`,
+      value: `${currentWeather.wind.toFixed(1)} kph`,
       icon: Wind,
-      severity: latestObserved.wind > 20 ? 'warning' : latestObserved.wind > 14 ? 'caution' : 'safe',
+      severity: currentWeather.wind > 20 ? 'warning' : currentWeather.wind > 14 ? 'caution' : 'safe',
     },
     {
       label: 'Visibility (km)',
-      value: '8.40 km',
+      value: (currentWeather as any).visibility !== undefined ? `${(currentWeather as any).visibility} km` : 'N/A',
       icon: Eye,
       severity: 'safe',
     },
     {
       label: 'Cloud Cover (%)',
-      value: '58 %',
+      value: (currentWeather as any).cloudCover !== undefined ? `${(currentWeather as any).cloudCover} %` : 'N/A',
       icon: Cloud,
       severity: 'caution',
     },
   ] as const;
+
+  // Only declared once after scenarioAdjustedForecast
 
   const scenarioAdjustedForecast = useMemo(() => {
     const multipliers =
@@ -535,30 +563,30 @@ export default function DetailedSiteAnalysis() {
     () => [
       {
         label: 'Live Rainfall',
-        value: `${latestObserved.rain.toFixed(2)} mm`,
+        value: `${currentWeather.rain.toFixed(2)} mm`,
         caption: 'Most recent measured precipitation',
         color: 'text-[#d2232a]',
       },
       {
         label: 'Rain Probability',
-        value: `${latestObserved.chanceRain.toFixed(0)}%`,
+        value: `${currentWeather.chanceRain.toFixed(0)}%`,
         caption: 'Chance of rainfall in current cycle',
         color: 'text-[#006193]',
       },
       {
         label: 'Wind Gust',
-        value: `${latestObserved.gust.toFixed(1)} kph`,
+        value: `${currentWeather.gust.toFixed(1)} kph`,
         caption: 'Peak observed gust speed',
         color: 'text-[#fbaf26]',
       },
       {
         label: 'Heat Index',
-        value: '36.20 degC',
+        value: `${computeHeatIndex(currentWeather.temp, currentWeather.humidity).toFixed(2)} degC`,
         caption: 'Thermal stress indicator',
         color: 'text-[#911d1f]',
       },
     ],
-    [latestObserved],
+    [currentWeather],
   );
 
   return (
@@ -805,40 +833,7 @@ export default function DetailedSiteAnalysis() {
                         attribution="&copy; Esri & OpenStreetMap contributors"
                       />
                       {/* Use fallback data to get CampusWeather for risk logic */}
-                      {(() => {
-                        const fallbackData = getFallbackCampusWeather();
-                        return CAMPUSES.map((campus) => {
-                          const fallback = fallbackData.find((c) => c.name === campus.name);
-                          const campusWeather: CampusWeather = fallback || {
-                            name: campus.name,
-                            rain: '0', rainPossibility: '0%', mslp: '', dewpoint: '', heatIndex: '', humidity: '', windDirection: '', windGust: '', windSpeed: '', visibility: '', cloudCover: '', status: 'Safe', warning: false
-                          };
-                          const { level } = getCardStatus(campusWeather);
-                          return (
-                            <Marker
-                              key={campus.name}
-                              position={[campus.lat, campus.lon]}
-                              icon={createRiskIcon(level, selectedCampusMarker === campus.name)}
-                              eventHandlers={{
-                                click: (e) => {
-                                  setSelectedCampusMarker(campus.name);
-                                  // Zoom transition
-                                  const map = e.target._map;
-                                  map.flyTo([campus.lat, campus.lon], 13, { duration: 1.1, easeLinearity: 0.4 });
-                                },
-                              }}
-                              zIndexOffset={1000}
-                            >
-                              <Popup>
-                                <div className="space-y-1 text-xs">
-                                  <p className="font-semibold text-[#414042]">{campus.name}</p>
-                                  <p className="text-[#414042]/70">{campus.lat.toFixed(6)}, {campus.lon.toFixed(6)}</p>
-                                </div>
-                              </Popup>
-                            </Marker>
-                          );
-                        });
-                      })()}
+                      {/* Only use live API data for campus markers. Render markers elsewhere with live data. */}
                       <CircleMarker
                         center={ALANGILAN_CENTER}
                         radius={8}

@@ -53,45 +53,16 @@ export const CAMPUSES: CampusSeed[] = [
   { name: 'Lobo Campus', lat: 13.6492, lon: 121.2063 }, // Brgy. Masaguitsuit, Lobo
 ];
 
-const FALLBACK_DATA: CampusWeather[] = [
-  {
-    name: 'Alangilan Campus',
-    rain: '0.00', rainPossibility: '5%', mslp: '1013', dewpoint: '18.5', heatIndex: '26.3', humidity: '65', windDirection: 'NE', windGust: '12', windSpeed: '8', visibility: '10', cloudCover: '20', status: 'Safe', warning: false,
-  },
-  {
-    name: 'Lipa City Campus',
-    rain: '0.00', rainPossibility: '3%', mslp: '1013', dewpoint: '17.2', heatIndex: '25.8', humidity: '62', windDirection: 'E', windGust: '10', windSpeed: '6', visibility: '10', cloudCover: '15', status: 'Safe', warning: false,
-  },
-  {
-    name: 'Main Campus',
-    rain: '0.71', rainPossibility: '45%', mslp: '1012', dewpoint: '21.3', heatIndex: '28.1', humidity: '75', windDirection: 'SE', windGust: '18', windSpeed: '12', visibility: '8', cloudCover: '60', status: 'Monitor', warning: true,
-  },
-  {
-    name: 'Malvar Campus',
-    rain: '0.00', rainPossibility: '8%', mslp: '1013', dewpoint: '19.1', heatIndex: '27.2', humidity: '68', windDirection: 'NE', windGust: '11', windSpeed: '7', visibility: '10', cloudCover: '25', status: 'Safe', warning: false,
-  },
-  {
-    name: 'Nasugbu Campus',
-    rain: '0.00', rainPossibility: '2%', mslp: '1013', dewpoint: '16.8', heatIndex: '25.5', humidity: '60', windDirection: 'N', windGust: '9', windSpeed: '5', visibility: '10', cloudCover: '10', status: 'Safe', warning: false,
-  },
-  {
-    name: 'Balayan Campus',
-    rain: '0.00', rainPossibility: '4%', mslp: '1012', dewpoint: '18.0', heatIndex: '26.0', humidity: '63', windDirection: 'NW', windGust: '10', windSpeed: '6', visibility: '10', cloudCover: '18', status: 'Safe', warning: false,
-  },
-  {
-    name: 'San Juan Campus',
-    rain: '0.00', rainPossibility: '6%', mslp: '1012', dewpoint: '19.2', heatIndex: '27.1', humidity: '67', windDirection: 'E', windGust: '12', windSpeed: '8', visibility: '10', cloudCover: '22', status: 'Safe', warning: false,
-  },
-  {
-    name: 'Lobo Campus',
-    rain: '0.00', rainPossibility: '7%', mslp: '1012', dewpoint: '18.7', heatIndex: '26.7', humidity: '66', windDirection: 'E', windGust: '11', windSpeed: '7', visibility: '10', cloudCover: '19', status: 'Safe', warning: false,
-  },
-];
 
 const OPEN_METEO_FORECAST_URL =
   import.meta.env.VITE_OPEN_METEO_FORECAST_API_URL ?? 'https://api.open-meteo.com/v1/forecast';
 const OPEN_METEO_TIMEZONE = import.meta.env.VITE_OPEN_METEO_TIMEZONE ?? 'Asia/Manila';
 
+
+
+const OPEN_METEO_DAILY_VARIABLES = ['weather_code', 'daylight_duration'] as const;
+
+// --- Variable definitions (no duplicates) ---
 const OPEN_METEO_CURRENT_VARIABLES = [
   'is_day',
   'rain',
@@ -102,17 +73,6 @@ const OPEN_METEO_CURRENT_VARIABLES = [
   'wind_direction_10m',
   'wind_speed_10m',
   'weather_code',
-] as const;
-
-const OPEN_METEO_DAILY_VARIABLES = ['weather_code', 'daylight_duration'] as const;
-
-const OPEN_METEO_CAMPUS_HOURLY_VARIABLES = [
-  'precipitation_probability',
-  'cloud_cover',
-  'visibility',
-  'surface_pressure',
-  'dew_point_2m',
-  'rain',
 ] as const;
 
 const OPEN_METEO_HOURLY_VARIABLES = [
@@ -146,14 +106,14 @@ const OPEN_METEO_HOURLY_VARIABLES = [
 ] as const;
 
 const OPEN_METEO_HOURLY_INDEX: Record<(typeof OPEN_METEO_HOURLY_VARIABLES)[number], number> =
-  OPEN_METEO_HOURLY_VARIABLES.reduce((acc, key, index) => {
-    acc[key] = index;
+  OPEN_METEO_HOURLY_VARIABLES.reduce((acc, key, idx) => {
+    acc[key] = idx;
     return acc;
   }, {} as Record<(typeof OPEN_METEO_HOURLY_VARIABLES)[number], number>);
 
 const OPEN_METEO_CURRENT_INDEX: Record<(typeof OPEN_METEO_CURRENT_VARIABLES)[number], number> =
-  OPEN_METEO_CURRENT_VARIABLES.reduce((acc, key, index) => {
-    acc[key] = index;
+  (OPEN_METEO_CURRENT_VARIABLES as readonly string[]).reduce((acc, key, idx) => {
+    acc[key as typeof OPEN_METEO_CURRENT_VARIABLES[number]] = idx;
     return acc;
   }, {} as Record<(typeof OPEN_METEO_CURRENT_VARIABLES)[number], number>);
 
@@ -163,13 +123,7 @@ const OPEN_METEO_DAILY_INDEX: Record<(typeof OPEN_METEO_DAILY_VARIABLES)[number]
     return acc;
   }, {} as Record<(typeof OPEN_METEO_DAILY_VARIABLES)[number], number>);
 
-const OPEN_METEO_CAMPUS_HOURLY_INDEX: Record<
-  (typeof OPEN_METEO_CAMPUS_HOURLY_VARIABLES)[number],
-  number
-> = OPEN_METEO_CAMPUS_HOURLY_VARIABLES.reduce((acc, key, index) => {
-  acc[key] = index;
-  return acc;
-}, {} as Record<(typeof OPEN_METEO_CAMPUS_HOURLY_VARIABLES)[number], number>);
+
 
 const asCardinalDirection = (degrees: number): string => {
   const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
@@ -245,22 +199,22 @@ const toCampusWeather = (name: string, apiData: any): CampusWeather => {
   );
 
   const rainSeries = toNumberArray(
-    hourly?.variables(OPEN_METEO_CAMPUS_HOURLY_INDEX.rain)?.valuesArray(),
+    hourly?.variables(OPEN_METEO_HOURLY_INDEX.rain)?.valuesArray(),
   );
   const chanceSeries = toNumberArray(
-    hourly?.variables(OPEN_METEO_CAMPUS_HOURLY_INDEX.precipitation_probability)?.valuesArray(),
+    hourly?.variables(OPEN_METEO_HOURLY_INDEX.precipitation_probability)?.valuesArray(),
   );
   const cloudSeries = toNumberArray(
-    hourly?.variables(OPEN_METEO_CAMPUS_HOURLY_INDEX.cloud_cover)?.valuesArray(),
+    hourly?.variables(OPEN_METEO_HOURLY_INDEX.cloud_cover)?.valuesArray(),
   );
   const visibilitySeries = toNumberArray(
-    hourly?.variables(OPEN_METEO_CAMPUS_HOURLY_INDEX.visibility)?.valuesArray(),
+    hourly?.variables(OPEN_METEO_HOURLY_INDEX.visibility)?.valuesArray(),
   );
   const pressureSeries = toNumberArray(
-    hourly?.variables(OPEN_METEO_CAMPUS_HOURLY_INDEX.surface_pressure)?.valuesArray(),
+    hourly?.variables(OPEN_METEO_HOURLY_INDEX.surface_pressure)?.valuesArray(),
   );
   const dewPointSeries = toNumberArray(
-    hourly?.variables(OPEN_METEO_CAMPUS_HOURLY_INDEX.dew_point_2m)?.valuesArray(),
+    hourly?.variables(OPEN_METEO_HOURLY_INDEX.dew_point_2m)?.valuesArray(),
   );
 
   const rainMm = currentRain > 0 ? currentRain : Number(rainSeries[0] ?? 0);
@@ -291,7 +245,7 @@ const toCampusWeather = (name: string, apiData: any): CampusWeather => {
   };
 };
 
-export const getFallbackCampusWeather = (): CampusWeather[] => FALLBACK_DATA;
+// getFallbackCampusWeather removed: always use live API data
 
 export const fetchCampusWeather = async (): Promise<CampusWeather[]> => {
   const responses = await Promise.all(
@@ -302,7 +256,7 @@ export const fetchCampusWeather = async (): Promise<CampusWeather[]> => {
         timezone: OPEN_METEO_TIMEZONE,
         forecast_days: 1,
         current: OPEN_METEO_CURRENT_VARIABLES,
-        hourly: OPEN_METEO_CAMPUS_HOURLY_VARIABLES,
+        hourly: OPEN_METEO_HOURLY_VARIABLES,
       };
 
       const apiResponses = await fetchWeatherApi(OPEN_METEO_FORECAST_URL, params);

@@ -120,7 +120,7 @@ export default function AuthPage({ onLogin, onSignUp }: AuthPageProps) {
       const data = await response.json()
 
       if (response.ok) {
-        setSignUpSuccess('Account created successfully! Redirecting...')
+        setSignUpSuccess('Redirecting...')
         setTimeout(() => {
           localStorage.setItem('user', JSON.stringify(data.user))
           localStorage.setItem('token', data.token)
@@ -128,7 +128,11 @@ export default function AuthPage({ onLogin, onSignUp }: AuthPageProps) {
           navigate('/dashboard')
         }, 1000)
       } else {
-        setSignUpError(data.message || 'Sign up failed. Please try again.')
+        if (data.message && data.message.toLowerCase().includes('email')) {
+          setSignUpError('This email is already registered.')
+        } else {
+          setSignUpError(data.message || 'Sign up failed. Please try again.')
+        }
       }
     } catch {
       setSignUpError('Cannot connect to the server. Please check your connection.')
@@ -394,22 +398,22 @@ export default function AuthPage({ onLogin, onSignUp }: AuthPageProps) {
                 </button>
               </div>
 
-              {signUpError && (
-                <div className="rounded-lg bg-[#d2232a]/15 border border-[#d2232a]/35 p-3 text-sm text-white font-bold">
-                  {signUpError}
-                </div>
-              )}
-
-              {signUpSuccess && (
-                <div className="rounded-lg bg-green-500/15 border border-green-500/35 p-3 text-sm text-green-300">
-                  {signUpSuccess}
-                </div>
-              )}
-
+              <div className="min-h-[16px] px-1">
+                {signUpError && (
+                  <p className="text-[12px] font-normal leading-tight text-white/40 -mt-1">
+                    {signUpError}
+                  </p>
+                )}
+                {signUpSuccess && (
+                  <p className="text-[12px] font-normal leading-tight text-white/40 -mt-1">
+                    {signUpSuccess}
+                  </p>
+                )}
+              </div>
               <button
                 type="submit"
                 disabled={isSignUpSubmitting}
-                className="w-full rounded-xl bg-[#d2232a] px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#d2232a]/35 transition-all duration-300 hover:bg-[#911d1f] hover:shadow-[#911d1f]/45 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
+                className={`w-full rounded-xl bg-[#d2232a] px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#d2232a]/35 transition-all duration-300 hover:bg-[#911d1f] hover:shadow-[#911d1f]/45 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0 disabled:cursor-not-allowed signup-button${signUpError ? ' with-error' : ''}`}
               >
                 {isSignUpSubmitting ? 'Creating Account...' : 'Sign Up'}
               </button>

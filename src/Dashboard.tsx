@@ -12,7 +12,6 @@ import HelpSection from './help.tsx';
 import Historical from './Historical';
 import {
   fetchCampusWeather,
-  getFallbackCampusWeather,
   type CampusWeather,
 } from './services/weather';
 
@@ -24,7 +23,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const navigate = useNavigate()
   const [activeNav, setActiveNav] = useState('local');
   const [mapMode, setMapMode] = useState<'street' | 'satellite' | 'dark'>('street');
-  const [campusWeather, setCampusWeather] = useState<CampusWeather[]>(getFallbackCampusWeather());
+  const [campusWeather, setCampusWeather] = useState<CampusWeather[]>([]);
   const [isLiveWeather, setIsLiveWeather] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [selectedCampusName, setSelectedCampusName] = useState<string | null>(null);
@@ -55,7 +54,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         setLastUpdated(new Date());
       } catch {
         if (!isMounted) return;
-        setCampusWeather(getFallbackCampusWeather());
+        setCampusWeather([]);
         setIsLiveWeather(false);
         setLastUpdated(new Date());
       }

@@ -1,3 +1,41 @@
+/* Signup inline error/success message styles */
+.signup-form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.signup-inline-message {
+  min-height: 18px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.2;
+  color: #ffd6d6;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.signup-inline-message.success {
+  color: #b6f7c6;
+}
+
+.signup-inline-message.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.signup-button {
+  transition: transform 0.25s ease;
+}
+
+.signup-button.with-error {
+  transform: translateY(4px);
+}
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }

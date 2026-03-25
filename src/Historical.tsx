@@ -441,9 +441,9 @@ export default function HistoricalData() {
                               type="button"
                               onClick={e => handleDelete(e, i)}
                               title="Delete"
-                              className="inline-flex items-center rounded-xl p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 border border-transparent hover:border-red-100 transition-all"
+                              className="inline-flex items-center rounded-xl p-2 text-red-500 hover:text-white hover:bg-red-500 border border-transparent hover:border-red-500 transition-all"
                             >
-                              <Trash2 size={18} />
+                              <Trash2 size={18} className="text-red-500" />
                             </button>
                             <ChevronDown
                               size={20}
