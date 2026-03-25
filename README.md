@@ -1,92 +1,120 @@
-# React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# Batangas State University Campus Risk & Weather Dashboard
 
-## Live Weather Forecast Setup
+A modern web dashboard for real-time campus risk assessment, live weather monitoring, and tropical cyclone analysis for Batangas State University campuses.
 
-The Detailed Site Analysis forecast view can use live Open-Meteo forecast data.
+---
 
-1. Copy `.env.example` to `.env.local`.
-2. Set `VITE_OPEN_METEO_FORECAST_API_URL` (default: `https://api.open-meteo.com/v1/forecast`).
-3. Keep your existing weather variables if you still use OpenWeather for campus observation cards.
+## Features
 
-## Live Tropical Cyclone Feed Setup
+- **Live Weather Forecasts:**
+  - Uses Open-Meteo API for up-to-date weather data per campus.
+  - Dewpoint, heat index, rainfall, wind, and more.
+- **Campus Risk Map:**
+  - Interactive map with custom BSU logo markers for each campus.
+  - Visualizes risk levels and campus locations.
+- **Tropical Cyclone Analysis:**
+  - Live typhoon event feed from GDACS and PAGASA.
+  - Historical and forecast cyclone tracks.
+- **Detailed Site Analysis:**
+  - Tabbed view: Observed, Forecast, and Synopsis for each campus.
+  - Actionable KPIs and operational notes.
+- **Backend API:**
+  - Node.js/Express backend for data management and future expansion.
 
-Tropical Cyclone Analysis can pull live typhoon event updates from GDACS.
+---
 
-1. Copy `.env.example` to `.env.local`.
-2. Set `VITE_GDACS_TYHOON_EVENTS_API_URL` (default: `https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventtype=TC`).
-3. (Optional but recommended) Set `VITE_PAGASA_CYCLONE_DAT_URL` to PAGASA's direct text feed:
-  - `https://pubfiles.pagasa.dost.gov.ph/tamss/weather/cyclone.dat`
-4. The TC UI reads these feeds directly; manual `pagasa:bulletin` execution is not required for normal dashboard display.
-5. Restart the Vite dev server after updating environment variables.
+## Project Structure
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+CCTVs/
+├── backend/         # Node.js/Express backend (DB, API)
+├── src/             # React frontend source code
+│   ├── components/  # Reusable React components
+│   ├── data/        # Static and fallback data
+│   ├── services/    # API and data fetching logic
+│   └── ...          # Main pages and features
+├── public/          # Static assets
+├── scripts/         # Data fetch/utility scripts
+├── README.md        # This file
+└── ...
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Getting Started
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Prerequisites
+- Node.js (v18+ recommended)
+- npm or yarn
+
+### 1. Clone the Repository
+```sh
+git clone <repo-url>
+cd CCTVs
 ```
+
+### 2. Install Dependencies
+#### Frontend
+```sh
+npm install
+```
+#### Backend
+```sh
+cd backend
+npm install
+cd ..
+```
+
+### 3. Environment Variables
+Copy `.env.example` to `.env.local` in the root folder. Set the following as needed:
+
+- `VITE_OPEN_METEO_FORECAST_API_URL` (default: `https://api.open-meteo.com/v1/forecast`)
+- `VITE_GDACS_TYHOON_EVENTS_API_URL` (default: `https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventtype=TC`)
+- `VITE_PAGASA_CYCLONE_DAT_URL` (optional, for direct PAGASA feed)
+
+### 4. Running the App
+#### Frontend (React/Vite)
+```sh
+npm run dev
+```
+Visit [http://localhost:5173](http://localhost:5173) (or as shown in terminal).
+
+#### Backend (API/DB)
+```sh
+cd backend
+npm start
+```
+
+---
+
+## Usage Notes
+- **Live Data:**
+  - Weather and cyclone data update automatically every few minutes.
+  - If live APIs are unavailable, fallback data is used.
+- **Map Markers:**
+  - Each campus is shown with a custom BSU logo marker.
+  - Risk levels are visualized on the map (see RiskMap logic).
+- **Custom Scripts:**
+  - See `scripts/` for data fetchers and utilities.
+
+---
+
+## Development
+- TypeScript, React, Vite for frontend.
+- Node.js, Express for backend.
+- ESLint, Prettier, and recommended plugins for code quality.
+- See `eslint.config.js` and comments for advanced linting setup.
+
+---
+
+## Credits
+- [Open-Meteo](https://open-meteo.com/) for weather data
+- [GDACS](https://www.gdacs.org/) and [PAGASA](https://bagong.pagasa.dost.gov.ph/) for cyclone feeds
+- [Leaflet](https://leafletjs.com/) for interactive maps
+- Batangas State University (project context)
+
+---
+
+## License
+MIT (or specify your license here)

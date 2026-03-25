@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CircleMarker, MapContainer, Marker, Popup, TileLayer, ZoomControl, useMap } from 'react-leaflet';
+import { Marker, MapContainer, Popup, TileLayer, ZoomControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import bsuLogo from './assets/bsu-logo.png';
+
 import {
   AlertTriangle,
   ChevronDown,
@@ -21,7 +23,7 @@ import {
   Wind,
   type LucideIcon,
 } from 'lucide-react';
-import bsuLogo from './assets/bsu-logo.png';
+
 // Map tile URLs for different modes
 const TILES = {
   street:    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
@@ -37,20 +39,32 @@ const MAP_MODES = [
 
 type MapMode = 'street' | 'satellite' | 'dark';
 
-// Risk ring config (simplified from RiskMap)
-const RISK_RING: Record<string, { color: string; glow: string }> = {
-  safe:    { color: '#009748', glow: '0 0 8px 2px #00974855' },
-  monitor: { color: '#fbaf26', glow: '0 0 8px 2px #fbaf2655' },
-  warning: { color: '#ff922b', glow: '0 0 8px 2px #ff922b55' },
-  danger:  { color: '#d2232a', glow: '0 0 10px 3px #d2232a77' },
-  risk:    { color: '#d2232a', glow: '0 0 10px 3px #d2232a77' },
+
+// Risk icon config (from RiskMap)
+type RiskLevel = 'safe' | 'caution' | 'warning' | 'danger' | 'monitor' | 'risk';
+const RISK_CONFIG: Record<RiskLevel, {
+  color: string;
+  ring: string;
+  pulse: boolean;
+  label: string;
+  hex: string;
+  glowHex: string;
+}> = {
+  safe:    { color: '#009748', ring: '#009748', pulse: false, label: 'Safe',     hex: '#009748', glowHex: 'rgba(0,151,72,0.45)' },
+  caution: { color: '#ffe066', ring: '#ffe066', pulse: false, label: 'Caution',  hex: '#ffe066', glowHex: 'rgba(255,224,102,0.45)' },
+  warning: { color: '#ff922b', ring: '#ff922b', pulse: false, label: 'Warning',  hex: '#ff922b', glowHex: 'rgba(255,146,43,0.45)' },
+  danger:  { color: '#d2232a', ring: '#d2232a', pulse: true,  label: 'Danger',   hex: '#d2232a', glowHex: 'rgba(210,35,42,0.5)' },
+  monitor: { color: '#fbaf26', ring: '#fbaf26', pulse: false, label: 'Monitor',  hex: '#fbaf26', glowHex: 'rgba(251,175,38,0.45)' },
+  risk:    { color: '#d2232a', ring: '#d2232a', pulse: true,  label: 'Critical', hex: '#d2232a', glowHex: 'rgba(210,35,42,0.5)' },
 };
 
-function createRiskIcon(level: string, selected: boolean): L.DivIcon {
-  const cfg = RISK_RING[level] || RISK_RING.safe;
+function createRiskIcon(level: RiskLevel, selected: boolean): L.DivIcon {
+  const cfg = RISK_CONFIG[level];
   const size = selected ? 44 : 36;
   const border = selected ? 4 : 2.5;
-  const glow = selected ? `0 0 16px 4px ${cfg.color}77` : cfg.glow;
+  const glow = selected
+    ? `0 0 12px 4px ${cfg.glowHex}`
+    : `0 0 6px 2px ${cfg.glowHex}`;
   return L.divIcon({
     html: `
       <div style="
@@ -58,15 +72,24 @@ function createRiskIcon(level: string, selected: boolean): L.DivIcon {
         height: ${size}px;
         border-radius: 50%;
         background: white;
-        border: ${border}px solid ${cfg.color};
+        border: ${border}px solid ${cfg.hex};
         box-shadow: ${glow};
         display: flex;
         align-items: center;
         justify-content: center;
         overflow: hidden;
-        position: relative;">
+        position: relative;
+      ">
         <img src='${bsuLogo}' alt='BSU' style="width: ${size - 8}px; height: ${size - 8}px; object-fit: contain; border-radius: 50%;" />
+        ${cfg.pulse ? `<span style='position:absolute;left:0;top:0;width:100%;height:100%;border-radius:50%;box-shadow:0_0_0_6px_${cfg.hex}44;animation:pulse 1.5s infinite;'></span>` : ''}
       </div>
+      <style>
+        @keyframes pulse {
+          0% { box-shadow: 0 0 0 0 ${cfg.hex}44; }
+          70% { box-shadow: 0 0 0 10px ${cfg.hex}00; }
+          100% { box-shadow: 0 0 0 0 ${cfg.hex}44; }
+        }
+      </style>
     `,
     className: '',
     iconSize: [size, size],
@@ -74,16 +97,18 @@ function createRiskIcon(level: string, selected: boolean): L.DivIcon {
     popupAnchor: [0, -size / 2],
   });
 }
+
+
+// ...existing code...
 import ForecastChart from './components/ForecastChart';
 import type { RiskLevel } from './CampusSummary';
 
 
 // CampusSummary color config
-import { STATUS_CONFIG, getCardStatus } from './CampusSummary';
+import { STATUS_CONFIG } from './CampusSummary';
 
 
 import { CAMPUSES, fetchOpenMeteoForecast } from './services/weather';
-import type { CampusWeather } from './services/weather';
 import { forecastData } from './data/forecastData';
 
 type AnalysisTab = 'observed' | 'forecast' | 'synopsis';
@@ -261,7 +286,7 @@ function MetricCard({ label, value, icon: Icon, severity }: MetricCardProps) {
 
 export default function DetailedSiteAnalysis() {
   const [mapMode, setMapMode] = useState<MapMode>('street');
-  const [selectedCampusMarker, setSelectedCampusMarker] = useState<string | null>(null);
+  // const [selectedCampusMarker, setSelectedCampusMarker] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<AnalysisTab>('observed');
   const [selectedCampus, setSelectedCampus] = useState(SITE_CAMPUSES[0]);
   const [showLegend, setShowLegend] = useState(true);
@@ -316,11 +341,11 @@ export default function DetailedSiteAnalysis() {
     };
   }, [selectedCampus]);
 
-  const latestObserved = useMemo(() => {
-    const fallbackPoint = forecastData[Math.min(3, forecastData.length - 1)];
-    if (forecastSeries.length === 0) return fallbackPoint;
-    return forecastSeries[Math.min(3, forecastSeries.length - 1)] ?? fallbackPoint;
-  }, [forecastSeries]);
+  // const latestObserved = useMemo(() => {
+  //   const fallbackPoint = forecastData[Math.min(3, forecastData.length - 1)];
+  //   if (forecastSeries.length === 0) return fallbackPoint;
+  //   return forecastSeries[Math.min(3, forecastSeries.length - 1)] ?? fallbackPoint;
+  // }, [forecastSeries]);
 
   // Calculate dewpoint and heat index if possible
   function computeDewPoint(tempC: number, humidityPct: number): number {
@@ -345,8 +370,40 @@ export default function DetailedSiteAnalysis() {
   }
   // scenarioAdjustedForecast and currentWeather must be defined first
 
-  // Only declared once after forecastKpis
+  // Only declared once after scenarioAdjustedForecast
 
+  const scenarioAdjustedForecast = useMemo(() => {
+    const multipliers =
+      forecastScenario === 'rain-heavy'
+        ? { rain: 1.35, wind: 1.08, gust: 1.12, humidity: 1.05, pressureDelta: -1.2 }
+        : forecastScenario === 'windy'
+          ? { rain: 0.9, wind: 1.28, gust: 1.35, humidity: 1.02, pressureDelta: -0.7 }
+          : { rain: 1, wind: 1, gust: 1, humidity: 1, pressureDelta: 0 };
+
+    // Include the starting hour plus each 6-hour step (e.g., 12h => 0, 6, 12 = 3 points).
+    const pointsToShow = Math.max(2, Math.min(forecastSeries.length, Math.floor(forecastHorizon / 6) + 1));
+    return forecastSeries.slice(0, pointsToShow).map((point) => ({
+      ...point,
+      rain: Number((point.rain * multipliers.rain).toFixed(2)),
+      wind: Math.round(point.wind * multipliers.wind),
+      gust: Math.round(point.gust * multipliers.gust),
+      humidity: Math.min(99, Math.round(point.humidity * multipliers.humidity)),
+      pressure: Number((point.pressure + multipliers.pressureDelta).toFixed(1)),
+      chanceRain: Math.min(99, Math.round(point.chanceRain * multipliers.rain)),
+    }));
+  }, [forecastScenario, forecastHorizon, forecastSeries]);
+
+  const forecastKpis = useMemo(() => {
+    const maxRain = Math.max(...scenarioAdjustedForecast.map((point) => point.rain));
+    const maxGust = Math.max(...scenarioAdjustedForecast.map((point) => point.gust));
+    const avgHumidity =
+      scenarioAdjustedForecast.reduce((sum, point) => sum + point.humidity, 0) /
+      scenarioAdjustedForecast.length;
+    const riskScore = Math.min(100, Math.round(maxRain * 18 + maxGust * 1.35 + avgHumidity * 0.25));
+    return { maxRain, maxGust, avgHumidity: Math.round(avgHumidity), riskScore };
+  }, [scenarioAdjustedForecast]);
+
+  const currentWeather = scenarioAdjustedForecast[0];
   // Use currentWeather for all metrics, handle missing fields gracefully
   const observedMetrics = [
     {
@@ -423,40 +480,6 @@ export default function DetailedSiteAnalysis() {
     },
   ] as const;
 
-  // Only declared once after scenarioAdjustedForecast
-
-  const scenarioAdjustedForecast = useMemo(() => {
-    const multipliers =
-      forecastScenario === 'rain-heavy'
-        ? { rain: 1.35, wind: 1.08, gust: 1.12, humidity: 1.05, pressureDelta: -1.2 }
-        : forecastScenario === 'windy'
-          ? { rain: 0.9, wind: 1.28, gust: 1.35, humidity: 1.02, pressureDelta: -0.7 }
-          : { rain: 1, wind: 1, gust: 1, humidity: 1, pressureDelta: 0 };
-
-    // Include the starting hour plus each 6-hour step (e.g., 12h => 0, 6, 12 = 3 points).
-    const pointsToShow = Math.max(2, Math.min(forecastSeries.length, Math.floor(forecastHorizon / 6) + 1));
-    return forecastSeries.slice(0, pointsToShow).map((point) => ({
-      ...point,
-      rain: Number((point.rain * multipliers.rain).toFixed(2)),
-      wind: Math.round(point.wind * multipliers.wind),
-      gust: Math.round(point.gust * multipliers.gust),
-      humidity: Math.min(99, Math.round(point.humidity * multipliers.humidity)),
-      pressure: Number((point.pressure + multipliers.pressureDelta).toFixed(1)),
-      chanceRain: Math.min(99, Math.round(point.chanceRain * multipliers.rain)),
-    }));
-  }, [forecastScenario, forecastHorizon, forecastSeries]);
-
-  const forecastKpis = useMemo(() => {
-    const maxRain = Math.max(...scenarioAdjustedForecast.map((point) => point.rain));
-    const maxGust = Math.max(...scenarioAdjustedForecast.map((point) => point.gust));
-    const avgHumidity =
-      scenarioAdjustedForecast.reduce((sum, point) => sum + point.humidity, 0) /
-      scenarioAdjustedForecast.length;
-    const riskScore = Math.min(100, Math.round(maxRain * 18 + maxGust * 1.35 + avgHumidity * 0.25));
-    return { maxRain, maxGust, avgHumidity: Math.round(avgHumidity), riskScore };
-  }, [scenarioAdjustedForecast]);
-
-  const currentWeather = scenarioAdjustedForecast[0];
   const updatedLabel = lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const horizon24Data = scenarioAdjustedForecast.slice(0, Math.min(5, scenarioAdjustedForecast.length));
   const weatherStatus =
@@ -834,15 +857,17 @@ export default function DetailedSiteAnalysis() {
                       />
                       {/* Use fallback data to get CampusWeather for risk logic */}
                       {/* Only use live API data for campus markers. Render markers elsewhere with live data. */}
-                      <CircleMarker
-                        center={ALANGILAN_CENTER}
-                        radius={8}
-                        pathOptions={{ color: '#911d1f', fillColor: '#d2232a', fillOpacity: 0.8, weight: 2 }}
-                      >
-                        <Popup>
-                          <p className="text-xs font-semibold">BatStateU Alangilan Campus</p>
-                        </Popup>
-                      </CircleMarker>
+                      {CAMPUSES.map(campus => (
+                        <Marker
+                          key={campus.name}
+                          position={[campus.lat, campus.lon]}
+                          icon={createRiskIcon('safe', false)}
+                        >
+                          <Popup>
+                            <p className="text-xs font-semibold">{campus.name}</p>
+                          </Popup>
+                        </Marker>
+                      ))}
                       <ZoomControl position="bottomright" />
                     </MapContainer>
                   </div>
