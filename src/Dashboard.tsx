@@ -237,6 +237,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 <RiskMap
                   mapMode={mapMode}
                   onCampusSelect={setSelectedCampusName}
+                  onMapModeChange={setMapMode}
                   campusRisks={campusWeather.map(c => ({ name: c.name, level: getCardStatus(c).level }))}
                   isLive={isLiveWeather}
                 />
@@ -384,7 +385,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         const colorMap: Record<RiskLevel, string> = {
                           safe: 'border-[#009748]/30 bg-[#009748]/10 text-[#007e42]',
                           monitor: 'border-[#fbaf26]/35 bg-[#fbaf26]/10 text-[#92610a]',
-                          caution: 'border-[#ffe066]/35 bg-[#ffe066]/10 text-[#bfa600]',
                           warning: 'border-[#ff922b]/35 bg-[#ff922b]/10 text-[#b85c00]',
                           danger: 'border-[#d2232a]/30 bg-[#d2232a]/8 text-[#911d1f]',
                           risk: 'border-[#d2232a]/30 bg-[#d2232a]/8 text-[#911d1f]',

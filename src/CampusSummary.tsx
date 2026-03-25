@@ -134,22 +134,6 @@ const STATUS_CONFIG = {
     accent: '#009748',
     dot: 'bg-[#009748]',
   },
-  caution: {
-    label: 'Caution',
-    icon: AlertTriangle,
-    emoji: '⚠️',
-    banner: 'Caution: Elevated temperature. Stay hydrated.',
-    message: 'Temperature is above normal. Take precautions.',
-    gradient: 'from-[#fffbe6] via-white to-[#fff9db]',
-    border: 'border-[#ffe066]/40',
-    badgeBg: 'bg-[#ffe066]/14 border-[#ffe066]/50',
-    badgeText: 'text-[#bfa600]',
-    bannerBg: 'bg-[#ffe066]/12 border-[#ffe066]/35',
-    bannerText: 'text-[#bfa600]',
-    glow: 'shadow-[0_0_0_1px_rgba(255,224,102,0.2),0_20px_60px_rgba(255,224,102,0.12)]',
-    accent: '#ffe066',
-    dot: 'bg-[#ffe066]',
-  },
   warning: {
     label: 'Warning',
     icon: AlertTriangle,
@@ -276,7 +260,6 @@ function MetricRow({ metricKey, value }: MetricRowProps) {
 
   const alertStyles: Record<RiskLevel, string> = {
     safe: 'bg-transparent border-transparent text-[#414042]',
-    caution: 'bg-[#ffe066]/10 border-[#ffe066]/35 text-[#bfa600]',
     warning: 'bg-[#ff922b]/10 border-[#ff922b]/35 text-[#b85c00]',
     danger: 'bg-[#d2232a]/8 border-[#d2232a]/30 text-[#911d1f]',
     monitor: 'bg-[#fbaf26]/10 border-[#fbaf26]/35 text-[#92610a]',

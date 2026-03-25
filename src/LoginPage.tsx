@@ -22,9 +22,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const [resetStatus, setResetStatus] = useState<'idle' | 'sent'>('idle');
   const [emailError, setEmailError] = useState('');
 
-  // Track focus state for email and password
-  const [emailFocused, setEmailFocused] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
 
   const backendBaseUrl = import.meta.env.VITE_BACKEND_API_URL ?? 'http://localhost:4000';
 
@@ -133,8 +130,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   id="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  onFocus={() => setEmailFocused(true)}
-                  onBlur={() => setEmailFocused(false)}
+                  // onFocus and onBlur handlers for focus state removed
                   className="block w-full rounded-xl border border-white/20 px-4 pb-2.5 pt-6 text-sm transition-all duration-300 focus:border-[#d2232a] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#d2232a] peer bg-white text-black placeholder-black"
                   placeholder=" "
                 />
@@ -152,8 +148,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  onFocus={() => setPasswordFocused(true)}
-                  onBlur={() => setPasswordFocused(false)}
+                  // onFocus and onBlur handlers for focus state removed
                   className="block w-full rounded-xl border border-white/20 px-4 pb-2.5 pt-6 text-sm transition-all duration-300 focus:border-[#d2232a] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#d2232a] peer pr-12 bg-white text-black placeholder-black"
                   placeholder=" "
                 />
@@ -198,16 +193,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               </button>
             </form>
 
-            <div className="my-8 flex items-center gap-4 relative z-10">
-              <div className="h-px flex-1 bg-white/10" />
-              <span className="text-xs font-medium text-white/45 uppercase tracking-wider">or</span>
-              <div className="h-px flex-1 bg-white/10" />
-            </div>
 
-            <button className="relative z-10 w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3.5 text-sm font-semibold text-white transition-all duration-300 hover:bg-white/10 hover:border-white/30 flex items-center justify-center gap-2">
-              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#d2232a] text-[11px] font-bold text-white">G</span>
-              Continue with Google
-            </button>
 
             <p className="mt-8 text-center text-sm text-white/65 relative z-10">
               New to the platform?{' '}

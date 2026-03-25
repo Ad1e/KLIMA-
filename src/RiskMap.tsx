@@ -35,6 +35,7 @@ interface CampusRisk {
 interface RiskMapProps {
   mapMode: 'street' | 'satellite' | 'dark';
   onCampusSelect?: (campusName: string) => void;
+  onMapModeChange?: (mode: 'street' | 'satellite' | 'dark') => void;
   campusRisks?: CampusRisk[];   // optional: pass risk levels from parent
   isLive?: boolean;
 }
@@ -131,6 +132,7 @@ function FlyToSelected({ lat, lon }: { lat: number; lon: number }) {
 export default function RiskMap({
   mapMode,
   onCampusSelect,
+  onMapModeChange,
   campusRisks = [],
   isLive = false,
 }: RiskMapProps) {
@@ -256,8 +258,7 @@ export default function RiskMap({
                   ? 'text-white/70 hover:bg-white/10 hover:text-white'
                   : 'text-[#414042]/60 hover:bg-[#414042]/8 hover:text-[#414042]'
             }`}
-            // Note: mode switching is handled by the parent via onMapModeChange
-            // kept here for visual grouping; wire up via parent prop if needed
+            onClick={() => onMapModeChange?.(mode.key)}
           >
             {mode.icon}
             {mode.label}

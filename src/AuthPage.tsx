@@ -284,11 +284,6 @@ export default function AuthPage({ onLogin, onSignUp }: AuthPageProps) {
               <div className="h-px flex-1 bg-white/10" />
             </div>
 
-            <button className="relative z-10 w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3.5 text-sm font-semibold text-white transition-all duration-300 hover:bg-white/10 hover:border-white/30 flex items-center justify-center gap-2">
-              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#d2232a] text-[11px] font-bold text-white">G</span>
-              Continue with Google
-            </button>
-
             <p className="mt-8 text-center text-sm text-white/65 relative z-10">
               New to the platform?{' '}
               <button
@@ -400,7 +395,7 @@ export default function AuthPage({ onLogin, onSignUp }: AuthPageProps) {
               </div>
 
               {signUpError && (
-                <div className="rounded-lg bg-[#d2232a]/15 border border-[#d2232a]/35 p-3 text-sm text-[#d2232a]">
+                <div className="rounded-lg bg-[#d2232a]/15 border border-[#d2232a]/35 p-3 text-sm text-white font-bold">
                   {signUpError}
                 </div>
               )}
