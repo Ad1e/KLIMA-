@@ -1,10 +1,20 @@
+
 import { useEffect, useMemo, useState } from 'react';
-import { MapContainer, TileLayer, Polyline, CircleMarker, Marker, Tooltip, ZoomControl } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, CircleMarker, Marker, Tooltip, ZoomControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { Wind, ShieldCheck, Info, Radio, Map, Satellite, Moon } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import bsuLogo from './assets/bsu-logo.png';
 import { CAMPUSES, fetchLiveTyphoonFeed, type CycloneTrackPoint } from './services/weather';
+
+// Fly-to helper for map zoom effect
+function FlyToSelected({ lat, lon }: { lat: number; lon: number }) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo([lat, lon], Math.max(map.getZoom(), 12), { duration: 1.1, easeLinearity: 0.4 });
+  }, [lat, lon, map]);
+  return null;
+}
 
 type MapMode = 'street' | 'satellite' | 'dark';
 type TrackMode = 'pagasa' | 'jtwc' | 'multi';
@@ -220,6 +230,8 @@ export default function TropicalCycloneAnalysis({
   mapMode,
   onMapModeChange,
 }: TropicalCycloneAnalysisProps) {
+  const [selectedCampus, setSelectedCampus] = useState<string | null>(null);
+  const [flyTarget, setFlyTarget] = useState<{ lat: number; lon: number } | null>(null);
   const [trackMode, setTrackMode] = useState<TrackMode>('pagasa');
   const [liveStormName, setLiveStormName] = useState('Tropical Storm AGATON');
   const [liveSourceLabel, setLiveSourceLabel] = useState('Fallback Dataset');
@@ -512,11 +524,29 @@ export default function TropicalCycloneAnalysis({
                   </CircleMarker>
                 ) : null}
 
-                {CAMPUSES.map((campus) => (
-                  <Marker key={campus.name} position={[campus.lat, campus.lon]} icon={bsuCampusIcon}>
-                    <Tooltip direction="top">{campus.name}</Tooltip>
-                  </Marker>
-                ))}
+
+                {/* Fly-to effect for selected campus */}
+                {flyTarget && <FlyToSelected lat={flyTarget.lat} lon={flyTarget.lon} />}
+
+                {CAMPUSES.map((campus) => {
+                  const isSelected = selectedCampus === campus.name;
+                  return (
+                    <Marker
+                      key={campus.name}
+                      position={[campus.lat, campus.lon]}
+                      icon={bsuCampusIcon}
+                      zIndexOffset={isSelected ? 1200 : 1000}
+                      eventHandlers={{
+                        click: () => {
+                          setSelectedCampus(campus.name);
+                          setFlyTarget({ lat: campus.lat, lon: campus.lon });
+                        },
+                      }}
+                    >
+                      <Tooltip direction="top">{campus.name}</Tooltip>
+                    </Marker>
+                  );
+                })}
 
                 <ZoomControl position="bottomright" />
               </MapContainer>

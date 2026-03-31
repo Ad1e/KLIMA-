@@ -1,4 +1,4 @@
-import { fetchWeatherApi } from 'openmeteo';
+
 
 export interface CampusSeed {
   name: string;
@@ -250,89 +250,71 @@ const toCampusWeather = (name: string, apiData: any): CampusWeather => {
 export const fetchCampusWeather = async (): Promise<CampusWeather[]> => {
   const responses = await Promise.all(
     CAMPUSES.map(async (campus) => {
-      const params = {
-        latitude: campus.lat,
-        longitude: campus.lon,
+      const params = new URLSearchParams({
+        latitude: campus.lat.toString(),
+        longitude: campus.lon.toString(),
         timezone: OPEN_METEO_TIMEZONE,
-        forecast_days: 1,
-        current: OPEN_METEO_CURRENT_VARIABLES,
-        hourly: OPEN_METEO_HOURLY_VARIABLES,
-      };
-
-      const apiResponses = await fetchWeatherApi(OPEN_METEO_FORECAST_URL, params);
-      const data = apiResponses?.[0];
-
-      if (!data) {
+        forecast_days: '1',
+        current: OPEN_METEO_CURRENT_VARIABLES.join(','),
+        hourly: OPEN_METEO_HOURLY_VARIABLES.join(','),
+      });
+      const url = `${OPEN_METEO_FORECAST_URL}?${params.toString()}`;
+      const response = await fetch(url);
+      if (!response.ok) {
         throw new Error(`Open-Meteo API failed for ${campus.name}`);
       }
-
-      return toCampusWeather(campus.name, data);
-    }),
+      const data = await response.json();
+      return toCampusWeather(campus.name, {
+        current: () => ({
+          variables: (idx: number) => ({ value: () => data.current[OPEN_METEO_CURRENT_VARIABLES[idx]] })
+        }),
+        hourly: () => ({
+          variables: (idx: number) => ({ valuesArray: () => data.hourly[OPEN_METEO_HOURLY_VARIABLES[idx]] }),
+        }),
+      });
+    })
   );
-
   return responses;
 };
 
 export const fetchOpenMeteoForecast = async (lat: number, lon: number): Promise<ForecastPayload> => {
-  const params = {
-    latitude: lat,
-    longitude: lon,
+  const params = new URLSearchParams({
+    latitude: lat.toString(),
+    longitude: lon.toString(),
     timezone: OPEN_METEO_TIMEZONE,
-    forecast_days: 2,
+    forecast_days: '2',
     models: 'best_match',
-    current: OPEN_METEO_CURRENT_VARIABLES,
-    daily: OPEN_METEO_DAILY_VARIABLES,
-    hourly: OPEN_METEO_HOURLY_VARIABLES,
-  };
-
-  const responses = await fetchWeatherApi(OPEN_METEO_FORECAST_URL, params);
-  const response = responses?.[0];
-
-  if (!response) {
+    current: OPEN_METEO_CURRENT_VARIABLES.join(','),
+    daily: OPEN_METEO_DAILY_VARIABLES.join(','),
+    hourly: OPEN_METEO_HOURLY_VARIABLES.join(','),
+  });
+  const url = `${OPEN_METEO_FORECAST_URL}?${params.toString()}`;
+  const response = await fetch(url);
+  if (!response.ok) {
     throw new Error('Open-Meteo forecast request failed');
   }
-
-  const current = response.current();
-  const hourly = response.hourly();
-  const daily = response.daily();
-
-  if (!hourly) {
-    throw new Error('Open-Meteo hourly data is unavailable');
-  }
-
-  const startTime = Number(hourly.time());
-  const endTime = Number(hourly.timeEnd());
-  const intervalSeconds = Number(hourly.interval());
-  const itemCount = Math.max(0, Math.floor((endTime - startTime) / intervalSeconds));
-
-  const times = Array.from(
-    { length: itemCount },
-    (_, index) => new Date((startTime + index * intervalSeconds) * 1000),
-  );
-
-  const temps = toNumberArray(hourly.variables(OPEN_METEO_HOURLY_INDEX.temperature_2m)?.valuesArray());
-  const humidities = toNumberArray(hourly.variables(OPEN_METEO_HOURLY_INDEX.relative_humidity_2m)?.valuesArray());
-  const rainChances = toNumberArray(hourly.variables(OPEN_METEO_HOURLY_INDEX.precipitation_probability)?.valuesArray());
-  const precipitations = toNumberArray(hourly.variables(OPEN_METEO_HOURLY_INDEX.precipitation)?.valuesArray());
-  const winds = toNumberArray(hourly.variables(OPEN_METEO_HOURLY_INDEX.wind_speed_10m)?.valuesArray());
-  const gusts = toNumberArray(hourly.variables(OPEN_METEO_HOURLY_INDEX.wind_gusts_10m)?.valuesArray());
-  const weatherCodes = toNumberArray(hourly.variables(OPEN_METEO_HOURLY_INDEX.weather_code)?.valuesArray());
-  const pressures = toNumberArray(hourly.variables(OPEN_METEO_HOURLY_INDEX.surface_pressure)?.valuesArray());
+  const data = await response.json();
+  const times = (data.hourly.time || []).map((t: string) => new Date(t));
+  const temps = data.hourly.temperature_2m || [];
+  const humidities = data.hourly.relative_humidity_2m || [];
+  const rainChances = data.hourly.precipitation_probability || [];
+  const precipitations = data.hourly.precipitation || [];
+  const winds = data.hourly.wind_speed_10m || [];
+  const gusts = data.hourly.wind_gusts_10m || [];
+  const weatherCodes = data.hourly.weather_code || [];
+  const pressures = data.hourly.surface_pressure || [];
 
   // Sample every 6 hours and keep enough points for multi-horizon charts.
   const sampledPointCount = Math.floor((times.length - 1) / 6) + 1;
   const totalPoints = Math.min(9, sampledPointCount);
-
   if (totalPoints < 2) {
     throw new Error('Insufficient forecast points from Open-Meteo');
   }
-
   const points = Array.from({ length: totalPoints }, (_, index) => {
     const sourceIndex = index * 6;
     const rain = Number(precipitations[sourceIndex] ?? 0);
     const chanceRain = Number(rainChances[sourceIndex] ?? (rain > 0 ? 45 : 20));
     const weatherCode = Number(weatherCodes[sourceIndex] ?? 0);
-
     return {
       time: formatHourLabel(times[sourceIndex]),
       temp: Number(temps[sourceIndex] ?? 0),
@@ -345,18 +327,15 @@ export const fetchOpenMeteoForecast = async (lat: number, lon: number): Promise<
       condition: mapWeatherCodeToCondition(weatherCode),
     };
   });
-
-  const currentIsDayRaw = current?.variables(OPEN_METEO_CURRENT_INDEX.is_day)?.value();
-  const currentWeatherCodeRaw = current?.variables(OPEN_METEO_CURRENT_INDEX.weather_code)?.value();
-  const daylightDurationRaw = daily?.variables(OPEN_METEO_DAILY_INDEX.daylight_duration)?.valuesArray()?.[0];
-
+  const currentIsDayRaw = data.current?.is_day;
+  const currentWeatherCodeRaw = data.current?.weather_code;
+  const daylightDurationRaw = data.daily?.daylight_duration?.[0];
   if (currentWeatherCodeRaw !== null && currentWeatherCodeRaw !== undefined && points.length > 0) {
     points[0] = {
       ...points[0],
       condition: mapWeatherCodeToCondition(Number(currentWeatherCodeRaw)),
     };
   }
-
   return {
     points,
     currentIsDay:

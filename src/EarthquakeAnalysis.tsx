@@ -111,8 +111,19 @@ const haversineDistanceKm = (start: [number, number], end: [number, number]): nu
   return earthRadiusKm * c;
 };
 
+// Fly-to helper for map zoom effect
+function FlyToSelected({ lat, lon }: { lat: number; lon: number }) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo([lat, lon], Math.max(map.getZoom(), 12), { duration: 1.1, easeLinearity: 0.4 });
+  }, [lat, lon, map]);
+  return null;
+}
+
 export default function EarthquakeAnalysis({ mapMode, onMapModeChange }: EarthquakeAnalysisProps) {
   const [focusMode, setFocusMode] = useState<FocusMode>('campuses');
+  const [selectedCampus, setSelectedCampus] = useState<string | null>(null);
+  const [flyTarget, setFlyTarget] = useState<{ lat: number; lon: number } | null>(null);
 
   const campusDistances = useMemo(() => {
     return CAMPUSES.map((campus) => {
@@ -237,18 +248,36 @@ export default function EarthquakeAnalysis({ mapMode, onMapModeChange }: Earthqu
                   </Popup>
                 </CircleMarker>
 
-                {CAMPUSES.map((campus) => (
-                  <Marker key={campus.name} position={[campus.lat, campus.lon]} icon={bsuCampusIcon} zIndexOffset={1000}>
-                    <Popup>
-                      <div className="space-y-1 text-xs">
-                        <p className="font-semibold text-[#414042]">{campus.name}</p>
-                        <p className="text-[#414042]/80">
-                          {campus.lat.toFixed(6)}, {campus.lon.toFixed(6)}
-                        </p>
-                      </div>
-                    </Popup>
-                  </Marker>
-                ))}
+
+                {/* Fly-to effect for selected campus */}
+                {flyTarget && <FlyToSelected lat={flyTarget.lat} lon={flyTarget.lon} />}
+
+                {CAMPUSES.map((campus) => {
+                  const isSelected = selectedCampus === campus.name;
+                  return (
+                    <Marker
+                      key={campus.name}
+                      position={[campus.lat, campus.lon]}
+                      icon={bsuCampusIcon}
+                      zIndexOffset={isSelected ? 1200 : 1000}
+                      eventHandlers={{
+                        click: () => {
+                          setSelectedCampus(campus.name);
+                          setFlyTarget({ lat: campus.lat, lon: campus.lon });
+                        },
+                      }}
+                    >
+                      <Popup>
+                        <div className="space-y-1 text-xs">
+                          <p className="font-semibold text-[#414042]">{campus.name}</p>
+                          <p className="text-[#414042]/80">
+                            {campus.lat.toFixed(6)}, {campus.lon.toFixed(6)}
+                          </p>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  );
+                })}
 
                 <ZoomControl position="bottomright" />
               </MapContainer>

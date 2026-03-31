@@ -19,10 +19,12 @@ import {
   RefreshCw,
   Sparkles,
   Thermometer,
-  TrendingUp,
+  // TrendingUp, // Unused
   Wind,
   type LucideIcon,
 } from 'lucide-react';
+import ForecastChart from './components/ForecastChart';
+import { STATUS_CONFIG, getCardStatus } from './CampusSummary';
 
 // Map tile URLs for different modes
 const TILES = {
@@ -99,13 +101,8 @@ function createRiskIcon(level: RiskLevel, selected: boolean): L.DivIcon {
 }
 
 
-// ...existing code...
-import ForecastChart from './components/ForecastChart';
-import type { RiskLevel } from './CampusSummary';
-
-
 // CampusSummary color config
-import { STATUS_CONFIG } from './CampusSummary';
+// import { STATUS_CONFIG, getCardStatus } from './CampusSummary'; // getCardStatus unused
 
 
 import { CAMPUSES, fetchOpenMeteoForecast } from './services/weather';
@@ -284,20 +281,34 @@ function MetricCard({ label, value, icon: Icon, severity }: MetricCardProps) {
   );
 }
 
+// Helper for fly-to animation (must be above main component)
+function FlyToSelected({ lat, lon }: { lat: number; lon: number }) {
+  const map = useMap();
+  useEffect(() => {
+    if (lat && lon) {
+      map.flyTo([lat, lon], map.getZoom(), { animate: true, duration: 1.2 });
+    }
+    // Only run when lat/lon change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lat, lon]);
+  return null;
+}
+
 export default function DetailedSiteAnalysis() {
   const [mapMode, setMapMode] = useState<MapMode>('street');
-  // const [selectedCampusMarker, setSelectedCampusMarker] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<AnalysisTab>('observed');
   const [selectedCampus, setSelectedCampus] = useState(SITE_CAMPUSES[0]);
+  const [mapSelectedCampus, setMapSelectedCampus] = useState<string | null>(null);
+  const [flyTarget, setFlyTarget] = useState<{ lat: number; lon: number } | null>(null);
   const [showLegend, setShowLegend] = useState(true);
-  const [forecastScenario, setForecastScenario] = useState<ForecastScenario>('baseline');
-  const [forecastHorizon, setForecastHorizon] = useState<ForecastHorizon>(24);
   const [lastUpdated, setLastUpdated] = useState(() => new Date());
   const [forecastSeries, setForecastSeries] = useState(forecastData);
   const [isLiveForecast, setIsLiveForecast] = useState(false);
   const [currentIsDay, setCurrentIsDay] = useState<boolean | null>(null);
   const [daylightDurationSeconds, setDaylightDurationSeconds] = useState<number | null>(null);
   const [currentWeatherCode, setCurrentWeatherCode] = useState<number | null>(null);
+  const [forecastScenario] = useState<ForecastScenario>('baseline');
+  const [forecastHorizon] = useState<ForecastHorizon>(24);
 
   useEffect(() => {
     let isMounted = true;
@@ -481,7 +492,7 @@ export default function DetailedSiteAnalysis() {
   ] as const;
 
   const updatedLabel = lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const horizon24Data = scenarioAdjustedForecast.slice(0, Math.min(5, scenarioAdjustedForecast.length));
+  // const horizon24Data = scenarioAdjustedForecast.slice(0, Math.min(5, scenarioAdjustedForecast.length)); // Unused
   const weatherStatus =
     currentWeather.chanceRain >= 70
       ? 'High chance of rainfall and possible operational delays.'
@@ -550,7 +561,7 @@ export default function DetailedSiteAnalysis() {
     };
   }, [currentWeather, currentIsDay, daylightDurationSeconds, currentWeatherCode]);
 
-  const WeatherSummaryIcon = weatherSummaryTheme.icon;
+  // const WeatherSummaryIcon = weatherSummaryTheme.icon; // Unused
 
   const synopsisSignals = useMemo(
     () => [
@@ -611,6 +622,15 @@ export default function DetailedSiteAnalysis() {
     ],
     [currentWeather],
   );
+
+  // Loading and no data fallback
+  if (!scenarioAdjustedForecast || scenarioAdjustedForecast.length === 0) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-[#101728] text-white text-xl">
+        {forecastSeries.length === 0 ? 'Loading data...' : 'No data available for this campus.'}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-full bg-[linear-gradient(180deg,#ffffff_0%,#fff5f6_100%)] px-6 py-8 lg:px-8">
@@ -850,24 +870,95 @@ export default function DetailedSiteAnalysis() {
                           ))}
                         </div>
                       </div>
+                      {flyTarget && <FlyToSelected lat={flyTarget.lat} lon={flyTarget.lon} />}
                       <CampusViewportController />
                       <TileLayer
                         url={TILES[mapMode]}
                         attribution="&copy; Esri & OpenStreetMap contributors"
                       />
-                      {/* Use fallback data to get CampusWeather for risk logic */}
                       {/* Only use live API data for campus markers. Render markers elsewhere with live data. */}
-                      {CAMPUSES.map(campus => (
-                        <Marker
-                          key={campus.name}
-                          position={[campus.lat, campus.lon]}
-                          icon={createRiskIcon('safe', false)}
-                        >
-                          <Popup>
-                            <p className="text-xs font-semibold">{campus.name}</p>
-                          </Popup>
-                        </Marker>
-                      ))}
+                      {CAMPUSES.map(campus => {
+                        // Use fallbackData or forecastData to get metrics for risk logic
+                        // For now, use observedMetrics for the selected campus, fallback to 'safe'
+                        // If you have per-campus data, replace this logic accordingly
+                        let campusWeather = null;
+                        if (forecastSeries && Array.isArray(forecastSeries)) {
+                          // Try to find a matching campus in forecastData (if available)
+                          // This is a placeholder; adapt as needed for your real data
+                          campusWeather = {
+                            name: campus.name,
+                            rain: currentWeather?.rain ?? 0,
+                            humidity: currentWeather?.humidity ?? 0,
+                            windSpeed: currentWeather?.wind ?? 0,
+                            windGust: currentWeather?.gust ?? 0,
+                            rainPossibility: String(currentWeather?.chanceRain ?? 0),
+                            heatIndex: computeHeatIndex(currentWeather?.temp ?? 0, currentWeather?.humidity ?? 0),
+                            dewpoint: computeDewPoint(currentWeather?.temp ?? 0, currentWeather?.humidity ?? 0),
+                            warning: false,
+                            status: 'Safe',
+                          };
+                        }
+                        // Use getCardStatus from CampusSummary to determine risk level
+                        let riskLevel: RiskLevel = 'safe';
+                        let riskLabel = 'Safe';
+                        if (campusWeather) {
+                          const status = getCardStatus(campusWeather);
+                          riskLevel = status.level;
+                          // Use label from RISK_CONFIG for tooltip
+                          riskLabel = RISK_CONFIG[riskLevel]?.label || 'Safe';
+                        }
+                        const isSelected = mapSelectedCampus === campus.name;
+                        const icon = createRiskIcon(riskLevel, isSelected);
+                        const cfg = RISK_CONFIG[riskLevel];
+                        return (
+                          <Marker
+                            key={campus.name}
+                            position={[campus.lat, campus.lon]}
+                            icon={icon}
+                            eventHandlers={{
+                              click: () => {
+                                setMapSelectedCampus(campus.name);
+                                setSelectedCampus(campus.name);
+                                setFlyTarget({ lat: campus.lat, lon: campus.lon });
+                              },
+                            }}
+                          >
+                            {/* Tooltip styled like RiskMap */}
+                            <Popup>
+                              <div
+                                style={{
+                                  background: 'rgba(255,255,255,0.97)',
+                                  border: `1.5px solid ${cfg.hex}55`,
+                                  borderRadius: 12,
+                                  padding: '5px 10px',
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  color: '#414042',
+                                  boxShadow: `0 4px 16px rgba(0,0,0,0.14)`,
+                                  whiteSpace: 'nowrap',
+                                  fontFamily: "'Trebuchet MS', sans-serif",
+                                }}
+                              >
+                                <span style={{ color: cfg.hex, marginRight: 5 }}>●</span>
+                                {campus.name}
+                                <span
+                                  style={{
+                                    marginLeft: 6,
+                                    fontSize: 9,
+                                    fontWeight: 800,
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.1em',
+                                    color: cfg.hex,
+                                  }}
+                                >
+                                  {riskLabel}
+                                </span>
+                              </div>
+                            </Popup>
+                          </Marker>
+                        );
+                      })}
+                      {/* Helper for fly-to animation (define once, outside JSX) */}
                       <ZoomControl position="bottomright" />
                     </MapContainer>
                   </div>
@@ -927,123 +1018,10 @@ export default function DetailedSiteAnalysis() {
             </div>
           </section>
         ) : (
+          // Forecast tab content
           <section className="space-y-6">
-            <div className="rounded-3xl border border-[#d2232a]/20 bg-gradient-to-r from-white to-[#d2232a]/10 p-4 shadow-sm">
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#d2232a]/20 text-[#911d1f]">
-                    <Sparkles size={18} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#414042]/70">Predictive Controls</p>
-                    <p className="text-sm font-semibold text-[#414042]">Tune scenario and horizon for planning simulations</p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex rounded-xl border border-[#d2232a]/20 bg-white p-1 shadow-sm">
-                    {[
-                      { key: 'baseline' as const, label: 'Baseline' },
-                      { key: 'rain-heavy' as const, label: 'Rain Heavy' },
-                      { key: 'windy' as const, label: 'Windy' },
-                    ].map((item) => (
-                      <button
-                        key={item.key}
-                        onClick={() => setForecastScenario(item.key)}
-                        className={`rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] transition-colors ${
-                          forecastScenario === item.key
-                            ? 'bg-[#911d1f] text-white'
-                            : 'text-[#414042]/75 hover:bg-[#d2232a]/12 hover:text-[#911d1f]'
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="flex rounded-xl border border-[#d2232a]/20 bg-white p-1 shadow-sm">
-                    {[6, 12, 24].map((hours) => (
-                      <button
-                        key={hours}
-                        onClick={() => setForecastHorizon(hours as ForecastHorizon)}
-                        className={`rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] transition-colors ${
-                          forecastHorizon === hours
-                            ? 'bg-[#911d1f] text-white'
-                            : 'text-[#414042]/75 hover:bg-[#d2232a]/12 hover:text-[#911d1f]'
-                        }`}
-                      >
-                        {hours}h
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="inline-flex items-center gap-2 rounded-xl border border-[#d2232a]/20 bg-white px-3 py-2 text-xs font-semibold text-[#414042]/80 shadow-sm">
-                    <RefreshCw size={13} /> Updated {updatedLabel}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <div className="rounded-2xl border border-[#d2232a]/20 bg-white p-4 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#414042]/70">Forecast Risk Score</p>
-                <p className="mt-2 text-3xl font-black text-[#911d1f]">{forecastKpis.riskScore}</p>
-                <p className="mt-1 text-xs text-[#414042]/70">Scenario-adjusted storm impact index</p>
-              </div>
-              <div className="rounded-2xl border border-[#d2232a]/20 bg-white p-4 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#414042]/70">Peak Rainfall</p>
-                <p className="mt-2 text-3xl font-black text-[#d2232a]">{forecastKpis.maxRain.toFixed(1)} mm</p>
-                <p className="mt-1 text-xs text-[#414042]/70">Highest expected 6-hour precipitation</p>
-              </div>
-              <div className="rounded-2xl border border-[#d2232a]/20 bg-white p-4 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#414042]/70">Peak Wind Gust</p>
-                <p className="mt-2 inline-flex items-center gap-2 text-3xl font-black text-[#fbaf26]">
-                  <TrendingUp size={22} /> {forecastKpis.maxGust} kph
-                </p>
-                <p className="mt-1 text-xs text-[#414042]/70">Maximum projected gust for selected horizon</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-              <div className="rounded-3xl border border-[#d2232a]/20 bg-white p-5 shadow-sm">
-                <div className="mb-3 flex items-center justify-between">
-                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#414042]/70">Weather Summary</p>
-                  <WeatherSummaryIcon size={18} className={weatherSummaryTheme.iconClass} />
-                </div>
-
-                <div
-                  className={`relative overflow-hidden rounded-2xl bg-gradient-to-br p-4 text-white shadow-[0_12px_30px_rgba(65,64,66,0.22)] ${weatherSummaryTheme.bg}`}
-                >
-                  <div className={`absolute inset-0 ${weatherSummaryTheme.overlay}`} />
-                  <div className="absolute -right-8 -top-10 h-24 w-24 rounded-full bg-[#006193]/16 blur-xl" />
-                  <div className="absolute -bottom-10 -left-8 h-24 w-24 rounded-full bg-[#006193]/16 blur-xl" />
-
-                  <div className="relative z-10">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/85">Current Condition</p>
-                  <p className="mt-2 text-4xl font-black">{currentWeather.temp.toFixed(1)} degC</p>
-                  <p className="mt-1 text-sm font-semibold text-white/95">{currentWeather.condition}</p>
-                  <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-white/82">{weatherSummaryTheme.label}</p>
-
-                  <div className="mt-4 grid grid-cols-2 gap-2">
-                    <div className="rounded-lg bg-[#414042]/10 px-2 py-2">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-white/78">Rain Chance</p>
-                      <p className="text-sm font-black">{currentWeather.chanceRain}%</p>
-                    </div>
-                    <div className="rounded-lg bg-[#414042]/10 px-2 py-2">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-white/78">Wind Gust</p>
-                      <p className="text-sm font-black">{currentWeather.gust} kph</p>
-                    </div>
-                  </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 rounded-xl border border-[#d2232a]/20 bg-white p-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#414042]/70">Operational Note</p>
-                  <p className="mt-1 text-sm font-semibold leading-relaxed text-[#414042]">{weatherStatus}</p>
-                </div>
-              </div>
-
-
+            {/* You can add more forecast-specific content here if needed */}
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
               <ForecastChart
                 title="Rainfall Forecast"
                 subtitle={`Next ${forecastHorizon} hours (mm)`}
@@ -1058,8 +1036,6 @@ export default function DetailedSiteAnalysis() {
                   },
                 ]}
               />
-
-
               <ForecastChart
                 title="Wind Speed & Gust"
                 subtitle={`Scenario: ${forecastScenario.replace('-', ' ')}`}
@@ -1080,47 +1056,6 @@ export default function DetailedSiteAnalysis() {
                 ]}
               />
             </div>
-
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-
-              <ForecastChart
-                title="Rainfall Outlook (24h)"
-                subtitle="Expected rainfall trend for the next 24 hours"
-                data={horizon24Data}
-                xKey="time"
-                unit="mm"
-                chartType="area"
-                series={[
-                  {
-                    key: 'rain',
-                    label: '24h Rainfall',
-                    color: '#009748',
-                  },
-                ]}
-              />
-
-
-              <ForecastChart
-                title="Wind Speed and Gust Outlook (24h)"
-                subtitle="Expected wind behavior for the next 24 hours"
-                data={horizon24Data}
-                xKey="time"
-                unit="kph"
-                series={[
-                  {
-                    key: 'wind',
-                    label: 'Wind Speed',
-                    color: '#009748',
-                  },
-                  {
-                    key: 'gust',
-                    label: 'Wind Gust',
-                    color: '#009748',
-                  },
-                ]}
-              />
-            </div>
-
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
               <ForecastChart
                 title="Relative Humidity Trend"
@@ -1157,10 +1092,8 @@ export default function DetailedSiteAnalysis() {
             </div>
           </section>
         )}
+      // (FlyToSelected is defined once at the bottom of the file)
       </div>
     </div>
   );
 }
-
-
-

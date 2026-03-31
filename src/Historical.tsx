@@ -388,10 +388,7 @@ export default function HistoricalData() {
                     <>
                       <tr
                         key={`r${i}`}
-                        onClick={() => setExpandedRow(expandedRow === i ? null : i)}
-                        className={`border-b border-gray-50 transition-colors cursor-pointer rounded-2xl ${
-                          expandedRow === i ? 'bg-blue-50/40' : 'hover:bg-gray-50/80'
-                        }`}
+                        className={`border-b border-gray-50 transition-colors rounded-2xl ${i % 2 === 0 ? 'bg-green-200' : 'bg-blue-200'} hover:bg-opacity-90`}
                       >
                         {/* Date requested */}
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -445,15 +442,23 @@ export default function HistoricalData() {
                             >
                               <Trash2 size={18} className="text-red-500" />
                             </button>
-                            <ChevronDown
-                              size={20}
-                              className={`text-gray-300 transition-transform duration-200 ${expandedRow === i ? 'rotate-180 text-blue-400' : ''}`}
-                            />
+                            <button
+                              type="button"
+                              onClick={() => setExpandedRow(expandedRow === i ? null : i)}
+                              className="inline-flex items-center rounded-xl p-2 text-gray-500 hover:text-blue-500 border border-transparent hover:border-blue-400 transition-all"
+                              aria-expanded={expandedRow === i}
+                              aria-label={expandedRow === i ? 'Hide details' : 'Show details'}
+                            >
+                              <ChevronDown
+                                size={20}
+                                className={`transition-transform duration-200 ${expandedRow === i ? 'rotate-180 text-blue-400' : ''}`}
+                              />
+                            </button>
                           </div>
                         </td>
                       </tr>
 
-                      {/* ── Expanded detail row ── */}
+                      {/* ── Dropdown detail row ── */}
                       {expandedRow === i && (
                         <tr key={`e${i}`} className="border-b border-blue-100 bg-blue-50/40 rounded-2xl">
                           <td colSpan={7} className="px-6 py-5">

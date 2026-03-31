@@ -196,7 +196,7 @@ export default function AuthPage({ onLogin, onSignUp }: AuthPageProps) {
         </div>
 
         {/* Right side - Animated card carousel */}
-        <div className="w-full max-w-md shrink-0 relative h-[600px]">
+        <div className="w-full max-w-md shrink-0 relative h-[620px]">
           {/* Stacked Card Swap Effect */}
           <motion.div
             animate={mode === 'signin'
@@ -431,7 +431,7 @@ export default function AuthPage({ onLogin, onSignUp }: AuthPageProps) {
                 <button
                   type="button"
                   onClick={() => setMode('signin')}
-                  className="ml-2 font-semibold text-[#d2232a] hover:text-white transition-colors underline underline-offset-2"
+                  className="ml-2 font-semibold text-green-500 hover:text-green-400 transition-colors underline decoration-green-500 underline-offset-2"
                 >
                   Sign In
                 </button>
