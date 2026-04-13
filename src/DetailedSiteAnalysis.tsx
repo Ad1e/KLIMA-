@@ -129,7 +129,7 @@ interface MetricCardProps {
 const SITE_CAMPUSES = [...CAMPUSES.map((campus) => campus.name)];
 const ALANGILAN_CENTER: [number, number] = [13.784295, 121.07428];
 
-type ColumnKey = 'time' | 'rain' | 'chanceRain' | 'temp' | 'wind' | 'humidity' | 'pressure' | 'condition';
+type ColumnKey = 'time' | 'condition' | 'rain' | 'chanceRain' | 'temp' | 'heatIndex' | 'dewpoint' | 'wind' | 'windDir' | 'humidity' | 'pressure' | 'cloudCover' | 'visibility';
 
 interface ColumnDefinition {
   key: ColumnKey;
@@ -141,10 +141,15 @@ const COLUMNS: ColumnDefinition[] = [
   { key: 'condition', label: 'Condition' },
   { key: 'rain', label: 'Rain (mm)' },
   { key: 'chanceRain', label: 'Rain Prob (%)' },
-  { key: 'temp', label: 'Temp (degC)' },
-  { key: 'wind', label: 'Wind / Gust (kph)' },
+  { key: 'temp', label: 'Temp (°C)' },
+  { key: 'heatIndex', label: 'Heat Index (°C)' },
+  { key: 'dewpoint', label: 'Dew Point (°C)' },
+  { key: 'wind', label: 'Wind/Gust (km/h)' },
+  { key: 'windDir', label: 'Wind Dir' },
   { key: 'humidity', label: 'Humidity (%)' },
-  { key: 'pressure', label: 'Pressure (hPa)' },
+  { key: 'pressure', label: 'MSLP (hPa)' },
+  { key: 'cloudCover', label: 'Cloud (%)' },
+  { key: 'visibility', label: 'Vis (km)' },
 ];
 
 
@@ -489,38 +494,38 @@ export default function DetailedSiteAnalysis() {
       severity: currentWeather.humidity > 85 ? 'warning' : currentWeather.humidity > 75 ? 'caution' : 'safe',
     },
     {
-      label: 'Temperature (degC)',
-      value: `${currentWeather.temp.toFixed(2)} degC`,
+      label: 'Temperature (°C)',
+      value: `${currentWeather.temp.toFixed(2)} °C`,
       icon: Thermometer,
       severity: currentWeather.temp > 32 ? 'warning' : currentWeather.temp > 30 ? 'caution' : 'safe',
     },
     {
-      label: 'Dewpoint (degC)',
-      value: `${computeDewPoint(currentWeather.temp, currentWeather.humidity).toFixed(2)} degC`,
+      label: 'Dewpoint (°C)',
+      value: `${computeDewPoint(currentWeather.temp, currentWeather.humidity).toFixed(2)} °C`,
       icon: Thermometer,
       severity: 'caution',
     },
     {
-      label: 'Heat Index (degC)',
-      value: `${computeHeatIndex(currentWeather.temp, currentWeather.humidity).toFixed(2)} degC`,
+      label: 'Heat Index (°C)',
+      value: `${computeHeatIndex(currentWeather.temp, currentWeather.humidity).toFixed(2)} °C`,
       icon: Flame,
       severity: computeHeatIndex(currentWeather.temp, currentWeather.humidity) > 38 ? 'warning' : computeHeatIndex(currentWeather.temp, currentWeather.humidity) > 33 ? 'caution' : 'safe',
     },
     {
-      label: 'Wind Direction (deg)',
-      value: currentWeather.wind !== undefined ? `${currentWeather.wind.toFixed(0)} deg` : 'N/A',
+      label: 'Wind Direction (°)',
+      value: currentWeather.wind !== undefined ? `${currentWeather.wind.toFixed(0)}°` : 'N/A',
       icon: Compass,
       severity: 'caution',
     },
     {
-      label: 'Wind Gust (kph)',
-      value: `${currentWeather.gust.toFixed(1)} kph`,
+      label: 'Wind Gust (km/h)',
+      value: `${currentWeather.gust.toFixed(1)} km/h`,
       icon: Wind,
       severity: currentWeather.gust > 30 ? 'warning' : currentWeather.gust > 18 ? 'caution' : 'safe',
     },
     {
-      label: 'Wind Speed (kph)',
-      value: `${currentWeather.wind.toFixed(1)} kph`,
+      label: 'Wind Speed (km/h)',
+      value: `${currentWeather.wind.toFixed(1)} km/h`,
       icon: Wind,
       severity: currentWeather.wind > 20 ? 'warning' : currentWeather.wind > 14 ? 'caution' : 'safe',
     },
@@ -620,9 +625,9 @@ export default function DetailedSiteAnalysis() {
       },
       {
         label: 'Wind Exposure',
-        value: `${forecastKpis.maxGust} kph`,
+        value: `${forecastKpis.maxGust} km/h`,
         caption: 'Projected highest wind gust',
-        color: 'text-[#fbaf26]',
+        color: 'text-[#ea580c]',
       },
       {
         label: 'Humidity Load',
@@ -656,15 +661,15 @@ export default function DetailedSiteAnalysis() {
       },
       {
         label: 'Wind Gust',
-        value: `${currentWeather.gust.toFixed(1)} kph`,
+        value: `${currentWeather.gust.toFixed(1)} km/h`,
         caption: 'Peak observed gust speed',
-        color: 'text-[#fbaf26]',
+        color: 'text-[#ea580c]', // Warning orange to match standardized color
       },
       {
         label: 'Heat Index',
-        value: `${computeHeatIndex(currentWeather.temp, currentWeather.humidity).toFixed(2)} degC`,
+        value: `${computeHeatIndex(currentWeather.temp, currentWeather.humidity).toFixed(2)} °C`,
         caption: 'Thermal stress indicator',
-        color: 'text-[#911d1f]',
+        color: 'text-[#b91c1c]', // Dangerous red to match standardized color
       },
     ],
     [currentWeather],
@@ -709,6 +714,14 @@ export default function DetailedSiteAnalysis() {
     }
     if (key === 'temp') {
       return <span className={`rounded-md px-2 py-1 text-[11px] font-bold ${row.temp > 30 ? 'bg-[#ff922b]/20 text-[#ff922b]' : 'bg-[#009748]/20 text-[#009748]'}`}>{row.temp}</span>;
+    }
+    if (key === 'heatIndex') {
+      const hi = computeHeatIndex(row.temp, row.humidity);
+      return <span className={`rounded-md px-2 py-1 text-[11px] font-bold ${hi > 33 ? 'bg-[#ff922b]/20 text-[#ff922b]' : 'bg-[#009748]/20 text-[#009748]'}`}>{hi.toFixed(1)}</span>;
+    }
+    if (key === 'dewpoint') {
+      const dp = computeDewPoint(row.temp, row.humidity);
+      return <span className="text-xs font-semibold text-[#414042]">{dp.toFixed(1)}</span>;
     }
     if (key === 'rain') {
       return <span className={`rounded-md px-2 py-1 text-[11px] font-bold ${row.rain > 0 ? 'bg-[#00818e]/20 text-[#00818e]' : 'bg-[#414042]/5 text-[#414042]/60'}`}>{row.rain}</span>;
@@ -1063,9 +1076,10 @@ export default function DetailedSiteAnalysis() {
                         <span className="w-28 shrink-0 text-[10px] font-black uppercase tracking-[0.15em] text-[#414042]/60">Risk Status</span>
                         <div className="flex flex-wrap items-center gap-4">
                           {[
-                            { label: 'High Risk',   color: '#d2232a' },
-                            { label: 'Medium Risk', color: '#fbaf26' },
-                            { label: 'Low Risk',    color: '#009748' },
+                            { label: 'Dangerous', color: '#d2232a' },
+                            { label: 'Warning',   color: '#ff922b' },
+                            { label: 'Caution',   color: '#fbaf26' },
+                            { label: 'Safe',      color: '#009748' },
                           ].map((item) => (
                             <div key={item.label} className="flex items-center gap-1.5">
                               <div className="h-2.5 w-2.5 rounded-full shadow-sm" style={{ background: item.color }} />

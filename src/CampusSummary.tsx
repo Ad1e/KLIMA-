@@ -1,4 +1,5 @@
 import { useState, useRef, useLayoutEffect } from 'react';
+
 import { createPortal } from 'react-dom';
 import bsuLogo from './assets/bsu-logo.png';
 import {
@@ -52,9 +53,9 @@ const THRESHOLDS = {
   windGust: { monitor: 50, risk: 80, unit: 'km/h', label: 'Wind Gust', icon: Zap, desc: 'Normal: <50km/h, Monitor: 50–80km/h, Risk: >80km/h' },
   heatIndex: {
     // PAGASA Heat Index Advisory scale
-    monitor:      27,   // Caution
-    warning:      33,   // Extreme Caution
-    danger:       42,   // Danger
+    monitor: 27,   // Caution
+    warning: 33,   // Extreme Caution
+    danger: 42,   // Danger
     extremeDanger: 52,  // Extreme Danger
     unit: '°C',
     label: 'Heat Index',
@@ -76,7 +77,7 @@ export function getRiskLevel(value: number | string, key: keyof typeof THRESHOLD
   if (key === 'heatIndex') {
     const hi = t as typeof THRESHOLDS['heatIndex'];
     if (v >= (hi as any).extremeDanger) return 'risk';   // Extreme Danger ≥52°C
-    if (v >= hi.danger)  return 'danger';                 // Danger 42–51°C
+    if (v >= hi.danger) return 'danger';                 // Danger 42–51°C
     if (v >= hi.warning) return 'warning';                // Extreme Caution 33–41°C
     if (v >= hi.monitor) return 'monitor';                // Caution 27–32°C
     return 'safe';
@@ -101,7 +102,7 @@ export function getCardStatus(campus: CampusWeather): { level: RiskLevel; reason
     ['dewpoint', campus.dewpoint],
     ['visibility', campus.visibility],
   ];
-  const priority: RiskLevel[] = ['danger', 'risk', 'warning', 'monitor', 'safe'];
+  const priority: RiskLevel[] = ['risk', 'danger', 'warning', 'monitor'];
   let found: Partial<Record<RiskLevel, string[]>> = {};
   for (const [key, val] of checks) {
     if (val === undefined || val === null) continue;
@@ -115,6 +116,32 @@ export function getCardStatus(campus: CampusWeather): { level: RiskLevel; reason
     }
   }
   return { level: 'safe', reasons: [] };
+}
+
+export function computeRiskScore(campus: CampusWeather): number {
+  let score = 0;
+  const hi = Number(campus.heatIndex);
+  if (!isNaN(hi)) {
+    if (hi >= 52) score = 100;
+    else if (hi >= 42) score = 80 + ((hi - 42) / 10) * 20;
+    else if (hi >= 33) score = 50 + ((hi - 33) / 9) * 29;
+    else if (hi >= 27) score = 20 + ((hi - 27) / 6) * 29;
+    else score = Math.max(0, hi - 20) * 1.5; 
+  }
+  
+  const rain = Number(campus.rain);
+  if (!isNaN(rain)) {
+    if (rain >= 30) score = Math.max(score, 85);
+    else if (rain >= 10) score = Math.max(score, 50);
+  }
+
+  const gust = Number(campus.windGust);
+  if (!isNaN(gust)) {
+    if (gust >= 80) score = Math.max(score, 90);
+    else if (gust >= 50) score = Math.max(score, 60);
+  }
+  
+  return Math.min(100, Math.round(score));
 }
 
 // ─── Status Config (Refined Palette) ─────────────────────────────────────────
@@ -163,7 +190,7 @@ export const STATUS_CONFIG = {
     statColor: '#c2410c',
   },
   danger: {
-    label: 'DANGER',
+    label: 'DANGEROUS',
     icon: AlertOctagon,
     emoji: '🚨',
     banner: 'Danger: Extreme temperature. Avoid exposure.',
@@ -205,7 +232,7 @@ export const STATUS_CONFIG = {
     statColor: '#b45309',
   },
   risk: {
-    label: 'RISK',
+    label: 'DANGEROUS',
     icon: AlertOctagon,
     emoji: '🚨',
     banner: 'Warning: Risk detected. Follow protocols.',
@@ -235,7 +262,7 @@ const THRESHOLD_DETAIL: Partial<Record<keyof typeof THRESHOLDS, {
   label: string;
 }>> = {
   heatIndex: {
-    label: 'Temperature',
+    label: 'Heat Index',
     unit: '°C',
     getThreshold: (level) => {
       if (level === 'monitor') return THRESHOLDS.heatIndex.monitor;
@@ -325,7 +352,7 @@ function getAlertReasonSummary(campus: CampusWeather, level: RiskLevel): string 
 function Tooltip({ text }: { text: string }) {
   const [show, setShow] = useState(false);
   const iconRef = useRef<HTMLSpanElement>(null);
-  const [tooltipPos, setTooltipPos] = useState<{top: number, left: number} | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ top: number, left: number } | null>(null);
 
   useLayoutEffect(() => {
     if (show && iconRef.current) {
@@ -407,16 +434,14 @@ function MetricRow({ metricKey, value, cardLevel }: MetricRowProps) {
         {isTrigger ? (
           <span className="relative flex items-center justify-center w-3 h-3 shrink-0">
             <span
-              className={`absolute inline-flex h-full w-full rounded-full opacity-60 animate-ping ${
-                risk === 'monitor' ? 'bg-amber-400' :
-                risk === 'warning' ? 'bg-orange-500' : 'bg-red-500'
-              }`}
+              className={`absolute inline-flex h-full w-full rounded-full opacity-60 animate-ping ${risk === 'monitor' ? 'bg-amber-400' :
+                  risk === 'warning' ? 'bg-orange-500' : 'bg-red-500'
+                }`}
             />
             <span
-              className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
-                risk === 'monitor' ? 'bg-amber-500' :
-                risk === 'warning' ? 'bg-orange-600' : 'bg-red-600'
-              }`}
+              className={`relative inline-flex rounded-full h-1.5 w-1.5 ${risk === 'monitor' ? 'bg-amber-500' :
+                  risk === 'warning' ? 'bg-orange-600' : 'bg-red-600'
+                }`}
             />
           </span>
         ) : (
@@ -449,7 +474,7 @@ function MetricRow({ metricKey, value, cardLevel }: MetricRowProps) {
 // ─── Campus Card ──────────────────────────────────────────────────────────────
 
 function CampusCard({ campus }: { campus: CampusWeather }) {
-  const [miniPage, setMiniPage] = useState<0|1|2>(0);
+  const [miniPage, setMiniPage] = useState<0 | 1 | 2>(0);
   const { level, reasons } = getCardStatus(campus);
   const cfg = STATUS_CONFIG[level];
   const StatusIcon = cfg.icon;
@@ -477,28 +502,31 @@ function CampusCard({ campus }: { campus: CampusWeather }) {
     v !== undefined && v !== null ? `${v}${unit}` : '—';
 
   // Three pages × 3 tiles each — card height NEVER changes
+  // Page 0 = Details (Rain/Temp/WindDir)
+  // Page 1 = Basic (Gust/Vis/Dew)
+  // Page 2 = Advanced (MSLP/Cloud/Humidity)
   const miniPages: { Icon: React.ElementType; label: string; value: string; alert: boolean }[][] = [
-    // Page 0: Basic
+    // Page 0: Details
     [
-      { Icon: TrendingUp,  label: 'Rain %',   value: campus.rainPossibility ?? '—',                         alert: false },
-      { Icon: Thermometer, label: 'Temp',      value: campus.temperature ? `${campus.temperature}°C` : '—', alert: false },
-      { Icon: Compass,     label: 'Wind Dir',  value: campus.windDirection ?? '—',                          alert: false },
+      { Icon: TrendingUp, label: 'Rain %', value: campus.rainPossibility ?? '—', alert: false },
+      { Icon: Thermometer, label: 'Temp', value: campus.temperature ? `${campus.temperature}°C` : '—', alert: false },
+      { Icon: Compass, label: 'Wind Dir', value: campus.windDirection ?? '—', alert: false },
     ],
-    // Page 1: Wind & Atmosphere
+    // Page 1: Basic
     [
-      { Icon: Zap,      label: 'Wind Gust',  value: fmtVal(campus.windGust,  ' km/h'), alert: campus.windGust   !== undefined && getRiskLevel(campus.windGust,   'windGust')   !== 'safe' },
-      { Icon: Eye,      label: 'Visibility', value: fmtVal(campus.visibility,' km'),   alert: campus.visibility !== undefined && getRiskLevel(campus.visibility, 'visibility') !== 'safe' },
-      { Icon: Droplets, label: 'Dew Point',  value: fmtVal(campus.dewpoint,  '°C'),    alert: campus.dewpoint  !== undefined && getRiskLevel(campus.dewpoint,   'dewpoint')   !== 'safe' },
+      { Icon: Zap, label: 'Wind Gust', value: fmtVal(campus.windGust, ' km/h'), alert: campus.windGust !== undefined && getRiskLevel(campus.windGust, 'windGust') !== 'safe' },
+      { Icon: Eye, label: 'Visibility', value: fmtVal(campus.visibility, ' km'), alert: campus.visibility !== undefined && getRiskLevel(campus.visibility, 'visibility') !== 'safe' },
+      { Icon: Droplets, label: 'Dew Point', value: fmtVal(campus.dewpoint, '°C'), alert: campus.dewpoint !== undefined && getRiskLevel(campus.dewpoint, 'dewpoint') !== 'safe' },
     ],
-    // Page 2: Pressure & Cloud
+    // Page 2: Advanced
     [
-      { Icon: TrendingUp, label: 'MSLP (hPa)', value: campus.mslp ?? '—',                                alert: false },
-      { Icon: Cloud,      label: 'Cloud',       value: campus.cloudCover ? `${campus.cloudCover}%` : '—', alert: false },
-      { Icon: Droplets,   label: 'Humidity',    value: campus.humidity ? `${campus.humidity}%` : '—',    alert: false },
+      { Icon: TrendingUp, label: 'MSLP (hPa)', value: campus.mslp ?? '—', alert: false },
+      { Icon: Cloud, label: 'Cloud', value: campus.cloudCover ? `${campus.cloudCover}%` : '—', alert: false },
+      { Icon: Droplets, label: 'Humidity', value: campus.humidity ? `${campus.humidity}%` : '—', alert: false },
     ],
   ];
 
-  const PAGE_LABELS = ['Details ▾', 'Advanced ▾', 'Basic ▴'];
+  const PAGE_LABELS = ['Details ▾', 'Basic ▾', 'Advanced ▴'];
   const currentMinis = miniPages[miniPage];
 
   return (
@@ -533,11 +561,20 @@ function CampusCard({ campus }: { campus: CampusWeather }) {
           </h3>
           <p className="mt-0.5 text-[9px] font-medium text-gray-400">Batangas State University</p>
         </div>
+        
+        <div className="flex flex-col items-end mr-0.5 mt-0.5">
+          <span className="text-[7.5px] font-black uppercase tracking-wider text-gray-400 leading-none mb-0.5">Risk Score</span>
+          <span className="text-[13px] leading-none font-black font-mono-metric" style={{ color: cfg.accent }}>
+            {computeRiskScore(campus)}
+            <span className="text-[8px] text-gray-400 font-bold ml-px">/100</span>
+          </span>
+        </div>
+
         <div
-          className={`flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 ${cfg.badgeBg}`}
+          className={`flex shrink-0 items-center gap-1 rounded-full border px-2 py-1 ${cfg.badgeBg}`}
           role="status"
         >
-          <StatusIcon size={10} className={cfg.badgeText} aria-hidden="true" />
+          <StatusIcon size={9} className={cfg.badgeText} aria-hidden="true" />
           <span className={`text-[9px] font-black uppercase tracking-widest ${cfg.badgeText}`}>{cfg.label}</span>
         </div>
       </div>
@@ -571,11 +608,10 @@ function CampusCard({ campus }: { campus: CampusWeather }) {
         {currentMinis.map(({ Icon, label, value, alert: isAlertMini }) => (
           <div
             key={label}
-            className={`flex flex-col items-center gap-0.5 rounded-xl border py-2 px-1 shadow-sm transition-colors duration-200 ${
-              isAlertMini
+            className={`flex flex-col items-center gap-0.5 rounded-xl border py-2 px-1 shadow-sm transition-colors duration-200 ${isAlertMini
                 ? `${cfg.statBg} border-[${cfg.leftBorder}]/30`
                 : 'border-gray-200 bg-white/70'
-            }`}
+              }`}
           >
             <Icon size={10} style={{ color: cfg.accent }} aria-hidden="true" />
             <span className="text-[8px] font-semibold uppercase tracking-wide text-gray-400">{label}</span>
@@ -591,7 +627,7 @@ function CampusCard({ campus }: { campus: CampusWeather }) {
 
       {/* ── Cycle button — rotates 3 pages, height NEVER changes ── */}
       <button
-        onClick={() => setMiniPage(p => ((p + 1) % 3) as 0|1|2)}
+        onClick={() => setMiniPage(p => ((p + 1) % 3) as 0 | 1 | 2)}
         className="mx-4 mb-3 flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white/60 py-1.5 text-[9px] font-bold uppercase tracking-wider text-gray-400 transition-all hover:bg-white hover:text-gray-600 hover:border-gray-300"
       >
         <ChevronDown
@@ -630,18 +666,18 @@ function CampusCard({ campus }: { campus: CampusWeather }) {
 // ─── Summary Stats Bar ────────────────────────────────────────────────────────
 
 function SummaryStatsBar({ campusData }: { campusData: CampusWeather[] }) {
-  const safeCount    = campusData.filter(c => getCardStatus(c).level === 'safe').length;
+  const safeCount = campusData.filter(c => getCardStatus(c).level === 'safe').length;
   const monitorCount = campusData.filter(c => getCardStatus(c).level === 'monitor').length;
   const warningCount = campusData.filter(c => getCardStatus(c).level === 'warning').length;
-  const dangerCount  = campusData.filter(c => getCardStatus(c).level === 'danger').length;
+  const dangerCount = campusData.filter(c => getCardStatus(c).level === 'danger').length;
 
   const total = campusData.length || 1;
 
   const stats = [
-    { label: 'SAFE',    count: safeCount,    color: '#15803d', bg: 'rgba(22,163,74,0.08)',   dot: '#16a34a', bar: '#16a34a', hasTint: safeCount > 0 },
-    { label: 'MONITOR', count: monitorCount, color: '#b45309', bg: 'rgba(217,119,6,0.08)',   dot: '#d97706', bar: '#d97706', hasTint: monitorCount > 0 },
-    { label: 'WARNING', count: warningCount, color: '#c2410c', bg: 'rgba(234,88,12,0.08)',   dot: '#ea580c', bar: '#ea580c', hasTint: warningCount > 0 },
-    { label: 'DANGER',  count: dangerCount,  color: '#b91c1c', bg: 'rgba(220,38,38,0.08)',   dot: '#dc2626', bar: '#dc2626', hasTint: dangerCount > 0 },
+    { label: 'SAFE', count: safeCount, color: '#009748', bg: 'rgba(0,151,72,0.08)', dot: '#009748', bar: '#009748', hasTint: safeCount > 0 },
+    { label: 'CAUTION', count: monitorCount, color: '#fbaf26', bg: 'rgba(251,175,38,0.08)', dot: '#fbaf26', bar: '#fbaf26', hasTint: monitorCount > 0 },
+    { label: 'WARNING', count: warningCount, color: '#ff922b', bg: 'rgba(255,146,43,0.08)', dot: '#ff922b', bar: '#ff922b', hasTint: warningCount > 0 },
+    { label: 'DANGEROUS', count: dangerCount, color: '#d2232a', bg: 'rgba(210,35,42,0.08)', dot: '#d2232a', bar: '#d2232a', hasTint: dangerCount > 0 },
   ];
 
   return (
@@ -714,16 +750,14 @@ export default function CampusSummary({ campusData, dataSource }: CampusSummaryP
           <p className="text-[11px] text-gray-500">{campusData.length} campuses monitored</p>
         </div>
         <span
-          className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
-            dataSource === 'live'
+          className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${dataSource === 'live'
               ? 'border-green-300 bg-green-50 text-green-700'
               : 'border-gray-200 bg-gray-50 text-gray-500'
-          }`}
+            }`}
         >
           <span
-            className={`h-2 w-2 rounded-full ${
-              dataSource === 'live' ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
-            }`}
+            className={`h-2 w-2 rounded-full ${dataSource === 'live' ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+              }`}
           />
           {dataSource === 'live' ? 'Live Data' : 'Fallback'}
         </span>

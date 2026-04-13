@@ -286,9 +286,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       <span className="w-24 shrink-0 text-[10px] font-black uppercase tracking-[0.15em] text-[#414042]/60">Risk Status</span>
                       <div className="flex flex-wrap items-center gap-4">
                         {[
-                          { label: 'High Risk', color: 'bg-[#d2232a]' },
-                          { label: 'Medium Risk', color: 'bg-[#fbaf26]' },
-                          { label: 'Low Risk', color: 'bg-[#009748]' },
+                          { label: 'Dangerous', color: 'bg-[#d2232a]' },
+                          { label: 'Warning',   color: 'bg-[#ff922b]' },
+                          { label: 'Caution',   color: 'bg-[#fbaf26]' },
+                          { label: 'Safe',      color: 'bg-[#009748]' },
                         ].map((item) => (
                           <div key={item.label} className="flex items-center gap-1.5">
                             <div className={`h-2.5 w-2.5 rounded-full ${item.color} shadow-sm`}></div>

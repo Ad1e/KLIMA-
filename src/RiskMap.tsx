@@ -50,12 +50,12 @@ const RISK_CONFIG: Record<RiskLevel, {
   hex: string;
   glowHex: string;
 }> = {
-  safe:    { color: '#009748', ring: '#009748', pulse: false, label: 'Safe',     hex: '#009748', glowHex: 'rgba(0,151,72,0.45)' },
-  caution: { color: '#ffe066', ring: '#ffe066', pulse: false, label: 'Caution',  hex: '#ffe066', glowHex: 'rgba(255,224,102,0.45)' },
-  warning: { color: '#ff922b', ring: '#ff922b', pulse: false, label: 'Warning',  hex: '#ff922b', glowHex: 'rgba(255,146,43,0.45)' },
-  danger:  { color: '#d2232a', ring: '#d2232a', pulse: true,  label: 'Danger',   hex: '#d2232a', glowHex: 'rgba(210,35,42,0.5)' },
-  monitor: { color: '#fbaf26', ring: '#fbaf26', pulse: false, label: 'Monitor',  hex: '#fbaf26', glowHex: 'rgba(251,175,38,0.45)' },
-  risk:    { color: '#d2232a', ring: '#d2232a', pulse: true,  label: 'Critical', hex: '#d2232a', glowHex: 'rgba(210,35,42,0.5)' },
+  safe:    { color: '#009748', ring: '#009748', pulse: false, label: 'Safe',      hex: '#009748', glowHex: 'rgba(0,151,72,0.45)' },
+  caution: { color: '#fbaf26', ring: '#fbaf26', pulse: false, label: 'Caution',   hex: '#fbaf26', glowHex: 'rgba(251,175,38,0.45)' },
+  warning: { color: '#ff922b', ring: '#ff922b', pulse: false, label: 'Warning',   hex: '#ff922b', glowHex: 'rgba(255,146,43,0.45)' },
+  danger:  { color: '#d2232a', ring: '#d2232a', pulse: true,  label: 'Dangerous', hex: '#d2232a', glowHex: 'rgba(210,35,42,0.5)' },
+  monitor: { color: '#fbaf26', ring: '#fbaf26', pulse: false, label: 'Caution',   hex: '#fbaf26', glowHex: 'rgba(251,175,38,0.45)' },
+  risk:    { color: '#d2232a', ring: '#d2232a', pulse: true,  label: 'Dangerous', hex: '#d2232a', glowHex: 'rgba(210,35,42,0.5)' },
 };
 
 // ─── BSU logo marker factory ────────────────────────────────────────────────
