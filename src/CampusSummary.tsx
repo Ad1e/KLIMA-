@@ -14,7 +14,6 @@ import {
   AlertTriangle,
   AlertOctagon,
   ChevronDown,
-  ChevronUp,
   Info,
   TrendingUp,
 } from 'lucide-react';
@@ -49,11 +48,10 @@ const THRESHOLDS = {
   humidity: { monitor: 80, risk: 90, unit: '%', label: 'Humidity', icon: Droplets, desc: 'Normal: <80%, Monitor: 80–90%, Risk: >90%' },
   windSpeed: { monitor: 40, risk: 60, unit: 'km/h', label: 'Wind Speed', icon: Wind, desc: 'Normal: <40km/h, Monitor: 40–60km/h, Risk: >60km/h' },
   windGust: { monitor: 50, risk: 80, unit: 'km/h', label: 'Wind Gust', icon: Zap, desc: 'Normal: <50km/h, Monitor: 50–80km/h, Risk: >80km/h' },
-  // Four-level threshold for heatIndex
   heatIndex: {
-    monitor: 32, // yellow
-    warning: 36, // orange
-    danger: 39, // red
+    monitor: 32,
+    warning: 36,
+    danger: 39,
     unit: '°C',
     label: 'Temperature',
     icon: Thermometer,
@@ -98,7 +96,6 @@ export function getCardStatus(campus: CampusWeather): { level: RiskLevel; reason
     ['dewpoint', campus.dewpoint],
     ['visibility', campus.visibility],
   ];
-  // Priority order from highest to lowest
   const priority: RiskLevel[] = ['danger', 'risk', 'warning', 'monitor', 'safe'];
   let found: Partial<Record<RiskLevel, string[]>> = {};
   for (const [key, val] of checks) {
@@ -115,91 +112,208 @@ export function getCardStatus(campus: CampusWeather): { level: RiskLevel; reason
   return { level: 'safe', reasons: [] };
 }
 
-// ─── Status Config ────────────────────────────────────────────────────────────
+// ─── Status Config (Refined Palette) ─────────────────────────────────────────
 
 export const STATUS_CONFIG = {
   safe: {
-    label: 'Normal',
+    label: 'NORMAL',
     icon: CheckCircle2,
     emoji: '✅',
     banner: 'Safe. No action needed.',
     message: 'All metrics within normal range.',
-    gradient: 'from-[#f0fff4] via-white to-[#e6f7f0]',
-    border: 'border-[#009748]/30',
-    badgeBg: 'bg-[#009748]/12 border-[#009748]/40',
-    badgeText: 'text-[#007e42]',
-    bannerBg: 'bg-[#009748]/10 border-[#009748]/30',
-    bannerText: 'text-[#007e42]',
-    glow: 'shadow-[0_0_0_1px_rgba(0,151,72,0.15),0_20px_60px_rgba(0,151,72,0.1)]',
-    accent: '#009748',
-    dot: 'bg-[#009748]',
+    cardBg: 'bg-green-50',
+    border: 'border-green-200',
+    leftBorder: '#16a34a',
+    badgeBg: 'bg-green-100 border-green-300',
+    badgeText: 'text-green-800',
+    bannerBg: 'bg-green-50 border-green-200',
+    bannerText: 'text-green-800',
+    glow: 'shadow-[0_2px_12px_rgba(22,163,74,0.12),0_8px_32px_rgba(22,163,74,0.08)]',
+    accent: '#16a34a',
+    dotClass: 'bg-green-500',
+    pillBg: 'bg-green-600 text-white',
+    statBg: 'bg-green-50',
+    statDot: '#16a34a',
+    statColor: '#15803d',
   },
   warning: {
-    label: 'Warning',
+    label: 'WARNING',
     icon: AlertTriangle,
     emoji: '🟧',
     banner: 'Warning: High temperature. Limit outdoor activity.',
     message: 'Temperature is high. Take extra precautions.',
-    gradient: 'from-[#fff4e6] via-white to-[#ffe8cc]',
-    border: 'border-[#ff922b]/40',
-    badgeBg: 'bg-[#ff922b]/14 border-[#ff922b]/50',
-    badgeText: 'text-[#b85c00]',
-    bannerBg: 'bg-[#ff922b]/12 border-[#ff922b]/35',
-    bannerText: 'text-[#b85c00]',
-    glow: 'shadow-[0_0_0_1px_rgba(255,146,43,0.2),0_20px_60px_rgba(255,146,43,0.12)]',
-    accent: '#ff922b',
-    dot: 'bg-[#ff922b]',
+    cardBg: 'bg-orange-50',
+    border: 'border-orange-200',
+    leftBorder: '#ea580c',
+    badgeBg: 'bg-orange-100 border-orange-300',
+    badgeText: 'text-orange-800',
+    bannerBg: 'bg-orange-50 border-orange-300',
+    bannerText: 'text-orange-800',
+    glow: 'shadow-[0_2px_12px_rgba(234,88,12,0.14),0_8px_32px_rgba(234,88,12,0.1)]',
+    accent: '#ea580c',
+    dotClass: 'bg-orange-500',
+    pillBg: 'bg-orange-600 text-white',
+    statBg: 'bg-orange-50',
+    statDot: '#ea580c',
+    statColor: '#c2410c',
   },
   danger: {
-    label: 'Danger',
+    label: 'DANGER',
     icon: AlertOctagon,
     emoji: '🚨',
     banner: 'Danger: Extreme temperature. Avoid exposure.',
     message: 'Critical temperature. Follow safety protocols.',
-    gradient: 'from-[#fff5f5] via-white to-[#ffe4e4]',
-    border: 'border-[#d2232a]/35',
-    badgeBg: 'bg-[#d2232a]/12 border-[#d2232a]/45',
-    badgeText: 'text-[#911d1f]',
-    bannerBg: 'bg-[#d2232a]/10 border-[#d2232a]/30',
-    bannerText: 'text-[#911d1f]',
-    glow: 'shadow-[0_0_0_1px_rgba(210,35,42,0.18),0_20px_60px_rgba(210,35,42,0.14)]',
-    accent: '#d2232a',
-    dot: 'bg-[#d2232a] animate-pulse',
+    cardBg: 'bg-red-50',
+    border: 'border-red-200',
+    leftBorder: '#dc2626',
+    badgeBg: 'bg-red-100 border-red-300',
+    badgeText: 'text-red-800',
+    bannerBg: 'bg-red-50 border-red-300',
+    bannerText: 'text-red-800',
+    glow: 'shadow-[0_2px_12px_rgba(220,38,38,0.16),0_8px_32px_rgba(220,38,38,0.12)]',
+    accent: '#dc2626',
+    dotClass: 'bg-red-500 animate-pulse',
+    pillBg: 'bg-red-600 text-white',
+    statBg: 'bg-red-50',
+    statDot: '#dc2626',
+    statColor: '#b91c1c',
   },
-  // fallback for other metrics
   monitor: {
-    label: 'Monitor',
+    label: 'MONITOR',
     icon: AlertTriangle,
     emoji: '⚠️',
     banner: 'Monitoring required. Stay alert.',
     message: 'Some metrics need attention.',
-    gradient: 'from-[#fffde7] via-white to-[#fff176]', // stronger yellow
-    border: 'border-[#ffd600]/40',
-    badgeBg: 'bg-[#ffd600]/14 border-[#ffd600]/50',
-    badgeText: 'text-[#bfa600]',
-    bannerBg: 'bg-[#ffd600]/12 border-[#ffd600]/35',
-    bannerText: 'text-[#bfa600]',
-    glow: 'shadow-[0_0_0_1px_rgba(255,214,0,0.2),0_20px_60px_rgba(255,214,0,0.12)]',
-    accent: '#ffd600',
-    dot: 'bg-[#ffd600]',
+    cardBg: 'bg-amber-50',
+    border: 'border-amber-200',
+    leftBorder: '#d97706',
+    badgeBg: 'bg-amber-100 border-amber-300',
+    badgeText: 'text-amber-800',
+    bannerBg: 'bg-amber-50 border-amber-300',
+    bannerText: 'text-amber-800',
+    glow: 'shadow-[0_2px_12px_rgba(217,119,6,0.14),0_8px_32px_rgba(217,119,6,0.1)]',
+    accent: '#d97706',
+    dotClass: 'bg-amber-500',
+    pillBg: 'bg-amber-600 text-white',
+    statBg: 'bg-amber-50',
+    statDot: '#d97706',
+    statColor: '#b45309',
   },
   risk: {
-    label: 'Risk',
+    label: 'RISK',
     icon: AlertOctagon,
     emoji: '🚨',
     banner: 'Warning: Risk detected. Follow protocols.',
     message: 'Critical thresholds exceeded.',
-    gradient: 'from-[#fff5f5] via-white to-[#ffe4e4]',
-    border: 'border-[#d2232a]/35',
-    badgeBg: 'bg-[#d2232a]/12 border-[#d2232a]/45',
-    badgeText: 'text-[#911d1f]',
-    bannerBg: 'bg-[#d2232a]/10 border-[#d2232a]/30',
-    bannerText: 'text-[#911d1f]',
-    glow: 'shadow-[0_0_0_1px_rgba(210,35,42,0.18),0_20px_60px_rgba(210,35,42,0.14)]',
-    accent: '#d2232a',
-    dot: 'bg-[#d2232a] animate-pulse',
+    cardBg: 'bg-red-50',
+    border: 'border-red-200',
+    leftBorder: '#dc2626',
+    badgeBg: 'bg-red-100 border-red-300',
+    badgeText: 'text-red-800',
+    bannerBg: 'bg-red-50 border-red-300',
+    bannerText: 'text-red-800',
+    glow: 'shadow-[0_2px_12px_rgba(220,38,38,0.16),0_8px_32px_rgba(220,38,38,0.12)]',
+    accent: '#dc2626',
+    dotClass: 'bg-red-500 animate-pulse',
+    pillBg: 'bg-red-600 text-white',
+    statBg: 'bg-red-50',
+    statDot: '#dc2626',
+    statColor: '#b91c1c',
   },
 };
+
+// ─── Threshold detail for footer messages ─────────────────────────────────────
+
+const THRESHOLD_DETAIL: Partial<Record<keyof typeof THRESHOLDS, {
+  getThreshold: (level: RiskLevel) => number | undefined;
+  unit: string;
+  label: string;
+}>> = {
+  heatIndex: {
+    label: 'Temperature',
+    unit: '°C',
+    getThreshold: (level) => {
+      if (level === 'monitor') return THRESHOLDS.heatIndex.monitor;
+      if (level === 'warning') return THRESHOLDS.heatIndex.warning;
+      if (level === 'danger') return THRESHOLDS.heatIndex.danger;
+      return undefined;
+    },
+  },
+  rain: {
+    label: 'Rainfall',
+    unit: 'mm',
+    getThreshold: (level) => {
+      if (level === 'monitor' || level === 'warning') return THRESHOLDS.rain.monitor;
+      if (level === 'risk' || level === 'danger') return THRESHOLDS.rain.risk;
+      return undefined;
+    },
+  },
+  humidity: {
+    label: 'Humidity',
+    unit: '%',
+    getThreshold: (level) => {
+      if (level === 'monitor' || level === 'warning') return THRESHOLDS.humidity.monitor;
+      if (level === 'risk' || level === 'danger') return THRESHOLDS.humidity.risk;
+      return undefined;
+    },
+  },
+  windSpeed: {
+    label: 'Wind Speed',
+    unit: 'km/h',
+    getThreshold: (level) => {
+      if (level === 'monitor' || level === 'warning') return THRESHOLDS.windSpeed.monitor;
+      if (level === 'risk' || level === 'danger') return THRESHOLDS.windSpeed.risk;
+      return undefined;
+    },
+  },
+};
+
+// Map of campus field keys to threshold keys
+const CAMPUS_FIELD_TO_THRESHOLD: Array<[keyof CampusWeather, keyof typeof THRESHOLDS]> = [
+  ['heatIndex', 'heatIndex'],
+  ['rain', 'rain'],
+  ['humidity', 'humidity'],
+  ['windSpeed', 'windSpeed'],
+  ['windGust', 'windGust'],
+  ['dewpoint', 'dewpoint'],
+  ['visibility', 'visibility'],
+];
+
+function getAlertFooterMessage(campus: CampusWeather, level: RiskLevel, reasons: string[]): string | null {
+  if (level === 'safe' || reasons.length === 0) return null;
+  // Find the first alerting metric with a value
+  for (const [field, threshKey] of CAMPUS_FIELD_TO_THRESHOLD) {
+    const val = campus[field];
+    if (val === undefined || val === null) continue;
+    const metricLevel = getRiskLevel(val as number | string, threshKey);
+    if (metricLevel !== 'safe') {
+      const detail = THRESHOLD_DETAIL[threshKey];
+      if (detail) {
+        const threshold = detail.getThreshold(metricLevel);
+        if (threshold !== undefined) {
+          const levelLabel = metricLevel.charAt(0).toUpperCase() + metricLevel.slice(1);
+          return `${detail.label} is at ${val}${detail.unit} — exceeds ${levelLabel} threshold (≥${threshold}${detail.unit})`;
+        }
+      }
+      return `${THRESHOLDS[threshKey].label} exceeds ${metricLevel} threshold`;
+    }
+  }
+  return reasons.join(' · ');
+}
+
+function getAlertReasonSummary(campus: CampusWeather, level: RiskLevel): string {
+  const parts: string[] = [];
+  for (const [field, threshKey] of CAMPUS_FIELD_TO_THRESHOLD) {
+    const val = campus[field];
+    if (val === undefined || val === null) continue;
+    const metricLevel = getRiskLevel(val as number | string, threshKey);
+    if (metricLevel !== 'safe') {
+      const t = THRESHOLDS[threshKey];
+      parts.push(`${t.label}: ${val}${t.unit}`);
+    }
+  }
+  return parts.length > 0 ? parts.join(' · ') : level;
+}
 
 // ─── Tooltip ──────────────────────────────────────────────────────────────────
 
@@ -212,8 +326,8 @@ function Tooltip({ text }: { text: string }) {
     if (show && iconRef.current) {
       const rect = iconRef.current.getBoundingClientRect();
       setTooltipPos({
-        top: rect.top + window.scrollY - 8, // adjust as needed
-        left: rect.left + window.scrollX + 24 // adjust as needed
+        top: rect.top + window.scrollY - 8,
+        left: rect.left + window.scrollX + 24
       });
     }
   }, [show]);
@@ -225,7 +339,7 @@ function Tooltip({ text }: { text: string }) {
       onMouseEnter={() => setShow(true)}
       onMouseLeave={() => setShow(false)}
     >
-      <Info size={11} className="cursor-help text-[#414042]/40 hover:text-[#006193] transition-colors" aria-label="Threshold info" />
+      <Info size={11} className="cursor-help text-gray-400 hover:text-blue-500 transition-colors" aria-label="Threshold info" />
       {show && tooltipPos && createPortal(
         <span
           role="tooltip"
@@ -234,8 +348,9 @@ function Tooltip({ text }: { text: string }) {
             top: tooltipPos.top,
             left: tooltipPos.left,
             zIndex: 9999,
+            fontFamily: "'DM Sans', sans-serif",
           }}
-          className="pointer-events-none w-52 rounded-xl border border-[#414042]/15 bg-white/98 px-3 py-2 text-[10px] leading-relaxed text-[#414042] shadow-xl backdrop-blur-md"
+          className="pointer-events-none w-52 rounded-xl border border-gray-200 bg-white/98 px-3 py-2 text-[10px] leading-relaxed text-gray-600 shadow-xl backdrop-blur-md"
         >
           {text}
         </span>,
@@ -250,41 +365,77 @@ function Tooltip({ text }: { text: string }) {
 interface MetricRowProps {
   metricKey: keyof typeof THRESHOLDS;
   value: number | string | undefined;
+  cardLevel: RiskLevel;
 }
 
-function MetricRow({ metricKey, value }: MetricRowProps) {
+function MetricRow({ metricKey, value, cardLevel }: MetricRowProps) {
   const t = THRESHOLDS[metricKey];
   const Icon = t.icon;
   const risk = value !== undefined ? getRiskLevel(value, metricKey) : 'safe';
   const isAlert = risk !== 'safe';
+  // This metric is the triggering one for the card
+  const isTrigger = isAlert && risk === cardLevel;
 
-  const alertStyles: Record<RiskLevel, string> = {
-    safe: 'bg-transparent border-transparent text-[#414042]',
-    warning: 'bg-[#ff922b]/10 border-[#ff922b]/35 text-[#b85c00]',
-    danger: 'bg-[#d2232a]/8 border-[#d2232a]/30 text-[#911d1f]',
-    monitor: 'bg-[#fbaf26]/10 border-[#fbaf26]/35 text-[#92610a]',
-    risk: 'bg-[#d2232a]/8 border-[#d2232a]/30 text-[#911d1f]',
+  const alertPillStyles: Record<RiskLevel, string> = {
+    safe: '',
+    monitor: 'bg-amber-500 text-white',
+    warning: 'bg-orange-600 text-white',
+    danger: 'bg-red-600 text-white',
+    risk: 'bg-red-600 text-white',
+  };
+
+  const rowBg: Record<RiskLevel, string> = {
+    safe: 'bg-white/60 border-gray-100',
+    monitor: 'bg-amber-50 border-amber-200',
+    warning: 'bg-orange-50 border-orange-200',
+    danger: 'bg-red-50 border-red-200',
+    risk: 'bg-red-50 border-red-200',
   };
 
   return (
     <div
-      className={`flex items-center justify-between rounded-lg border px-2.5 py-1.5 transition-all ${alertStyles[risk]}`}
+      className={`flex items-center justify-between rounded-xl border px-2.5 py-1.5 transition-all duration-200 ${rowBg[risk]}`}
       aria-label={`${t.label}: ${value ?? 'N/A'}${t.unit}${isAlert ? ` — ${risk} level` : ''}`}
     >
-      <div className="flex items-center gap-1.5">
-        <Icon size={12} style={{ color: isAlert ? undefined : '#414042aa' }} aria-hidden="true" />
-        <span className={`text-[10px] font-medium ${isAlert ? 'font-semibold' : 'text-[#414042]/70'}`}>{t.label}</span>
+      {/* Label side */}
+      <div className="flex items-center gap-1.5 min-w-0">
+        {isTrigger ? (
+          <span className="relative flex items-center justify-center w-3 h-3 shrink-0">
+            <span
+              className={`absolute inline-flex h-full w-full rounded-full opacity-60 animate-ping ${
+                risk === 'monitor' ? 'bg-amber-400' :
+                risk === 'warning' ? 'bg-orange-500' : 'bg-red-500'
+              }`}
+            />
+            <span
+              className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
+                risk === 'monitor' ? 'bg-amber-500' :
+                risk === 'warning' ? 'bg-orange-600' : 'bg-red-600'
+              }`}
+            />
+          </span>
+        ) : (
+          <Icon size={12} className={isAlert ? 'text-gray-600' : 'text-gray-400'} aria-hidden="true" />
+        )}
+        <span className={`text-[10px] font-semibold truncate ${isAlert ? 'text-gray-700' : 'text-gray-500'}`}>
+          {t.label}
+        </span>
         <Tooltip text={t.desc} />
       </div>
-      <div className="flex items-center gap-1">
-        {isAlert && (
-          <span className={`text-[9px] font-bold uppercase tracking-wider ${risk === 'risk' ? 'text-[#d2232a]' : 'text-[#fbaf26]'}`}>
-            {risk}
+
+      {/* Value side */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        {isTrigger ? (
+          <span
+            className={`rounded-full px-2 py-0.5 text-[9.5px] font-bold font-mono-metric ${alertPillStyles[risk]}`}
+          >
+            {value !== undefined ? `${value}${t.unit}` : '—'}
+          </span>
+        ) : (
+          <span className={`text-[11px] font-bold font-mono-metric ${isAlert ? 'text-gray-700' : 'text-gray-800'}`}>
+            {value !== undefined ? `${value}${t.unit}` : '—'}
           </span>
         )}
-        <span className={`text-xs font-bold ${isAlert ? '' : 'text-black'}`}>
-          {value !== undefined ? `${value}${t.unit}` : '—'}
-        </span>
       </div>
     </div>
   );
@@ -293,13 +444,13 @@ function MetricRow({ metricKey, value }: MetricRowProps) {
 // ─── Campus Card ──────────────────────────────────────────────────────────────
 
 function CampusCard({ campus }: { campus: CampusWeather }) {
-  const [expanded, setExpanded] = useState(false);
+  const [showExtra, setShowExtra] = useState(false);
   const { level, reasons } = getCardStatus(campus);
   const cfg = STATUS_CONFIG[level];
   const StatusIcon = cfg.icon;
+  const isAlert = level !== 'safe';
 
   const primaryMetrics: Array<keyof typeof THRESHOLDS> = ['rain', 'humidity', 'windSpeed', 'heatIndex'];
-  const secondaryMetrics: Array<keyof typeof THRESHOLDS> = ['windGust', 'visibility', 'dewpoint'];
 
   const getValue = (key: keyof typeof THRESHOLDS): number | string | undefined => {
     const map: Record<keyof typeof THRESHOLDS, number | string | undefined> = {
@@ -314,112 +465,171 @@ function CampusCard({ campus }: { campus: CampusWeather }) {
     return map[key];
   };
 
+  const footerMessage = getAlertFooterMessage(campus, level, reasons);
+  const alertReasonSummary = isAlert ? getAlertReasonSummary(campus, level) : '';
+
+  // Basic minis (always shown when !showExtra)
+  const basicMinis = [
+    { Icon: TrendingUp, label: 'Rain %',  value: campus.rainPossibility ?? '—' },
+    { Icon: Compass,    label: 'Wind Dir', value: campus.windDirection    ?? '—' },
+    { Icon: Cloud,      label: 'Cloud',    value: campus.cloudCover       ?? '—' },
+  ];
+
+  // Extra minis shown when showExtra — same 3-col grid, just different data
+  const fmtVal = (v: number | string | undefined, unit: string) =>
+    v !== undefined && v !== null ? `${v}${unit}` : '—';
+
+  const extraMinis = [
+    {
+      Icon: Zap,
+      label: 'Wind Gust',
+      value: fmtVal(campus.windGust, 'km/h'),
+      alert: campus.windGust !== undefined && getRiskLevel(campus.windGust, 'windGust') !== 'safe',
+    },
+    {
+      Icon: Eye,
+      label: 'Visibility',
+      value: fmtVal(campus.visibility, 'km'),
+      alert: campus.visibility !== undefined && getRiskLevel(campus.visibility, 'visibility') !== 'safe',
+    },
+    {
+      Icon: Droplets,
+      label: 'Dew Point',
+      value: fmtVal(campus.dewpoint, '°C'),
+      alert: campus.dewpoint !== undefined && getRiskLevel(campus.dewpoint, 'dewpoint') !== 'safe',
+    },
+  ];
+
+  const currentMinis = showExtra ? extraMinis : basicMinis;
+
   return (
     <article
-      className={`relative overflow-hidden rounded-3xl border bg-gradient-to-br ${cfg.gradient} ${cfg.border} ${cfg.glow} flex flex-col transition-all duration-300`}
+      className={`group relative overflow-hidden rounded-2xl border ${cfg.cardBg} ${cfg.border} ${cfg.glow} flex flex-col transition-all duration-300 hover:scale-[1.012] hover:shadow-lg`}
       aria-label={`Campus card for ${campus.name}, status: ${cfg.label}`}
     >
-      {/* Decorative top accent bar */}
-      <div className="h-1 w-full" style={{ background: `linear-gradient(90deg, ${cfg.accent}aa, ${cfg.accent}33, transparent)` }} aria-hidden="true" />
+      {/* ── Left accent bar ── */}
+      <div
+        className="absolute left-0 top-0 h-full w-[3px] rounded-l-2xl"
+        style={{ background: cfg.leftBorder }}
+        aria-hidden="true"
+      />
 
-      {/* Card body */}
-      <div className="flex flex-col gap-3 p-5">
-
-        {/* Campus Identity */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <div
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm border border-[#e5e7eb]"
-              aria-hidden="true"
-            >
-              <img src={bsuLogo} alt="BSU Logo" className="h-7 w-7 object-contain" />
-            </div>
-            <h3 className="truncate text-sm font-extrabold tracking-tight text-[#414042] leading-tight" title={campus.name}>
-              {campus.name}
-            </h3>
-          </div>
-
-          {/* Status Badge */}
+      {/* ── Header ── */}
+      <div className="flex items-center gap-3 pl-5 pr-4 pt-4 pb-3">
+        <div className="relative shrink-0" aria-hidden="true">
           <div
-            className={`flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 ${cfg.badgeBg}`}
-            role="status"
-            aria-label={`Status: ${cfg.label}`}
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm"
+            style={{ boxShadow: `0 0 0 2px ${cfg.leftBorder}40, 0 2px 8px rgba(0,0,0,0.08)` }}
           >
-            <div className={`h-2 w-2 rounded-full ${cfg.dot}`} aria-hidden="true" />
-            <StatusIcon size={11} className={cfg.badgeText} aria-hidden="true" />
-            <span className={`text-[10px] font-bold uppercase tracking-wider ${cfg.badgeText}`}>{cfg.label}</span>
+            <img src={bsuLogo} alt="BSU Logo" className="h-7 w-7 object-contain" />
           </div>
+          <span
+            className={`absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white ${cfg.dotClass}`}
+            style={{ boxShadow: `0 0 6px ${cfg.leftBorder}80` }}
+          />
         </div>
-
-        {/* Reason / Message */}
-        <div className="rounded-xl px-3 py-2" style={{ background: `${cfg.accent}0d` }}>
-          {reasons.length > 0 ? (
-            <p className="text-[11px] font-semibold text-[#414042]">
-              <span style={{ color: cfg.accent }}>⚡ Triggered by: </span>
-              {reasons.join(', ')}
-            </p>
-          ) : (
-            <p className="text-[11px] text-[#414042]/70">{cfg.message}</p>
-          )}
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-[12px] font-extrabold leading-tight tracking-tight text-gray-800" title={campus.name}>
+            {campus.name}
+          </h3>
+          <p className="mt-0.5 text-[9px] font-medium text-gray-400">Batangas State University</p>
         </div>
-
-        {/* Primary Metrics */}
-        <div className="grid grid-cols-2 gap-1.5">
-          {primaryMetrics.map(key => (
-            <MetricRow key={key} metricKey={key} value={getValue(key)} />
-          ))}
-        </div>
-
-        {/* Extra metrics: Rain Possibility, Wind Direction, Cloud Cover */}
-        <div className="grid grid-cols-3 gap-1.5">
-          <div className="flex flex-col items-center rounded-lg border border-[#414042]/10 bg-white/60 py-1.5 px-2 text-center">
-            <TrendingUp size={11} className="mb-0.5 text-[#414042]/50" aria-hidden="true" />
-            <span className="text-[9px] text-[#414042]/60">Rain %</span>
-            <span className="text-[11px] font-bold text-black">{campus.rainPossibility ?? '—'}</span>
-          </div>
-          <div className="flex flex-col items-center rounded-lg border border-[#414042]/10 bg-white/60 py-1.5 px-2 text-center">
-            <Compass size={11} className="mb-0.5 text-[#414042]/50" aria-hidden="true" />
-            <span className="text-[9px] text-[#414042]/60">Wind Dir</span>
-            <span className="text-[11px] font-bold text-black">{campus.windDirection ?? '—'}</span>
-          </div>
-          <div className="flex flex-col items-center rounded-lg border border-[#414042]/10 bg-white/60 py-1.5 px-2 text-center">
-            <Cloud size={11} className="mb-0.5 text-[#414042]/50" aria-hidden="true" />
-            <span className="text-[9px] text-[#414042]/60">Cloud</span>
-            <span className="text-[11px] font-bold text-black">{campus.cloudCover ?? '—'}</span>
-          </div>
-        </div>
-
-        {/* Expand/Collapse */}
-        <button
-          onClick={() => setExpanded(p => !p)}
-          className="flex items-center justify-center gap-1 rounded-xl border border-[#414042]/12 bg-white/70 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#414042]/60 transition-all hover:bg-white hover:text-[#414042]"
-          aria-expanded={expanded}
-          aria-controls={`details-${campus.name}`}
+        <div
+          className={`flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 ${cfg.badgeBg}`}
+          role="status"
         >
-          {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-          {expanded ? 'Hide Details' : 'More Details'}
-        </button>
+          <StatusIcon size={10} className={cfg.badgeText} aria-hidden="true" />
+          <span className={`text-[9px] font-black uppercase tracking-widest ${cfg.badgeText}`}>{cfg.label}</span>
+        </div>
+      </div>
 
-        {/* Expanded secondary metrics */}
-        {expanded && (
-          <div id={`details-${campus.name}`} className="flex flex-col gap-1.5 border-t border-[#414042]/10 pt-3">
-            <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-[#414042]/50">Additional Metrics</p>
-            {secondaryMetrics.map(key => (
-              <MetricRow key={key} metricKey={key} value={getValue(key)} />
-            ))}
+      {/* ── Alert / normal banner ── */}
+      <div className="mx-4 mb-3">
+        {isAlert ? (
+          <div className={`flex items-start gap-2 rounded-xl border px-3 py-2 ${cfg.bannerBg}`}>
+            <StatusIcon size={11} style={{ color: cfg.accent, flexShrink: 0, marginTop: 1 }} aria-hidden="true" />
+            <p className="text-[10px] font-semibold text-gray-700 leading-snug">
+              <span className="font-black" style={{ color: cfg.accent }}>Alert: </span>
+              {alertReasonSummary}
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 rounded-xl border border-green-100 bg-green-50/60 px-3 py-2">
+            <CheckCircle2 size={11} className="text-green-600 shrink-0" aria-hidden="true" />
+            <p className="text-[10px] text-gray-500 font-medium">{cfg.message}</p>
           </div>
         )}
       </div>
 
-      {/* Summary Banner */}
-      <div
-        className={`mt-auto border-t px-4 py-2.5 ${cfg.bannerBg}`}
-        role="note"
-        aria-label={`Summary: ${cfg.banner}`}
+      {/* ── Primary metrics 2×2 grid ── */}
+      <div className="grid grid-cols-2 gap-1.5 px-4 pb-3">
+        {primaryMetrics.map(key => (
+          <MetricRow key={key} metricKey={key} value={getValue(key)} cardLevel={level} />
+        ))}
+      </div>
+
+      {/* ── Swappable 3-col mini grid — NEVER changes the card height ── */}
+      <div className="mx-4 mb-2 grid grid-cols-3 gap-1.5">
+        {currentMinis.map(({ Icon, label, value, ...rest }) => {
+          const isAlertMini = 'alert' in rest ? (rest as { alert: boolean }).alert : false;
+          return (
+            <div
+              key={label}
+              className={`flex flex-col items-center gap-0.5 rounded-xl border py-2 px-1 shadow-sm transition-colors duration-200 ${
+                isAlertMini
+                  ? `${cfg.statBg} border-[${cfg.leftBorder}]/30`
+                  : 'border-gray-200 bg-white/70'
+              }`}
+            >
+              <Icon size={10} style={{ color: isAlertMini ? cfg.accent : cfg.accent }} aria-hidden="true" />
+              <span className="text-[8px] font-semibold uppercase tracking-wide text-gray-400">{label}</span>
+              <span
+                className={`text-[11px] font-black font-mono-metric ${
+                  isAlertMini ? cfg.statColor : 'text-gray-800'
+                }`}
+                style={isAlertMini ? { color: cfg.accent } : {}}
+              >
+                {value}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Toggle button — swaps content, never resizes the card ── */}
+      <button
+        onClick={() => setShowExtra(p => !p)}
+        className="mx-4 mb-3 flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white/60 py-1.5 text-[9px] font-bold uppercase tracking-wider text-gray-400 transition-all hover:bg-white hover:text-gray-600 hover:border-gray-300"
+        aria-pressed={showExtra}
       >
-        <p className={`text-center text-[10px] font-bold uppercase tracking-[0.12em] ${cfg.bannerText}`}>
-          {cfg.emoji} {cfg.banner}
-        </p>
+        <ChevronDown
+          size={11}
+          className="transition-transform duration-300"
+          style={{ transform: showExtra ? 'rotate(180deg)' : 'rotate(0deg)' }}
+        />
+        {showExtra ? 'Basic View' : 'More Details'}
+      </button>
+
+      {/* ── Footer ── */}
+      <div
+        className={`flex items-center justify-center gap-1.5 border-t px-4 py-2 ${cfg.bannerBg}`}
+        role="note"
+      >
+        {isAlert ? (
+          <>
+            <span className="text-[10px] shrink-0" aria-hidden="true">⚠</span>
+            <p className={`text-[9px] font-semibold leading-snug text-center ${cfg.bannerText}`}>
+              {footerMessage}
+            </p>
+          </>
+        ) : (
+          <>
+            <span className="text-[10px]" aria-hidden="true">{cfg.emoji}</span>
+            <p className={`text-[9px] font-black uppercase tracking-[0.12em] ${cfg.bannerText}`}>
+              {cfg.banner}
+            </p>
+          </>
+        )}
       </div>
     </article>
   );
@@ -428,51 +638,75 @@ function CampusCard({ campus }: { campus: CampusWeather }) {
 // ─── Summary Stats Bar ────────────────────────────────────────────────────────
 
 function SummaryStatsBar({ campusData }: { campusData: CampusWeather[] }) {
-  const safeCount = campusData.filter(c => getCardStatus(c).level === 'safe').length;
+  const safeCount    = campusData.filter(c => getCardStatus(c).level === 'safe').length;
   const monitorCount = campusData.filter(c => getCardStatus(c).level === 'monitor').length;
   const warningCount = campusData.filter(c => getCardStatus(c).level === 'warning').length;
-  const dangerCount = campusData.filter(c => getCardStatus(c).level === 'danger').length;
+  const dangerCount  = campusData.filter(c => getCardStatus(c).level === 'danger').length;
+
+  const total = campusData.length || 1;
+
+  const stats = [
+    { label: 'SAFE',    count: safeCount,    color: '#15803d', bg: 'rgba(22,163,74,0.08)',   dot: '#16a34a', bar: '#16a34a', hasTint: safeCount > 0 },
+    { label: 'MONITOR', count: monitorCount, color: '#b45309', bg: 'rgba(217,119,6,0.08)',   dot: '#d97706', bar: '#d97706', hasTint: monitorCount > 0 },
+    { label: 'WARNING', count: warningCount, color: '#c2410c', bg: 'rgba(234,88,12,0.08)',   dot: '#ea580c', bar: '#ea580c', hasTint: warningCount > 0 },
+    { label: 'DANGER',  count: dangerCount,  color: '#b91c1c', bg: 'rgba(220,38,38,0.08)',   dot: '#dc2626', bar: '#dc2626', hasTint: dangerCount > 0 },
+  ];
 
   return (
-    <div className="mb-6 grid grid-cols-4 gap-3" role="region" aria-label="Campus status overview">
-      {[
-        {
-          label: 'Safe',
-          count: safeCount,
-          color: 'text-[#007e42]',
-          bg: 'bg-[#009748]/10 border-[#009748]/25',
-          dot: 'bg-[#009748]'
-        },
-        {
-          label: 'Monitor',
-          count: monitorCount,
-          color: 'text-[#92610a]',
-          bg: 'bg-[#fbaf26]/10 border-[#fbaf26]/30',
-          dot: 'bg-[#fbaf26]'
-        },
-        {
-          label: 'Warning',
-          count: warningCount,
-          color: 'text-[#b85c00]',
-          bg: 'bg-[#ff922b]/10 border-[#ff922b]/25',
-          dot: 'bg-[#ff922b]'
-        },
-        {
-          label: 'Danger',
-          count: dangerCount,
-          color: 'text-[#911d1f]',
-          bg: 'bg-[#d2232a]/10 border-[#d2232a]/25',
-          dot: 'bg-[#d2232a] animate-pulse'
-        },
-      ].map(item => (
-        <div key={item.label} className={`flex items-center gap-3 rounded-2xl border px-4 py-3 ${item.bg}`}>
-          <div className={`h-3 w-3 shrink-0 rounded-full ${item.dot}`} aria-hidden="true" />
-          <div>
-            <p className={`text-2xl font-black leading-none ${item.color}`}>{item.count}</p>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#414042]/60">{item.label}</p>
+    <div
+      className="mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+      role="region"
+      aria-label="Campus status overview"
+    >
+      {/* Header row */}
+      <div className="flex items-center justify-between border-b border-gray-100 bg-gradient-to-r from-white to-gray-50 px-5 py-2.5">
+        <p className="text-[10.5px] font-black uppercase tracking-[0.14em] text-gray-500">
+          Campus Status Overview
+        </p>
+        <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[9.5px] font-bold text-gray-500">
+          {total} sites monitored
+        </span>
+      </div>
+
+      {/* Stat columns */}
+      <div className="grid grid-cols-4 divide-x divide-gray-100">
+        {stats.map(item => (
+          <div
+            key={item.label}
+            className="flex flex-col items-center gap-1.5 px-4 py-4 transition-colors"
+            style={{ background: item.hasTint ? item.bg : 'transparent' }}
+          >
+            {/* Label + dot */}
+            <div className="flex items-center gap-1.5">
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{ background: item.dot, boxShadow: `0 0 5px ${item.dot}99` }}
+                aria-hidden="true"
+              />
+              <span className="text-[9px] font-black uppercase tracking-[0.13em]" style={{ color: item.color }}>
+                {item.label}
+              </span>
+            </div>
+
+            {/* Count — monospace, large */}
+            <p className="text-[2.2rem] font-black leading-none font-mono-metric" style={{ color: item.color }}>
+              {item.count}
+            </p>
+
+            {/* Animated progress bar */}
+            <div className="h-[4px] w-full overflow-hidden rounded-full bg-gray-100">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${Math.max(item.count > 0 ? 4 : 0, (item.count / total) * 100)}%`,
+                  background: item.bar,
+                  transition: 'width 0.9s cubic-bezier(0.34,1.56,0.64,1)',
+                }}
+              />
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
@@ -482,19 +716,24 @@ function SummaryStatsBar({ campusData }: { campusData: CampusWeather[] }) {
 export default function CampusSummary({ campusData, dataSource }: CampusSummaryProps) {
   return (
     <section aria-label="Campus Risk Summary" className="mb-8">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-5 flex items-center justify-between">
         <div>
-          <h2 className="text-base font-extrabold tracking-tight text-[#414042]">Campus Overview</h2>
-          <p className="text-[11px] text-[#414042]/60">{campusData.length} campuses monitored</p>
+          <h2 className="text-base font-extrabold tracking-tight text-gray-800">Campus Overview</h2>
+          <p className="text-[11px] text-gray-500">{campusData.length} campuses monitored</p>
         </div>
         <span
-          className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+          className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
             dataSource === 'live'
-              ? 'border-[#009748]/40 bg-[#009748]/12 text-[#007e42]'
-              : 'border-[#414042]/20 bg-[#414042]/6 text-[#414042]/60'
+              ? 'border-green-300 bg-green-50 text-green-700'
+              : 'border-gray-200 bg-gray-50 text-gray-500'
           }`}
         >
-          {dataSource === 'live' ? '● Live' : '○ Fallback'}
+          <span
+            className={`h-2 w-2 rounded-full ${
+              dataSource === 'live' ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+            }`}
+          />
+          {dataSource === 'live' ? 'Live Data' : 'Fallback'}
         </span>
       </div>
 
@@ -508,4 +747,3 @@ export default function CampusSummary({ campusData, dataSource }: CampusSummaryP
     </section>
   );
 }
-  

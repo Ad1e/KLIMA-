@@ -303,7 +303,9 @@ export default function RiskMap({
         }`}
         role="legend"
         aria-label="Map risk legend"
+        style={{ minWidth: 148 }}
       >
+        {/* Risk Level */}
         <p
           className={`mb-2 text-[9px] font-black uppercase tracking-[0.18em] ${
             isDark ? 'text-white/50' : 'text-[#414042]/50'
@@ -343,6 +345,7 @@ export default function RiskMap({
             );
           })}
         </div>
+
       </div>
 
       {/* ── Bottom-left: Selected campus chip ── */}

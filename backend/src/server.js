@@ -4,6 +4,7 @@ import cors from 'cors';
 import pool from './db.js';
 import authRoutes from './routes/auth.js';
 import historicalRoutes from './routes/historical.js';
+import weatherRoutes from './routes/weather.js';
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.get('/health', async (_req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/historical', historicalRoutes);
+app.use('/api/weather', weatherRoutes);
 
 app.listen(port, () => {
   console.log(`Backend running on http://localhost:${port}`);

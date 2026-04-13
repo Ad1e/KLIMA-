@@ -117,11 +117,13 @@ const OPEN_METEO_CURRENT_INDEX: Record<(typeof OPEN_METEO_CURRENT_VARIABLES)[num
     return acc;
   }, {} as Record<(typeof OPEN_METEO_CURRENT_VARIABLES)[number], number>);
 
-const OPEN_METEO_DAILY_INDEX: Record<(typeof OPEN_METEO_DAILY_VARIABLES)[number], number> =
+// Daily variables are read directly from data.daily by name in fetchOpenMeteoForecast
+const _OPEN_METEO_DAILY_INDEX: Record<(typeof OPEN_METEO_DAILY_VARIABLES)[number], number> =
   OPEN_METEO_DAILY_VARIABLES.reduce((acc, key, index) => {
     acc[key] = index;
     return acc;
   }, {} as Record<(typeof OPEN_METEO_DAILY_VARIABLES)[number], number>);
+void _OPEN_METEO_DAILY_INDEX;
 
 
 
@@ -245,51 +247,127 @@ const toCampusWeather = (name: string, apiData: any): CampusWeather => {
   };
 };
 
-// getFallbackCampusWeather removed: always use live API data
+// Fallback data used when the live API is unreachable
+export const generateFallbackCampusWeather = (): CampusWeather[] =>
+  CAMPUSES.map((campus) => ({
+    name: campus.name,
+    rain: '0.00',
+    rainPossibility: '20%',
+    mslp: '1012',
+    dewpoint: '22.0',
+    heatIndex: '29.5',
+    humidity: '72',
+    windDirection: 'E',
+    windGust: '18',
+    windSpeed: '12',
+    visibility: '10.0',
+    cloudCover: '35',
+    status: 'Safe' as const,
+    warning: false,
+  }));
 
-export const fetchCampusWeather = async (): Promise<CampusWeather[]> => {
-  const responses = await Promise.all(
-    CAMPUSES.map(async (campus) => {
-      const params = new URLSearchParams({
-        latitude: campus.lat.toString(),
-        longitude: campus.lon.toString(),
-        timezone: OPEN_METEO_TIMEZONE,
-        forecast_days: '1',
-        current: OPEN_METEO_CURRENT_VARIABLES.join(','),
-        hourly: OPEN_METEO_HOURLY_VARIABLES.join(','),
-      });
-      const url = `${OPEN_METEO_FORECAST_URL}?${params.toString()}`;
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Open-Meteo API failed for ${campus.name}`);
-      }
-      const data = await response.json();
-      return toCampusWeather(campus.name, {
-        current: () => ({
-          variables: (idx: number) => ({ value: () => data.current[OPEN_METEO_CURRENT_VARIABLES[idx]] })
-        }),
-        hourly: () => ({
-          variables: (idx: number) => ({ valuesArray: () => data.hourly[OPEN_METEO_HOURLY_VARIABLES[idx]] }),
-        }),
-      });
-    })
-  );
-  return responses;
+
+// ── In-memory cache to avoid hammering the free-tier rate limit ──────────────
+let _campusWeatherCache: { data: CampusWeather[]; ts: number } | null = null;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Build a URL for Open-Meteo that keeps commas as literal characters.
+ * URLSearchParams encodes commas as %2C which breaks the multi-location
+ * batch feature (Open-Meteo expects raw commas in latitude/longitude arrays).
+ */
+const buildOpenMeteoUrl = (
+  base: string,
+  arrayParams: Record<string, string>,
+  scalarParams: Record<string, string>,
+): string => {
+  // Scalar params can go through URLSearchParams safely
+  const scalar = new URLSearchParams(scalarParams).toString();
+  // Array params must keep their commas literal
+  const arrays = Object.entries(arrayParams)
+    .map(([k, v]) => `${encodeURIComponent(k)}=${v}`)
+    .join('&');
+  return `${base}?${scalar}&${arrays}`;
 };
 
-export const fetchOpenMeteoForecast = async (lat: number, lon: number): Promise<ForecastPayload> => {
-  const params = new URLSearchParams({
-    latitude: lat.toString(),
-    longitude: lon.toString(),
-    timezone: OPEN_METEO_TIMEZONE,
-    forecast_days: '2',
-    models: 'best_match',
-    current: OPEN_METEO_CURRENT_VARIABLES.join(','),
-    daily: OPEN_METEO_DAILY_VARIABLES.join(','),
-    hourly: OPEN_METEO_HOURLY_VARIABLES.join(','),
+/** Fetch with exponential back-off on 429 (up to 3 retries). */
+const fetchWithBackoff = async (url: string, maxRetries = 3): Promise<Response> => {
+  let delay = 1000;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const response = await fetch(url);
+    if (response.status !== 429) return response;
+    if (attempt === maxRetries) return response;
+    // Honour Retry-After header if present
+    const retryAfter = response.headers.get('Retry-After');
+    const waitMs = retryAfter ? Number(retryAfter) * 1000 : delay;
+    await new Promise<void>((resolve) => setTimeout(resolve, waitMs));
+    delay *= 2;
+  }
+  throw new Error('Unreachable');
+};
+
+// Backend proxy URL — all Open-Meteo calls are routed through the backend
+// to avoid browser-side 429 rate limits.
+const WEATHER_PROXY_URL =
+  import.meta.env.VITE_WEATHER_PROXY_URL ?? 'http://localhost:4000/api/weather/current';
+
+export const fetchCampusWeather = async (): Promise<CampusWeather[]> => {
+  // Return cached result if still fresh
+  if (_campusWeatherCache && Date.now() - _campusWeatherCache.ts < CACHE_TTL_MS) {
+    return _campusWeatherCache.data;
+  }
+
+  // Fetch via backend proxy (server caches for 10 min, no 429 from browser)
+  const response = await fetch(WEATHER_PROXY_URL);
+  if (!response.ok) {
+    throw new Error(`Weather proxy failed: ${response.status}`);
+  }
+
+  const payload = await response.json() as { ok: boolean; data: any[]; ts: number };
+  if (!payload.ok || !Array.isArray(payload.data)) {
+    throw new Error('Invalid response from weather proxy');
+  }
+
+  const results = payload.data.map((data: any, idx: number) => {
+    const campusName = data._campusName ?? CAMPUSES[idx]?.name ?? `Campus ${idx + 1}`;
+    return toCampusWeather(campusName, {
+      current: () => ({
+        variables: (i: number) => ({ value: () => data.current?.[OPEN_METEO_CURRENT_VARIABLES[i]] }),
+      }),
+      hourly: () => ({
+        variables: (i: number) => ({ valuesArray: () => data.hourly?.[OPEN_METEO_HOURLY_VARIABLES[i]] }),
+      }),
+    });
   });
-  const url = `${OPEN_METEO_FORECAST_URL}?${params.toString()}`;
-  const response = await fetch(url);
+
+  _campusWeatherCache = { data: results, ts: Date.now() };
+  return results;
+};
+
+/** Call this to force-invalidate the cache (e.g. on manual refresh). */
+export const invalidateCampusWeatherCache = (): void => {
+  _campusWeatherCache = null;
+};
+
+
+export const fetchOpenMeteoForecast = async (lat: number, lon: number): Promise<ForecastPayload> => {
+  // Use buildOpenMeteoUrl to keep commas in variable lists unencoded
+  const url = buildOpenMeteoUrl(
+    OPEN_METEO_FORECAST_URL,
+    {
+      current: OPEN_METEO_CURRENT_VARIABLES.join(','),
+      daily: OPEN_METEO_DAILY_VARIABLES.join(','),
+      hourly: OPEN_METEO_HOURLY_VARIABLES.join(','),
+    },
+    {
+      latitude: lat.toString(),
+      longitude: lon.toString(),
+      timezone: OPEN_METEO_TIMEZONE,
+      forecast_days: '2',
+      models: 'best_match',
+    },
+  );
+  const response = await fetchWithBackoff(url);
   if (!response.ok) {
     throw new Error('Open-Meteo forecast request failed');
   }

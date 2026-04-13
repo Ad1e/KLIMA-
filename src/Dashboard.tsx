@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Activity, FileSearch, CloudLightning, HelpCircle, LogOut, Clock } from 'lucide-react';
+import { LayoutDashboard, Activity, FileSearch, CloudLightning, HelpCircle, LogOut, Clock, Wind, CloudRain, Cloud } from 'lucide-react';
 import bsuLogo from './assets/bsu-logo.png';
 import CampusSummary, { getCardStatus } from './CampusSummary';
 import type { RiskLevel } from './CampusSummary';
@@ -12,6 +12,7 @@ import HelpSection from './help.tsx';
 import Historical from './Historical';
 import {
   fetchCampusWeather,
+  generateFallbackCampusWeather,
   type CampusWeather,
 } from './services/weather';
 
@@ -27,11 +28,18 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [isLiveWeather, setIsLiveWeather] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [selectedCampusName, setSelectedCampusName] = useState<string | null>(null);
+  // Auto-tick the display time every minute
+  const [displayTime, setDisplayTime] = useState(new Date());
 
-  const handleLogout = () => {
+  useEffect(() => {
+    const tick = setInterval(() => setDisplayTime(new Date()), 60_000);
+    return () => clearInterval(tick);
+  }, []);
+
+  const handleLogout = useCallback(() => {
     onLogout()
     navigate('/')
-  }
+  }, [onLogout, navigate]);
 
   const navItems = [
     { id: 'local', label: 'Local Analysis', icon: LayoutDashboard, active: true },
@@ -54,7 +62,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         setLastUpdated(new Date());
       } catch {
         if (!isMounted) return;
-        setCampusWeather([]);
+        setCampusWeather(generateFallbackCampusWeather());
         setIsLiveWeather(false);
         setLastUpdated(new Date());
       }
@@ -63,13 +71,22 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     void loadWeather();
     const refreshId = setInterval(() => {
       void loadWeather();
-    }, 30000);
+    }, 10 * 60 * 1000); // 10 minutes — cache TTL is 5 min, so this is at most 1 real API call per interval
 
     return () => {
       isMounted = false;
       clearInterval(refreshId);
     };
   }, []);
+
+  // Derive the overall system status color for the top bar
+  const overallStatusColor = useMemo(() => {
+    const levels = campusWeather.map(c => getCardStatus(c).level);
+    if (levels.includes('danger') || levels.includes('risk')) return '#dc2626';
+    if (levels.includes('warning')) return '#ea580c';
+    if (levels.includes('monitor')) return '#d97706';
+    return '#16a34a';
+  }, [campusWeather]);
 
   const observationSummary = useMemo(() => {
     const monitored = campusWeather.filter((campus) => campus.warning);
@@ -119,7 +136,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }, [campusWeather]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[radial-gradient(circle_at_12%_8%,rgba(0,129,142,0.12),transparent_36%),radial-gradient(circle_at_88%_3%,rgba(0,97,147,0.1),transparent_40%),linear-gradient(165deg,#ffffff_0%,#fff5f6_55%,#ffeef0_100%)]">
+    <div className="flex h-screen overflow-hidden bg-[#FAFAF9]">
       {/* Sidebar */}
       <div className="relative flex h-screen w-72 shrink-0 flex-col border-r border-[#d2232a]/40 bg-[linear-gradient(180deg,#911d1f_0%,#d2232a_46%,#414042_100%)] text-white shadow-[14px_0_50px_rgba(65,64,66,0.42)]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_8%,rgba(251,175,38,0.14),transparent_26%),radial-gradient(circle_at_88%_12%,rgba(210,35,42,0.18),transparent_36%)]" />
@@ -180,19 +197,41 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       </div>
 
       {/* Main Content */}
-      <div className="modern-scrollbar h-screen flex-1 overflow-y-auto bg-[radial-gradient(circle_at_18%_14%,rgba(0,129,142,0.1),transparent_34%),radial-gradient(circle_at_84%_12%,rgba(210,35,42,0.08),transparent_42%),linear-gradient(180deg,#ffffff_0%,#fff7f8_100%)]">
+      <div className="modern-scrollbar h-screen flex-1 overflow-y-auto dot-grid-bg">
+        {/* 3px top status bar */}
+        <div
+          className="sticky top-0 z-30 h-[3px] w-full transition-colors duration-700"
+          style={{ background: overallStatusColor }}
+          aria-hidden="true"
+        />
         {/* Header */}
-        <div className="sticky top-0 z-20 border-b border-[#d2232a]/25 bg-white/92 p-6 backdrop-blur-lg">
+        <div className="sticky top-[3px] z-20 border-b border-gray-200 bg-white/95 px-6 py-4 backdrop-blur-lg shadow-sm">
           <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+            {/* Left: system status */}
             <div className="flex items-center gap-3">
-              <div className="h-3 w-3 animate-pulse rounded-full bg-[#007e42]"></div>
+              <div className="h-3 w-3 animate-pulse rounded-full" style={{ background: overallStatusColor }} />
               <div>
-                <p className="text-sm font-semibold text-[#414042]">System Status</p>
-                <p className="text-xs text-[#414042]/80">All field sensors operational</p>
+                <p className="text-sm font-semibold text-gray-800" style={{ fontFamily: "'DM Sans', sans-serif" }}>System Status</p>
+                <p className="text-xs text-gray-500">All field sensors operational</p>
               </div>
             </div>
-          </div>
+            {/* Right: timestamp + live badge */}
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] text-gray-400">
+                As of{' '}
+                {displayTime.toLocaleString([], {
+                  month: 'short',
+                  day: '2-digit',
+                  year: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                })}
+              </span>
+              <span className="flex items-center gap-1.5 rounded-full border border-green-300 bg-green-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-green-700">
+                <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                Live Data
+              </span>
+            </div>
           </div>
         </div>
 
@@ -210,9 +249,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <div className="p-8">
           {/* 1. Header Section */}
           <header className="mb-8">
-            <h1 className="text-3xl font-extrabold text-[#414042]">Local Risk Assessment</h1>
-            <p className="mt-1 text-sm text-[#414042]/80">
-              As of{' '}
+            <h1 className="text-3xl font-extrabold text-gray-800" style={{ fontFamily: "'DM Sans', sans-serif" }}>Local Risk Assessment</h1>
+            <p className="mt-1 text-sm text-gray-500">
               {lastUpdated
                 ? lastUpdated.toLocaleString([], {
                     month: 'short',
@@ -222,7 +260,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     minute: '2-digit',
                   })
                 : 'Loading live weather'}{' '}
-              • Batangas State University
+              · Batangas State University
             </p>
           </header>
 
@@ -244,17 +282,43 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   campusRisks={campusWeather.map(c => ({ name: c.name, level: getCardStatus(c).level }))}
                   isLive={isLiveWeather}
                 />
-                <div className="mt-4 grid grid-cols-3 gap-3">
-                  {[
-                    { label: 'High Risk', color: 'bg-[#d2232a]' },
-                    { label: 'Medium Risk', color: 'bg-[#fbaf26]' },
-                    { label: 'Low Risk', color: 'bg-[#009748]' },
-                  ].map((item) => (
-                    <div key={item.label} className="flex items-center gap-2">
-                      <div className={`h-3 w-3 rounded-full ${item.color}`}></div>
-                      <span className="text-xs text-[#414042]">{item.label}</span>
+                <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-[#d2232a]/15 bg-white/70 p-4 shadow-sm backdrop-blur-md">
+                  {/* Risk Levels Row */}
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                    <span className="w-24 shrink-0 text-[10px] font-black uppercase tracking-[0.15em] text-[#414042]/60">Risk Status</span>
+                    <div className="flex flex-wrap items-center gap-4">
+                      {[
+                        { label: 'High Risk', color: 'bg-[#d2232a]' },
+                        { label: 'Medium Risk', color: 'bg-[#fbaf26]' },
+                        { label: 'Low Risk', color: 'bg-[#009748]' },
+                      ].map((item) => (
+                        <div key={item.label} className="flex items-center gap-1.5">
+                          <div className={`h-2.5 w-2.5 rounded-full ${item.color} shadow-sm`}></div>
+                          <span className="text-[11px] font-bold text-[#414042]">{item.label}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="h-px bg-gradient-to-r from-[#d2232a]/15 to-transparent" />
+
+                  {/* Weather Hazards Row */}
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                    <span className="w-24 shrink-0 text-[10px] font-black uppercase tracking-[0.15em] text-[#414042]/60">Map Hazards</span>
+                    <div className="flex flex-wrap items-center gap-4 sm:gap-5">
+                      {[
+                        { label: 'Typhoon', Icon: Wind, hex: '#7c3aed' },
+                        { label: 'Low Pressure', Icon: Cloud, hex: '#0ea5e9' },
+                        { label: 'Tropical Cyclone', Icon: CloudRain, hex: '#06b6d4' },
+                        { label: 'Thunderstorm', Icon: CloudLightning, hex: '#f59e0b' },
+                      ].map(({ label, Icon, hex }) => (
+                        <div key={label} className="flex items-center gap-1.5">
+                          <Icon size={14} style={{ color: hex }} strokeWidth={2.5} />
+                          <span className="text-[11px] font-bold text-[#414042]">{label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

@@ -7,6 +7,11 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  ListFilter,
+  Search,
+  Settings2,
   Cloud,
   CloudRain,
   CloudSun,
@@ -105,7 +110,7 @@ function createRiskIcon(level: RiskLevel, selected: boolean): L.DivIcon {
 // import { STATUS_CONFIG, getCardStatus } from './CampusSummary'; // getCardStatus unused
 
 
-import { CAMPUSES, fetchOpenMeteoForecast } from './services/weather';
+import { CAMPUSES, fetchOpenMeteoForecast, fetchCampusWeather, type CampusWeather as WeatherServiceCampusWeather } from './services/weather';
 import { forecastData } from './data/forecastData';
 
 type AnalysisTab = 'observed' | 'forecast' | 'synopsis';
@@ -123,6 +128,24 @@ interface MetricCardProps {
 
 const SITE_CAMPUSES = [...CAMPUSES.map((campus) => campus.name)];
 const ALANGILAN_CENTER: [number, number] = [13.784295, 121.07428];
+
+type ColumnKey = 'time' | 'rain' | 'chanceRain' | 'temp' | 'wind' | 'humidity' | 'pressure' | 'condition';
+
+interface ColumnDefinition {
+  key: ColumnKey;
+  label: string;
+}
+
+const COLUMNS: ColumnDefinition[] = [
+  { key: 'time', label: 'Time' },
+  { key: 'condition', label: 'Condition' },
+  { key: 'rain', label: 'Rain (mm)' },
+  { key: 'chanceRain', label: 'Rain Prob (%)' },
+  { key: 'temp', label: 'Temp (degC)' },
+  { key: 'wind', label: 'Wind / Gust (kph)' },
+  { key: 'humidity', label: 'Humidity (%)' },
+  { key: 'pressure', label: 'Pressure (hPa)' },
+];
 
 
 
@@ -265,7 +288,7 @@ function MetricCard({ label, value, icon: Icon, severity }: MetricCardProps) {
   const cfg = STATUS_CONFIG[risk];
   return (
     <article
-      className={`h-full rounded-xl border ${cfg.border} bg-gradient-to-br ${cfg.gradient} ${cfg.glow} p-3 shadow-sm`}
+      className={`h-full rounded-xl border ${cfg.border} ${cfg.cardBg} ${cfg.glow} p-3 shadow-sm`}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="line-clamp-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[#414042]/70">{label}</p>
@@ -300,7 +323,6 @@ export default function DetailedSiteAnalysis() {
   const [selectedCampus, setSelectedCampus] = useState(SITE_CAMPUSES[0]);
   const [mapSelectedCampus, setMapSelectedCampus] = useState<string | null>(null);
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lon: number } | null>(null);
-  const [showLegend, setShowLegend] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(() => new Date());
   const [forecastSeries, setForecastSeries] = useState(forecastData);
   const [isLiveForecast, setIsLiveForecast] = useState(false);
@@ -309,6 +331,31 @@ export default function DetailedSiteAnalysis() {
   const [currentWeatherCode, setCurrentWeatherCode] = useState<number | null>(null);
   const [forecastScenario] = useState<ForecastScenario>('baseline');
   const [forecastHorizon] = useState<ForecastHorizon>(24);
+  const [allCampusWeather, setAllCampusWeather] = useState<WeatherServiceCampusWeather[]>([]);
+
+  // Table states for Forecast Tab
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showColumnPopover, setShowColumnPopover] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(COLUMNS.map((column) => column.key));
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadAllWeather = async () => {
+      try {
+        const data = await fetchCampusWeather();
+        if (isMounted) setAllCampusWeather(data);
+      } catch (error) {
+        console.error('Failed to fetch all campus weather:', error);
+      }
+    };
+    void loadAllWeather();
+    const interval = setInterval(loadAllWeather, 10 * 60 * 1000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -632,6 +679,47 @@ export default function DetailedSiteAnalysis() {
     );
   }
 
+  const filteredRows = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return scenarioAdjustedForecast;
+
+    return scenarioAdjustedForecast.filter((row: any) => {
+      return Object.values(row).some((value) => String(value).toLowerCase().includes(term));
+    });
+  }, [scenarioAdjustedForecast, searchTerm]);
+
+  const pageSize = 6;
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedRows = filteredRows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const toggleColumn = (key: ColumnKey) => {
+    setVisibleColumns((prev) => {
+      if (prev.includes(key)) {
+        if (prev.length === 1) return prev;
+        return prev.filter((item) => item !== key);
+      }
+      return [...prev, key];
+    });
+  };
+
+  const renderCell = (row: any, key: ColumnKey) => {
+    if (key === 'time') {
+      return <span className="text-xs font-semibold text-[#414042]">{row.time}</span>;
+    }
+    if (key === 'temp') {
+      return <span className={`rounded-md px-2 py-1 text-[11px] font-bold ${row.temp > 30 ? 'bg-[#ff922b]/20 text-[#ff922b]' : 'bg-[#009748]/20 text-[#009748]'}`}>{row.temp}</span>;
+    }
+    if (key === 'rain') {
+      return <span className={`rounded-md px-2 py-1 text-[11px] font-bold ${row.rain > 0 ? 'bg-[#00818e]/20 text-[#00818e]' : 'bg-[#414042]/5 text-[#414042]/60'}`}>{row.rain}</span>;
+    }
+    if (key === 'wind') {
+       return <span className="text-xs font-semibold text-[#414042]">{row.wind} / {row.gust}</span>;
+    }
+    const value = row[key];
+    return <span className="text-xs font-semibold text-[#414042]">{value !== undefined ? value : '—'}</span>;
+  };
+
   return (
     <div className="min-h-full bg-[linear-gradient(180deg,#ffffff_0%,#fff5f6_100%)] px-6 py-8 lg:px-8">
       <div className="mx-auto max-w-[1600px] space-y-6">
@@ -666,7 +754,7 @@ export default function DetailedSiteAnalysis() {
               ].map((tab) => (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
+                  onClick={() => { setActiveTab(tab.key); setPage(1); }}
                   className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-[0.08em] transition-colors ${
                     activeTab === tab.key
                       ? 'bg-[#911d1f] text-white'
@@ -881,30 +969,35 @@ export default function DetailedSiteAnalysis() {
                         // Use fallbackData or forecastData to get metrics for risk logic
                         // For now, use observedMetrics for the selected campus, fallback to 'safe'
                         // If you have per-campus data, replace this logic accordingly
-                        let campusWeather = null;
-                        if (forecastSeries && Array.isArray(forecastSeries)) {
-                          // Try to find a matching campus in forecastData (if available)
-                          // This is a placeholder; adapt as needed for your real data
-                          campusWeather = {
+                        // Use live data for this specific campus if available in allCampusWeather
+                        const campusSpecificData = allCampusWeather.find(w => w.name === campus.name);
+                        
+                        let riskLevel: RiskLevel = 'safe';
+                        let riskLabel = 'Safe';
+
+                        if (campusSpecificData) {
+                          // Adapt WeatherServiceCampusWeather to the format expected by getCardStatus if needed
+                          // getCardStatus expects properties like 'rain', 'humidity', etc.
+                          // Fortunately, both interfaces share these common keys.
+                          const status = getCardStatus(campusSpecificData as any);
+                          riskLevel = status.level;
+                          riskLabel = RISK_CONFIG[riskLevel]?.label || 'Safe';
+                        } else if (campus.name === selectedCampus && currentWeather) {
+                          // Fallback to currently selected campus data if allCampusWeather hasn't loaded yet
+                          const tempCampusWeather = {
                             name: campus.name,
-                            rain: currentWeather?.rain ?? 0,
-                            humidity: currentWeather?.humidity ?? 0,
-                            windSpeed: currentWeather?.wind ?? 0,
-                            windGust: currentWeather?.gust ?? 0,
-                            rainPossibility: String(currentWeather?.chanceRain ?? 0),
-                            heatIndex: computeHeatIndex(currentWeather?.temp ?? 0, currentWeather?.humidity ?? 0),
-                            dewpoint: computeDewPoint(currentWeather?.temp ?? 0, currentWeather?.humidity ?? 0),
+                            rain: currentWeather.rain,
+                            humidity: currentWeather.humidity,
+                            windSpeed: currentWeather.wind,
+                            windGust: currentWeather.gust,
+                            rainPossibility: String(currentWeather.chanceRain),
+                            heatIndex: computeHeatIndex(currentWeather.temp, currentWeather.humidity),
+                            dewpoint: computeDewPoint(currentWeather.temp, currentWeather.humidity),
                             warning: false,
                             status: 'Safe',
                           };
-                        }
-                        // Use getCardStatus from CampusSummary to determine risk level
-                        let riskLevel: RiskLevel = 'safe';
-                        let riskLabel = 'Safe';
-                        if (campusWeather) {
-                          const status = getCardStatus(campusWeather);
+                          const status = getCardStatus(tempCampusWeather as any);
                           riskLevel = status.level;
-                          // Use label from RISK_CONFIG for tooltip
                           riskLabel = RISK_CONFIG[riskLevel]?.label || 'Safe';
                         }
                         const isSelected = mapSelectedCampus === campus.name;
@@ -963,28 +1056,43 @@ export default function DetailedSiteAnalysis() {
                     </MapContainer>
                   </div>
 
-                  <div className="border-t border-[#d2232a]/15">
-                    <button
-                      onClick={() => setShowLegend((prev) => !prev)}
-                      className="flex w-full items-center justify-between bg-gradient-to-r from-white to-[#d2232a]/10 px-4 py-3 text-left"
-                    >
-                      <span className="text-xs font-bold uppercase tracking-[0.12em] text-[#414042]">Legend</span>
-                      {showLegend ? <ChevronUp size={15} className="text-[#414042]/70" /> : <ChevronDown size={15} className="text-[#414042]/70" />}
-                    </button>
-
-                    {showLegend ? (
-                      <div className="grid grid-cols-1 gap-3 border-t border-[#d2232a]/15 px-4 py-3 text-xs font-semibold text-[#414042] sm:grid-cols-3">
-                        <div className="flex items-center gap-2 rounded-lg border border-[#009748]/30 bg-[#009748]/14 px-2.5 py-2">
-                          <span className="h-3 w-3 rounded-full bg-[#009748]" /> Safe
-                        </div>
-                        <div className="flex items-center gap-2 rounded-lg border border-[#fbaf26]/30 bg-[#fbaf26]/16 px-2.5 py-2">
-                          <span className="h-3 w-3 rounded-full bg-[#fbaf26]" /> Caution
-                        </div>
-                        <div className="flex items-center gap-2 rounded-lg border border-[#d2232a]/30 bg-[#d2232a]/16 px-2.5 py-2">
-                          <span className="h-3 w-3 rounded-full bg-[#d2232a]" /> Warning
+                  <div className="border-t border-[#d2232a]/15 px-4 py-4">
+                    <div className="flex flex-col gap-3">
+                      {/* Risk Status Row */}
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                        <span className="w-28 shrink-0 text-[10px] font-black uppercase tracking-[0.15em] text-[#414042]/60">Risk Status</span>
+                        <div className="flex flex-wrap items-center gap-4">
+                          {[
+                            { label: 'High Risk',   color: '#d2232a' },
+                            { label: 'Medium Risk', color: '#fbaf26' },
+                            { label: 'Low Risk',    color: '#009748' },
+                          ].map((item) => (
+                            <div key={item.label} className="flex items-center gap-1.5">
+                              <div className="h-2.5 w-2.5 rounded-full shadow-sm" style={{ background: item.color }} />
+                              <span className="text-[11px] font-bold text-[#414042]">{item.label}</span>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                    ) : null}
+
+                      <div className="h-px bg-gradient-to-r from-[#d2232a]/15 to-transparent" />
+
+                      {/* Map Markers Row */}
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                        <span className="w-28 shrink-0 text-[10px] font-black uppercase tracking-[0.15em] text-[#414042]/60">Map Markers</span>
+                        <div className="flex flex-wrap items-center gap-4 sm:gap-5">
+                          {[
+                            { label: 'Selected Campus', el: <span className="h-3 w-3 rounded-full border-2 border-white bg-[#d2232a] shadow-sm" /> },
+                            { label: 'BSU Campus',      el: <span className="h-2.5 w-2.5 rounded-full border-2 border-white bg-[#414042]/40 shadow-sm" /> },
+                          ].map(({ label, el }) => (
+                            <div key={label} className="flex items-center gap-1.5">
+                              {el}
+                              <span className="text-[11px] font-bold text-[#414042]">{label}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1020,7 +1128,105 @@ export default function DetailedSiteAnalysis() {
         ) : (
           // Forecast tab content
           <section className="space-y-6">
-            {/* You can add more forecast-specific content here if needed */}
+            {/* Forecast Data Table (Restored Design) */}
+            <div className="flex flex-col justify-between gap-3 rounded-2xl border border-[#d2232a]/20 bg-white p-4 shadow-sm md:flex-row md:items-center">
+              <div className="relative w-full max-w-sm">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#414042]/50" />
+                <input
+                  value={searchTerm}
+                  onChange={(event) => {
+                    setSearchTerm(event.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="Search forecast records..."
+                  className="w-full rounded-lg border border-[#d2232a]/20 bg-gray-50 py-2 pl-9 pr-3 text-xs font-medium text-[#414042] outline-none transition-colors focus:border-[#d2232a]"
+                />
+              </div>
+
+              <div className="relative">
+                <button
+                  onClick={() => setShowColumnPopover((prev) => !prev)}
+                  className="inline-flex items-center gap-2 rounded-lg border border-[#d2232a]/20 bg-white px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-[#414042] transition-colors hover:bg-gray-50"
+                >
+                  <Settings2 size={14} />
+                  Columns
+                </button>
+
+                {showColumnPopover ? (
+                  <div className="absolute right-0 z-20 mt-2 w-52 rounded-xl border border-[#d2232a]/20 bg-white p-3 shadow-xl">
+                    <div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#414042]/60">
+                      <ListFilter size={13} /> Visible Columns
+                    </div>
+                    <div className="space-y-2">
+                      {COLUMNS.map((column) => (
+                        <label key={column.key} className="flex items-center gap-2 text-xs font-semibold text-[#414042]">
+                          <input
+                            type="checkbox"
+                            checked={visibleColumns.includes(column.key)}
+                            onChange={() => toggleColumn(column.key)}
+                          />
+                          {column.label}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-3xl border border-[#d2232a]/20 bg-white shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50/50">
+                      {COLUMNS.filter((column) => visibleColumns.includes(column.key)).map((column) => (
+                        <th
+                          key={column.key}
+                          className="whitespace-nowrap border-b border-[#d2232a]/15 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-[0.08em] text-[#414042]/60"
+                        >
+                          {column.label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {paginatedRows.map((row, idx) => (
+                      <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50/70">
+                        {COLUMNS.filter((column) => visibleColumns.includes(column.key)).map((column) => (
+                          <td key={`${idx}-${column.key}`} className="whitespace-nowrap px-4 py-3 align-middle">
+                            {renderCell(row, column.key)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 border-t border-gray-100 px-4 py-3">
+                <button
+                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="inline-flex items-center gap-1 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-[#414042] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <ChevronLeft size={13} /> Prev
+                </button>
+
+                <span className="text-xs font-semibold text-[#414042]/60">
+                  Page {currentPage} of {totalPages}
+                </span>
+
+                <button
+                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="inline-flex items-center gap-1 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-[#414042] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Next <ChevronRight size={13} />
+                </button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
               <ForecastChart
                 title="Rainfall Forecast"
@@ -1092,7 +1298,6 @@ export default function DetailedSiteAnalysis() {
             </div>
           </section>
         )}
-      // (FlyToSelected is defined once at the bottom of the file)
       </div>
     </div>
   );
