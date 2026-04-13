@@ -94,9 +94,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     const avgHumidity =
       campusWeather.length > 0
         ? Math.round(
-            campusWeather.reduce((sum, campus) => sum + Number(campus.humidity), 0) /
-              campusWeather.length,
-          )
+          campusWeather.reduce((sum, campus) => sum + Number(campus.humidity), 0) /
+          campusWeather.length,
+        )
         : 0;
     const topRainCampus = [...campusWeather].sort((a, b) => Number(b.rain) - Number(a.rain))[0];
     const strongestWind = [...campusWeather].sort(
@@ -164,16 +164,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <button
                 key={item.id}
                 onClick={() => setActiveNav(item.id)}
-                className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all ${
-                  isActive
-                    ? 'border border-[#fbaf26]/55 bg-[#414042]/18 text-white shadow-[0_12px_28px_rgba(145,29,31,0.36)] backdrop-blur-md'
-                    : 'border border-transparent text-white/90 hover:border-[#fbaf26]/35 hover:bg-[#414042]/10 hover:text-[#fbaf26]'
-                }`}
+                className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all ${isActive
+                  ? 'border border-[#fbaf26]/55 bg-[#414042]/18 text-white shadow-[0_12px_28px_rgba(145,29,31,0.36)] backdrop-blur-md'
+                  : 'border border-transparent text-white/90 hover:border-[#fbaf26]/35 hover:bg-[#414042]/10 hover:text-[#fbaf26]'
+                  }`}
               >
                 <span
-                  className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
-                    isActive ? 'bg-[#414042]/20 text-white' : 'bg-[#414042]/28 text-white group-hover:bg-[#414042]/18'
-                  }`}
+                  className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${isActive ? 'bg-[#414042]/20 text-white' : 'bg-[#414042]/28 text-white group-hover:bg-[#414042]/18'
+                    }`}
                 >
                   <Icon size={17} />
                 </span>
@@ -246,234 +244,232 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         ) : activeNav === 'help' ? (
           <HelpSection />
         ) : (
-        <div className="p-8">
-          {/* 1. Header Section */}
-          <header className="mb-8">
-            <h1 className="text-3xl font-extrabold text-gray-800" style={{ fontFamily: "'DM Sans', sans-serif" }}>Local Risk Assessment</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              {lastUpdated
-                ? lastUpdated.toLocaleString([], {
+          <div className="p-8">
+            {/* 1. Header Section */}
+            <header className="mb-8">
+              <h1 className="text-3xl font-extrabold text-gray-800" style={{ fontFamily: "'DM Sans', sans-serif" }}>Local Risk Assessment</h1>
+              <p className="mt-1 text-sm text-gray-500">
+                {lastUpdated
+                  ? lastUpdated.toLocaleString([], {
                     month: 'short',
                     day: '2-digit',
                     year: 'numeric',
                     hour: 'numeric',
                     minute: '2-digit',
                   })
-                : 'Loading live weather'}{' '}
-              · Batangas State University
-            </p>
-          </header>
+                  : 'Loading live weather'}{' '}
+                · Batangas State University
+              </p>
+            </header>
 
-          {/* 2. Campus Summary Cards */}
-          <CampusSummary campusData={campusWeather} dataSource={isLiveWeather ? 'live' : 'fallback'} />
+            {/* 2. Campus Summary Cards */}
+            <CampusSummary campusData={campusWeather} dataSource={isLiveWeather ? 'live' : 'fallback'} />
 
-          {/* 3. The Map & Table Grid */}
-          <div className="grid grid-cols-12 gap-6">
-            {/* Map */}
-            <div className="col-span-12 lg:col-span-6">
-              <div className="h-full rounded-3xl border border-[#d2232a]/20 bg-gradient-to-br from-white/96 to-[#d2232a]/8 p-6 shadow-[0_20px_65px_rgba(65,64,66,0.12)] backdrop-blur-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-[#414042]">Risk Map</h3>
-                </div>
-                <RiskMap
-                  mapMode={mapMode}
-                  onCampusSelect={setSelectedCampusName}
-                  onMapModeChange={setMapMode}
-                  campusRisks={campusWeather.map(c => ({ name: c.name, level: getCardStatus(c).level }))}
-                  isLive={isLiveWeather}
-                />
-                <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-[#d2232a]/15 bg-white/70 p-4 shadow-sm backdrop-blur-md">
-                  {/* Risk Levels Row */}
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                    <span className="w-24 shrink-0 text-[10px] font-black uppercase tracking-[0.15em] text-[#414042]/60">Risk Status</span>
-                    <div className="flex flex-wrap items-center gap-4">
-                      {[
-                        { label: 'High Risk', color: 'bg-[#d2232a]' },
-                        { label: 'Medium Risk', color: 'bg-[#fbaf26]' },
-                        { label: 'Low Risk', color: 'bg-[#009748]' },
-                      ].map((item) => (
-                        <div key={item.label} className="flex items-center gap-1.5">
-                          <div className={`h-2.5 w-2.5 rounded-full ${item.color} shadow-sm`}></div>
-                          <span className="text-[11px] font-bold text-[#414042]">{item.label}</span>
-                        </div>
-                      ))}
-                    </div>
+            {/* 3. The Map & Table Grid */}
+            <div className="grid grid-cols-12 gap-6">
+              {/* Map */}
+              <div className="col-span-12 lg:col-span-6">
+                <div className="h-full rounded-3xl border border-[#d2232a]/20 bg-gradient-to-br from-white/96 to-[#d2232a]/8 p-6 shadow-[0_20px_65px_rgba(65,64,66,0.12)] backdrop-blur-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-[#414042]">Risk Map</h3>
                   </div>
+                  <RiskMap
+                    mapMode={mapMode}
+                    onCampusSelect={setSelectedCampusName}
+                    onMapModeChange={setMapMode}
+                    campusRisks={campusWeather.map(c => ({ name: c.name, level: getCardStatus(c).level }))}
+                    isLive={isLiveWeather}
+                  />
+                  <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-[#d2232a]/15 bg-white/70 p-4 shadow-sm backdrop-blur-md">
+                    {/* Risk Levels Row */}
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                      <span className="w-24 shrink-0 text-[10px] font-black uppercase tracking-[0.15em] text-[#414042]/60">Risk Status</span>
+                      <div className="flex flex-wrap items-center gap-4">
+                        {[
+                          { label: 'High Risk', color: 'bg-[#d2232a]' },
+                          { label: 'Medium Risk', color: 'bg-[#fbaf26]' },
+                          { label: 'Low Risk', color: 'bg-[#009748]' },
+                        ].map((item) => (
+                          <div key={item.label} className="flex items-center gap-1.5">
+                            <div className={`h-2.5 w-2.5 rounded-full ${item.color} shadow-sm`}></div>
+                            <span className="text-[11px] font-bold text-[#414042]">{item.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
 
-                  <div className="h-px bg-gradient-to-r from-[#d2232a]/15 to-transparent" />
+                    <div className="h-px bg-gradient-to-r from-[#d2232a]/15 to-transparent" />
 
-                  {/* Weather Hazards Row */}
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                    <span className="w-24 shrink-0 text-[10px] font-black uppercase tracking-[0.15em] text-[#414042]/60">Map Hazards</span>
-                    <div className="flex flex-wrap items-center gap-4 sm:gap-5">
-                      {[
-                        { label: 'Typhoon', Icon: Wind, hex: '#7c3aed' },
-                        { label: 'Low Pressure', Icon: Cloud, hex: '#0ea5e9' },
-                        { label: 'Tropical Cyclone', Icon: CloudRain, hex: '#06b6d4' },
-                        { label: 'Thunderstorm', Icon: CloudLightning, hex: '#f59e0b' },
-                      ].map(({ label, Icon, hex }) => (
-                        <div key={label} className="flex items-center gap-1.5">
-                          <Icon size={14} style={{ color: hex }} strokeWidth={2.5} />
-                          <span className="text-[11px] font-bold text-[#414042]">{label}</span>
-                        </div>
-                      ))}
+                    {/* Weather Hazards Row */}
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                      <span className="w-24 shrink-0 text-[10px] font-black uppercase tracking-[0.15em] text-[#414042]/60">Map Hazards</span>
+                      <div className="flex flex-wrap items-center gap-4 sm:gap-5">
+                        {[
+                          { label: 'Typhoon', Icon: Wind, hex: '#7c3aed' },
+                          { label: 'Low Pressure', Icon: Cloud, hex: '#0ea5e9' },
+                          { label: 'Tropical Cyclone', Icon: CloudRain, hex: '#06b6d4' },
+                          { label: 'Thunderstorm', Icon: CloudLightning, hex: '#f59e0b' },
+                        ].map(({ label, Icon, hex }) => (
+                          <div key={label} className="flex items-center gap-1.5">
+                            <Icon size={14} style={{ color: hex }} strokeWidth={2.5} />
+                            <span className="text-[11px] font-bold text-[#414042]">{label}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Data Section */}
-            <div className="col-span-12 lg:col-span-6">
-              {/* Current Observations */}
-              <div className="h-full rounded-3xl border border-[#d2232a]/20 bg-gradient-to-br from-white/96 to-[#911d1f]/8 p-6 shadow-[0_20px_65px_rgba(65,64,66,0.12)] backdrop-blur-sm">
-                <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-[#414042]">Current Observations</h3>
-                  <span
-                    className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase ${
-                      isLiveWeather
+              {/* Data Section */}
+              <div className="col-span-12 lg:col-span-6">
+                {/* Current Observations */}
+                <div className="h-full rounded-3xl border border-[#d2232a]/20 bg-gradient-to-br from-white/96 to-[#911d1f]/8 p-6 shadow-[0_20px_65px_rgba(65,64,66,0.12)] backdrop-blur-sm">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-[#414042]">Current Observations</h3>
+                    <span
+                      className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase ${isLiveWeather
                         ? 'border-[#00818e]/45 bg-[#00818e]/16 text-[#006193]'
                         : 'border-[#d2232a]/25 bg-white text-[#414042]/80'
-                    }`}
-                  >
-                    {isLiveWeather ? 'Live API' : 'Fallback'}
-                  </span>
-                </div>
-
-                <div className="mb-4 rounded-xl border border-[#d2232a]/20 bg-white/92 p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-[10px] uppercase tracking-[0.12em] text-[#414042]/80">Selected Campus</p>
-                    <p className="text-[10px] font-semibold text-[#006193]">Click a map icon to update</p>
+                        }`}
+                    >
+                      {isLiveWeather ? 'Live API' : 'Fallback'}
+                    </span>
                   </div>
-                  {selectedCampus ? (
-                    <div className="mt-2">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-bold text-[#414042]">{selectedCampus.name}</p>
-                        <span
-                          className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase ${
-                            selectedCampus.warning
+
+                  <div className="mb-4 rounded-xl border border-[#d2232a]/20 bg-white/92 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[10px] uppercase tracking-[0.12em] text-[#414042]/80">Selected Campus</p>
+                      <p className="text-[10px] font-semibold text-[#006193]">Click a map icon to update</p>
+                    </div>
+                    {selectedCampus ? (
+                      <div className="mt-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-bold text-[#414042]">{selectedCampus.name}</p>
+                          <span
+                            className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase ${selectedCampus.warning
                               ? 'bg-[#fbaf26]/30 text-[#fbaf26]'
                               : 'bg-[#009748]/25 text-[#007e42]'
-                          }`}
-                        >
-                          {selectedCampus.status}
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="mt-2 text-xs text-[#414042]/80">No campus selected yet.</p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-[#d2232a]/20 bg-white/92 p-3">
-                    <p className="text-[10px] uppercase tracking-[0.12em] text-[#414042]/80">Monitored Campuses</p>
-                    <p className="mt-1 text-2xl font-extrabold text-[#414042]">{observationSummary.monitoredCount}</p>
-                  </div>
-                  <div className="rounded-xl border border-[#d2232a]/20 bg-white/92 p-3">
-                    <p className="text-[10px] uppercase tracking-[0.12em] text-[#414042]/80">Total Rainfall</p>
-                    <p className="mt-1 text-2xl font-extrabold text-[#414042]">{observationSummary.totalRain} mm</p>
-                  </div>
-                  {/* Campuses Exceeding Any Risk Threshold */}
-                  {(() => {
-                    // List of metrics to check
-                    const METRICS = [
-                      { key: 'rain', label: 'Rainfall', unit: 'mm', threshold: 30 },
-                      { key: 'windSpeed', label: 'Wind Speed', unit: 'km/h', threshold: 60 },
-                      { key: 'heatIndex', label: 'Temperature', unit: '°C', threshold: 39 },
-                      { key: 'humidity', label: 'Humidity', unit: '%', threshold: 90 },
-                      { key: 'dewPoint', label: 'Dew Point', unit: '°C', threshold: 28 },
-                      { key: 'windGust', label: 'Wind Gust', unit: 'km/h', threshold: 80 },
-                      { key: 'visibility', label: 'Visibility', unit: 'km', threshold: 2, inverted: true },
-                    ] as const;
-
-                    type MetricKey = 'rain' | 'windSpeed' | 'heatIndex' | 'humidity' | 'dewpoint' | 'windGust' | 'visibility';
-                    const getMetricValue = (campus: CampusWeather, key: MetricKey): number | undefined => {
-                      if (key === 'rain') return Number(campus.rain);
-                      if (key === 'windSpeed') return Number(campus.windSpeed);
-                      if (key === 'heatIndex') return Number(campus.heatIndex);
-                      if (key === 'humidity') return Number(campus.humidity);
-                      if (key === 'dewpoint') return Number(campus.dewpoint);
-                      if (key === 'windGust') return Number(campus.windGust);
-                      if (key === 'visibility') return Number(campus.visibility);
-                      return undefined;
-                    };
-                    // Find all campuses with any metric exceeding its risk threshold
-                    const exceeded = campusWeather.flatMap(campus => {
-                      const exceededMetrics = METRICS.filter(metric => {
-                        const value = getMetricValue(campus, metric.key as MetricKey);
-                        if (value === undefined || isNaN(value)) return false;
-                        if ('inverted' in metric && metric.inverted) return value < metric.threshold;
-                        return value >= metric.threshold;
-                      });
-                      if (exceededMetrics.length === 0) return [];
-                      return [{ campus, exceededMetrics }];
-                    });
-                    if (exceeded.length === 0) return null;
-                    const colorMap = {
-                      safe: 'border-[#009748]/30 bg-[#009748]/10 text-[#007e42]',
-                      monitor: 'border-[#ffd600]/35 bg-[#ffd600]/10 text-[#bfa600]', // strong yellow
-                      caution: 'border-[#ffe066]/35 bg-[#ffe066]/10 text-[#bfa600]',
-                      warning: 'border-[#ff922b]/35 bg-[#ff922b]/10 text-[#b85c00]',
-                      danger: 'border-[#d2232a]/30 bg-[#d2232a]/8 text-[#911d1f]',
-                      risk: 'border-[#d2232a]/30 bg-[#d2232a]/8 text-[#911d1f]',
-                    };
-                    return exceeded.map(({ campus, exceededMetrics }) => {
-                      const risk = getCardStatus(campus).level;
-                      return (
-                        <div key={campus.name + '-exceeded'} className={`col-span-1 rounded-xl border p-2.5 ${colorMap[risk]}`}>
-                          <p className="text-[10px] uppercase tracking-[0.12em]">Exceeded</p>
-                          <p className="mt-1 text-xs font-semibold">{campus.name}</p>
-                          <ul className="text-[11px] ml-2 list-disc">
-                            {exceededMetrics.map(metric => (
-                              <li key={metric.key}>
-                                {metric.label}: {getMetricValue(campus, metric.key as MetricKey)} {metric.unit}
-                              </li>
-                            ))}
-                          </ul>
-                          <span className="text-[10px] font-bold uppercase tracking-wider">{risk}</span>
+                              }`}
+                          >
+                            {selectedCampus.status}
+                          </span>
                         </div>
-                      );
-                    });
-                  })()}
-                </div>
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-xs text-[#414042]/80">No campus selected yet.</p>
+                    )}
+                  </div>
 
-                <div className="mt-4 rounded-xl border border-[#d2232a]/20 bg-white/92 p-4">
-                  <p className="text-[10px] uppercase tracking-[0.12em] text-[#414042]/80">Selected Campus Metrics</p>
-                  {selectedCampus ? (
-                    <div className="mt-3 grid grid-cols-2 gap-3">
-                      {[
-                        { key: 'heatIndex', label: 'Temperature', unit: '°C', value: selectedCampus.heatIndex },
-                        { key: 'windSpeed', label: 'Wind Speed', unit: 'km/h', value: selectedCampus.windSpeed },
-                        { key: 'humidity', label: 'Humidity', unit: '%', value: selectedCampus.humidity },
-                        { key: 'rain', label: 'Rainfall', unit: 'mm', value: selectedCampus.rain },
-                      ].map(metric => {
-                        const risk: RiskLevel = getCardStatus({ ...selectedCampus, [metric.key]: metric.value }).level;
-                        const colorMap: Record<RiskLevel, string> = {
-                          safe: 'border-[#009748]/30 bg-[#009748]/10 text-[#007e42]',
-                          monitor: 'border-[#fbaf26]/35 bg-[#fbaf26]/10 text-[#92610a]',
-                          warning: 'border-[#ff922b]/35 bg-[#ff922b]/10 text-[#b85c00]',
-                          danger: 'border-[#d2232a]/30 bg-[#d2232a]/8 text-[#911d1f]',
-                          risk: 'border-[#d2232a]/30 bg-[#d2232a]/8 text-[#911d1f]',
-                        };
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-xl border border-[#d2232a]/20 bg-white/92 p-3">
+                      <p className="text-[10px] uppercase tracking-[0.12em] text-[#414042]/80">Monitored Campuses</p>
+                      <p className="mt-1 text-2xl font-extrabold text-[#414042]">{observationSummary.monitoredCount}</p>
+                    </div>
+                    <div className="rounded-xl border border-[#d2232a]/20 bg-white/92 p-3">
+                      <p className="text-[10px] uppercase tracking-[0.12em] text-[#414042]/80">Total Rainfall</p>
+                      <p className="mt-1 text-2xl font-extrabold text-[#414042]">{observationSummary.totalRain} mm</p>
+                    </div>
+                    {/* Campuses Exceeding Any Risk Threshold */}
+                    {(() => {
+                      // List of metrics to check
+                      const METRICS = [
+                        { key: 'rain', label: 'Rainfall', unit: 'mm', threshold: 30 },
+                        { key: 'windSpeed', label: 'Wind Speed', unit: 'km/h', threshold: 60 },
+                        { key: 'heatIndex', label: 'Temperature', unit: '°C', threshold: 39 },
+                        { key: 'humidity', label: 'Humidity', unit: '%', threshold: 90 },
+                        { key: 'dewPoint', label: 'Dew Point', unit: '°C', threshold: 28 },
+                        { key: 'windGust', label: 'Wind Gust', unit: 'km/h', threshold: 80 },
+                        { key: 'visibility', label: 'Visibility', unit: 'km', threshold: 2, inverted: true },
+                      ] as const;
+
+                      type MetricKey = 'rain' | 'windSpeed' | 'heatIndex' | 'humidity' | 'dewpoint' | 'windGust' | 'visibility';
+                      const getMetricValue = (campus: CampusWeather, key: MetricKey): number | undefined => {
+                        if (key === 'rain') return Number(campus.rain);
+                        if (key === 'windSpeed') return Number(campus.windSpeed);
+                        if (key === 'heatIndex') return Number(campus.heatIndex);
+                        if (key === 'humidity') return Number(campus.humidity);
+                        if (key === 'dewpoint') return Number(campus.dewpoint);
+                        if (key === 'windGust') return Number(campus.windGust);
+                        if (key === 'visibility') return Number(campus.visibility);
+                        return undefined;
+                      };
+                      // Find all campuses with any metric exceeding its risk threshold
+                      const exceeded = campusWeather.flatMap(campus => {
+                        const exceededMetrics = METRICS.filter(metric => {
+                          const value = getMetricValue(campus, metric.key as MetricKey);
+                          if (value === undefined || isNaN(value)) return false;
+                          if ('inverted' in metric && metric.inverted) return value < metric.threshold;
+                          return value >= metric.threshold;
+                        });
+                        if (exceededMetrics.length === 0) return [];
+                        return [{ campus, exceededMetrics }];
+                      });
+                      if (exceeded.length === 0) return null;
+                      const colorMap = {
+                        safe: 'border-[#009748]/30 bg-[#009748]/10 text-[#007e42]',
+                        monitor: 'border-[#ffd600]/35 bg-[#ffd600]/10 text-[#bfa600]', // strong yellow
+                        caution: 'border-[#ffe066]/35 bg-[#ffe066]/10 text-[#bfa600]',
+                        warning: 'border-[#ff922b]/35 bg-[#ff922b]/10 text-[#b85c00]',
+                        danger: 'border-[#d2232a]/30 bg-[#d2232a]/8 text-[#911d1f]',
+                        risk: 'border-[#d2232a]/30 bg-[#d2232a]/8 text-[#911d1f]',
+                      };
+                      return exceeded.map(({ campus, exceededMetrics }) => {
+                        const risk = getCardStatus(campus).level;
                         return (
-                          <div key={metric.key} className={`rounded-xl border px-3 py-3 ${colorMap[risk]}`}>
-                            <p className="text-[10px] uppercase tracking-[0.1em] text-[#414042]/80">{metric.label}</p>
-                            <p className="mt-1 text-xl font-extrabold">{metric.value} {metric.unit}</p>
+                          <div key={campus.name + '-exceeded'} className={`col-span-1 rounded-xl border p-2.5 ${colorMap[risk]}`}>
+                            <p className="text-[10px] uppercase tracking-[0.12em]">Exceeded</p>
+                            <p className="mt-1 text-xs font-semibold">{campus.name}</p>
+                            <ul className="text-[11px] ml-2 list-disc">
+                              {exceededMetrics.map(metric => (
+                                <li key={metric.key}>
+                                  {metric.label}: {getMetricValue(campus, metric.key as MetricKey)} {metric.unit}
+                                </li>
+                              ))}
+                            </ul>
                             <span className="text-[10px] font-bold uppercase tracking-wider">{risk}</span>
                           </div>
                         );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="mt-2 text-xs text-[#414042]/80">Select a campus on the map to view its metrics.</p>
-                  )}
+                      });
+                    })()}
+                  </div>
+
+                  <div className="mt-4 rounded-xl border border-[#d2232a]/20 bg-white/92 p-4">
+                    <p className="text-[10px] uppercase tracking-[0.12em] text-[#414042]/80">Selected Campus Metrics</p>
+                    {selectedCampus ? (
+                      <div className="mt-3 grid grid-cols-2 gap-3">
+                        {[
+                          { key: 'heatIndex', label: 'Temperature', unit: '°C', value: selectedCampus.heatIndex },
+                          { key: 'windSpeed', label: 'Wind Speed', unit: 'km/h', value: selectedCampus.windSpeed },
+                          { key: 'humidity', label: 'Humidity', unit: '%', value: selectedCampus.humidity },
+                          { key: 'rain', label: 'Rainfall', unit: 'mm', value: selectedCampus.rain },
+                        ].map(metric => {
+                          const risk: RiskLevel = getCardStatus({ ...selectedCampus, [metric.key]: metric.value }).level;
+                          const colorMap: Record<RiskLevel, string> = {
+                            safe: 'border-[#009748]/30 bg-[#009748]/10 text-[#007e42]',
+                            monitor: 'border-[#fbaf26]/35 bg-[#fbaf26]/10 text-[#92610a]',
+                            warning: 'border-[#ff922b]/35 bg-[#ff922b]/10 text-[#b85c00]',
+                            danger: 'border-[#d2232a]/30 bg-[#d2232a]/8 text-[#911d1f]',
+                            risk: 'border-[#d2232a]/30 bg-[#d2232a]/8 text-[#911d1f]',
+                          };
+                          return (
+                            <div key={metric.key} className={`rounded-xl border px-3 py-3 ${colorMap[risk]}`}>
+                              <p className="text-[10px] uppercase tracking-[0.1em] text-[#414042]/80">{metric.label}</p>
+                              <p className="mt-1 text-xl font-extrabold">{metric.value} {metric.unit}</p>
+                              <span className="text-[10px] font-bold uppercase tracking-wider">{risk}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-xs text-[#414042]/80">Select a campus on the map to view its metrics.</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-        </div>
+          </div>
         )}
       </div>
     </div>

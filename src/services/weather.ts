@@ -32,6 +32,7 @@ export interface CampusWeather {
   mslp: string;
   dewpoint: string;
   heatIndex: string;
+  temperature: string;
   humidity: string;
   windDirection: string;
   windGust: string;
@@ -236,6 +237,7 @@ const toCampusWeather = (name: string, apiData: any): CampusWeather => {
     mslp: `${Math.round(mslp)}`,
     dewpoint: dewPoint.toFixed(1),
     heatIndex: heatIndex.toFixed(1),
+    temperature: temp.toFixed(1),
     humidity: `${Math.round(humidity)}`,
     windDirection: asCardinalDirection(windDeg),
     windGust: windGust.toFixed(0),
@@ -256,6 +258,7 @@ export const generateFallbackCampusWeather = (): CampusWeather[] =>
     mslp: '1012',
     dewpoint: '22.0',
     heatIndex: '29.5',
+    temperature: '28.0',
     humidity: '72',
     windDirection: 'E',
     windGust: '18',

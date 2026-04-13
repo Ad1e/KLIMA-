@@ -4,7 +4,6 @@ import L from 'leaflet';
 import {
   Activity,
   Navigation,
-  Info,
   ShieldAlert,
   Map,
   Satellite,
@@ -89,10 +88,22 @@ const getRiskLabel = (distanceKm: number) => {
 };
 
 const statusClasses: Record<string, string> = {
-  Safe: 'bg-[#009748]/22 text-[#007e42] border-[#009748]/35',
-  Watch: 'bg-[#fbaf26]/25 text-[#fbaf26] border-[#fbaf26]/35',
+  Safe:    'bg-[#009748]/22 text-[#007e42] border-[#009748]/35',
+  Watch:   'bg-[#fbaf26]/25 text-[#fbaf26] border-[#fbaf26]/35',
   Monitor: 'bg-[#d2232a]/20 text-[#911d1f] border-[#d2232a]/35',
 };
+
+const previousEQs = [
+  { magnitude: 3.1, location: 'Batangas Province',    depthKm: 12,  time: 'Mar 17 · 10:22 AM' },
+  { magnitude: 4.8, location: 'Mindoro Strait',        depthKm: 35,  time: 'Mar 15 · 3:45 PM'  },
+  { magnitude: 3.6, location: 'Tayabas Bay',            depthKm: 22,  time: 'Mar 12 · 8:11 PM'  },
+  { magnitude: 5.2, location: 'Masbate Province',      depthKm: 18,  time: 'Mar 10 · 6:33 AM'  },
+  { magnitude: 2.9, location: 'Laguna de Bay Region',  depthKm: 8,   time: 'Mar 8 · 11:55 PM'  },
+  { magnitude: 4.1, location: 'Quezon Province',       depthKm: 45,  time: 'Mar 6 · 2:17 AM'   },
+];
+
+const getMagColor = (mag: number) =>
+  mag >= 6.0 ? '#d2232a' : mag >= 4.0 ? '#fbaf26' : '#009748';
 
 const haversineDistanceKm = (start: [number, number], end: [number, number]): number => {
   const toRad = (value: number) => (value * Math.PI) / 180;
@@ -139,17 +150,6 @@ export default function EarthquakeAnalysis({ mapMode, onMapModeChange }: Earthqu
   }, []);
 
   const mapTileUrl = getEqTileUrl(mapMode);
-  const nearestCampus = campusDistances[0];
-  const advisoryLevel =
-    nearestCampus.status === 'Monitor'
-      ? 'Heightened monitoring'
-      : nearestCampus.status === 'Watch'
-        ? 'Preparedness watch'
-        : 'Routine awareness';
-  const shakingEstimate =
-    latestEQ.depthKm > 300
-      ? 'Deep-focus event: generally lower surface shaking impact is expected in Batangas.'
-      : 'Shallow-to-mid depth event: monitor for stronger local ground motion and aftershocks.';
 
   const mapView =
     focusMode === 'event'
@@ -159,20 +159,22 @@ export default function EarthquakeAnalysis({ mapMode, onMapModeChange }: Earthqu
         : ({ center: [18.7, 127.5] as [number, number], zoom: 4 } as const);
 
   return (
-    <div className="space-y-4 px-6 py-4">
-      <header className="mb-2 flex items-center justify-between">
+    <div className="flex flex-col px-5 py-3" style={{ height: 'calc(100vh - 56px)', overflow: 'hidden' }}>
+      <header className="mb-2 flex shrink-0 items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#414042]">Earthquake Risk Analysis</h1>
-          <p className="mt-0.5 text-xs text-[#414042]/80">As of March 18, 2026 • Regional Seismic Activity Overview</p>
+          <h1 className="text-xl font-extrabold text-[#414042]">Earthquake Risk Analysis</h1>
+          <p className="mt-0.5 text-[11px] text-[#414042]/80">As of March 18, 2026 • Regional Seismic Activity Overview</p>
         </div>
         <div className="rounded-xl border border-[#d2232a]/20 bg-white/92 px-3 py-1.5 text-[11px] font-semibold text-[#414042]/80 shadow-sm backdrop-blur-sm">
           Source: PHIVOLCS / USGS style feed (mock)
         </div>
       </header>
 
-      <div className="grid grid-cols-12 gap-3 items-start">
-        <div className="col-span-12 space-y-3 lg:col-span-7">
-          <div className="relative overflow-hidden rounded-2xl border border-[#d2232a]/20 bg-gradient-to-br from-white/95 to-[#d2232a]/10 p-4 shadow-[0_12px_40px_rgba(65,64,66,0.10)]">
+      <div className="grid min-h-0 flex-1 grid-cols-12 gap-3 overflow-hidden">
+        {/* LEFT column: map fills remaining height naturally */}
+        <div className="col-span-12 flex min-h-0 flex-col gap-3 lg:col-span-7">
+          {/* Map card — flex-1 so it fills whatever space is left */}
+          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#d2232a]/20 bg-gradient-to-br from-white/95 to-[#d2232a]/10 p-2 shadow-[0_12px_40px_rgba(65,64,66,0.10)]">
             <div className="absolute left-6 top-6 z-[1000] flex gap-2 rounded-full border border-[#d2232a]/20 bg-white/92 p-1 backdrop-blur-md">
               {[
                 { key: 'street' as const, label: 'Street', icon: <Map size={13} /> },
@@ -215,7 +217,7 @@ export default function EarthquakeAnalysis({ mapMode, onMapModeChange }: Earthqu
               ))}
             </div>
 
-            <div className="h-[400px] w-full overflow-hidden rounded-2xl">
+            <div className="min-h-0 flex-1 overflow-hidden rounded-2xl">
               <MapContainer
                 center={mapView.center}
                 zoom={mapView.zoom}
@@ -284,7 +286,7 @@ export default function EarthquakeAnalysis({ mapMode, onMapModeChange }: Earthqu
             </div>
           </div>
 
-          <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-[#d2232a]/15 bg-white/70 p-4 shadow-sm backdrop-blur-md">
+          <div className="shrink-0 flex flex-col gap-3 rounded-2xl border border-[#d2232a]/15 bg-white/70 px-4 py-3 shadow-sm backdrop-blur-md">
             {/* Risk Status Row */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
               <span className="w-28 shrink-0 text-[10px] font-black uppercase tracking-[0.15em] text-[#414042]/60">Risk Status</span>
@@ -321,10 +323,13 @@ export default function EarthquakeAnalysis({ mapMode, onMapModeChange }: Earthqu
               </div>
             </div>
           </div>
+
         </div>
 
-        <div className="col-span-12 space-y-4 lg:col-span-5">
-          <div className="relative overflow-hidden rounded-3xl border border-[#d2232a]/20 bg-gradient-to-br from-white/95 to-[#d2232a]/14 p-6 shadow-[0_20px_65px_rgba(65,64,66,0.12)]">
+        {/* RIGHT column */}
+        <div className="col-span-12 flex min-h-0 flex-col gap-3 lg:col-span-5">
+          {/* Latest EQ card — fixed height */}
+          <div className="relative shrink-0 overflow-hidden rounded-2xl border border-[#d2232a]/20 bg-gradient-to-br from-white/95 to-[#d2232a]/14 p-4 shadow-sm">
             <div className="absolute right-0 top-0 p-4 opacity-10">
               <Activity size={96} className="text-[#911d1f]" />
             </div>
@@ -353,75 +358,75 @@ export default function EarthquakeAnalysis({ mapMode, onMapModeChange }: Earthqu
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-[#d2232a]/20 bg-white/96 shadow-[0_12px_40px_rgba(65,64,66,0.08)]">
-            <div className="flex items-center justify-between border-b border-[#d2232a]/15 p-3">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#d2232a]/20 bg-white/96 shadow-sm">
+            <div className="flex shrink-0 items-center justify-between border-b border-[#d2232a]/15 p-3">
               <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-[#414042]">Campus Distance Analysis</h3>
               <Navigation size={14} className="text-[#911d1f]/55" />
             </div>
 
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-[#d2232a]/8">
-                <th className="px-4 py-2 text-[10px] font-bold uppercase text-[#414042]/70">Campus</th>
-                <th className="px-4 py-2 text-center text-[10px] font-bold uppercase text-[#414042]/70">Distance (km)</th>
-                <th className="px-4 py-2 text-right text-[10px] font-bold uppercase text-[#414042]/70">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#d2232a]/10">
-                {campusDistances.map((campus) => (
-                  <tr key={campus.name} className="transition-colors hover:bg-[#d2232a]/8">
-                    <td className="px-4 py-2.5 text-xs font-bold text-[#414042]">{campus.name}</td>
-                    <td className="px-4 py-2.5 text-center text-xs font-mono text-[#414042]/80">
-                      {campus.distanceKm.toFixed(0)}
-                    </td>
-                    <td className="px-4 py-2.5 text-right">
-                      <span
-                        className={`rounded-md border px-2 py-1 text-[9px] font-black uppercase ${
-                          statusClasses[campus.status]
-                        }`}
-                      >
-                        {campus.status}
-                      </span>
-                    </td>
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <table className="w-full text-left">
+                <thead className="sticky top-0 z-10">
+                  <tr className="bg-[#d2232a]/8">
+                    <th className="px-4 py-2 text-[10px] font-bold uppercase text-[#414042]/70">Campus</th>
+                    <th className="px-4 py-2 text-center text-[10px] font-bold uppercase text-[#414042]/70">Distance (km)</th>
+                    <th className="px-4 py-2 text-right text-[10px] font-bold uppercase text-[#414042]/70">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-[#d2232a]/10">
+                  {campusDistances.map((campus) => (
+                    <tr key={campus.name} className="transition-colors hover:bg-[#d2232a]/8">
+                      <td className="px-4 py-2 text-xs font-bold text-[#414042]">{campus.name}</td>
+                      <td className="px-4 py-2 text-center text-xs font-mono text-[#414042]/80">
+                        {campus.distanceKm.toFixed(0)}
+                      </td>
+                      <td className="px-4 py-2 text-right">
+                        <span
+                          className={`rounded-md border px-2 py-1 text-[9px] font-black uppercase ${
+                            statusClasses[campus.status]
+                          }`}
+                        >
+                          {campus.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          <div className="rounded-2xl border border-[#d2232a]/20 bg-gradient-to-br from-white/95 to-[#d2232a]/12 p-3 shadow-sm">
-            <div className="mb-2 flex items-center gap-2">
-              <Radar size={14} className="text-[#911d1f]" />
-              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#414042]">Action Briefing</p>
+          {/* Previous Earthquakes list */}
+          <div className="shrink-0 overflow-hidden rounded-2xl border border-[#d2232a]/15 bg-white/90 shadow-sm">
+            <div className="flex items-center gap-2 border-b border-[#d2232a]/10 bg-gradient-to-r from-white to-[#d2232a]/8 px-3 py-2">
+              <Activity size={12} className="text-[#911d1f]" />
+              <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#414042]">Previous Earthquakes</p>
             </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-xl border border-[#d2232a]/20 bg-white/92 p-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#414042]/80">Nearest</p>
-                <p className="mt-0.5 text-xs font-semibold text-[#414042]">{nearestCampus.name}</p>
-              </div>
-              <div className="rounded-xl border border-[#d2232a]/20 bg-white/92 p-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#414042]/80">Distance</p>
-                <p className="mt-0.5 text-xs font-semibold text-[#414042]">{nearestCampus.distanceKm.toFixed(0)} km</p>
-              </div>
-              <div className="rounded-xl border border-[#d2232a]/20 bg-white/92 p-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#414042]/80">Advisory</p>
-                <p className="mt-0.5 text-xs font-semibold text-[#414042]">{advisoryLevel}</p>
-              </div>
-            </div>
-
-            <div className="mt-2 rounded-xl border border-[#d2232a]/20 bg-white/92 p-2.5">
-              <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#414042]/80">Expected Ground Impact</p>
-              <p className="mt-1 text-xs text-[#414042]">{shakingEstimate}</p>
-            </div>
-
-            <div className="mt-2 rounded-xl border border-[#d2232a]/20 bg-white/92 p-2.5">
-              <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#414042]/80">Recommended Actions</p>
-              <div className="mt-1.5 space-y-0.5 text-xs text-[#414042]">
-                <p>Check official seismic advisories every 30 minutes.</p>
-                <p>Confirm building and lab safety status before high-occupancy activities.</p>
-                <p>Prepare response teams for possible aftershock notifications.</p>
-              </div>
+            <div className="max-h-[148px] overflow-y-auto divide-y divide-[#d2232a]/8">
+              {previousEQs.map((eq, i) => {
+                const hex = getMagColor(eq.magnitude);
+                return (
+                  <div key={i} className="flex items-center gap-3 px-3 py-2 transition-colors hover:bg-[#d2232a]/5">
+                    <div
+                      className="flex h-8 w-8 shrink-0 flex-col items-center justify-center rounded-lg text-white"
+                      style={{ background: `linear-gradient(135deg, ${hex}cc, ${hex})` }}
+                    >
+                      <span className="text-[11px] font-black leading-none">{eq.magnitude.toFixed(1)}</span>
+                      <span className="text-[7px] font-bold uppercase opacity-85">mag</span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[11px] font-bold text-[#414042]">{eq.location}</p>
+                      <p className="text-[9px] text-[#414042]/55">{eq.time} · {eq.depthKm} km depth</p>
+                    </div>
+                    <span
+                      className="shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase"
+                      style={{ color: hex, borderColor: `${hex}44`, background: `${hex}14` }}
+                    >
+                      {eq.depthKm > 300 ? 'Deep' : eq.depthKm > 70 ? 'Mid' : 'Shallow'}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

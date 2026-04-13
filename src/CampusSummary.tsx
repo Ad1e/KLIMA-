@@ -32,6 +32,8 @@ export interface CampusWeather {
   dewpoint?: number | string;
   windDirection?: string;
   cloudCover?: string;
+  mslp?: string;
+  temperature?: string;
   warning: boolean;
   status: string;
 }
@@ -49,13 +51,15 @@ const THRESHOLDS = {
   windSpeed: { monitor: 40, risk: 60, unit: 'km/h', label: 'Wind Speed', icon: Wind, desc: 'Normal: <40km/h, Monitor: 40–60km/h, Risk: >60km/h' },
   windGust: { monitor: 50, risk: 80, unit: 'km/h', label: 'Wind Gust', icon: Zap, desc: 'Normal: <50km/h, Monitor: 50–80km/h, Risk: >80km/h' },
   heatIndex: {
-    monitor: 32,
-    warning: 36,
-    danger: 39,
+    // PAGASA Heat Index Advisory scale
+    monitor:      27,   // Caution
+    warning:      33,   // Extreme Caution
+    danger:       42,   // Danger
+    extremeDanger: 52,  // Extreme Danger
     unit: '°C',
-    label: 'Temperature',
+    label: 'Heat Index',
     icon: Thermometer,
-    desc: 'Normal: <32°C, Monitor: 32–36°C, Warning: 36–39°C, Danger: ≥39°C',
+    desc: 'Caution: 27–32°C · Extreme Caution: 33–41°C · Danger: 42–51°C · Extreme Danger: ≥52°C',
   },
   dewpoint: { monitor: 24, risk: 28, unit: '°C', label: 'Dew Point', icon: Droplets, desc: 'Normal: <24°C, Monitor: 24–28°C, Risk: >28°C' },
   visibility: { monitor: 5, risk: 2, unit: 'km', label: 'Visibility', icon: Eye, invertedLow: true, desc: 'Normal: >5km, Monitor: 2–5km, Risk: <2km' },
@@ -71,9 +75,10 @@ export function getRiskLevel(value: number | string, key: keyof typeof THRESHOLD
   if (!t || isNaN(v)) return 'safe';
   if (key === 'heatIndex') {
     const hi = t as typeof THRESHOLDS['heatIndex'];
-    if (v >= hi.danger) return 'danger';
-    if (v >= hi.warning) return 'warning';
-    if (v >= hi.monitor) return 'monitor';
+    if (v >= (hi as any).extremeDanger) return 'risk';   // Extreme Danger ≥52°C
+    if (v >= hi.danger)  return 'danger';                 // Danger 42–51°C
+    if (v >= hi.warning) return 'warning';                // Extreme Caution 33–41°C
+    if (v >= hi.monitor) return 'monitor';                // Caution 27–32°C
     return 'safe';
   }
   if ('invertedLow' in t && (t as any).invertedLow) {
@@ -179,11 +184,11 @@ export const STATUS_CONFIG = {
     statColor: '#b91c1c',
   },
   monitor: {
-    label: 'MONITOR',
+    label: 'CAUTION',
     icon: AlertTriangle,
     emoji: '⚠️',
-    banner: 'Monitoring required. Stay alert.',
-    message: 'Some metrics need attention.',
+    banner: 'Caution: Some metrics need attention.',
+    message: 'Conditions require monitoring.',
     cardBg: 'bg-amber-50',
     border: 'border-amber-200',
     leftBorder: '#d97706',
@@ -444,7 +449,7 @@ function MetricRow({ metricKey, value, cardLevel }: MetricRowProps) {
 // ─── Campus Card ──────────────────────────────────────────────────────────────
 
 function CampusCard({ campus }: { campus: CampusWeather }) {
-  const [showExtra, setShowExtra] = useState(false);
+  const [miniPage, setMiniPage] = useState<0|1|2>(0);
   const { level, reasons } = getCardStatus(campus);
   const cfg = STATUS_CONFIG[level];
   const StatusIcon = cfg.icon;
@@ -468,39 +473,33 @@ function CampusCard({ campus }: { campus: CampusWeather }) {
   const footerMessage = getAlertFooterMessage(campus, level, reasons);
   const alertReasonSummary = isAlert ? getAlertReasonSummary(campus, level) : '';
 
-  // Basic minis (always shown when !showExtra)
-  const basicMinis = [
-    { Icon: TrendingUp, label: 'Rain %',  value: campus.rainPossibility ?? '—' },
-    { Icon: Compass,    label: 'Wind Dir', value: campus.windDirection    ?? '—' },
-    { Icon: Cloud,      label: 'Cloud',    value: campus.cloudCover       ?? '—' },
-  ];
-
-  // Extra minis shown when showExtra — same 3-col grid, just different data
   const fmtVal = (v: number | string | undefined, unit: string) =>
     v !== undefined && v !== null ? `${v}${unit}` : '—';
 
-  const extraMinis = [
-    {
-      Icon: Zap,
-      label: 'Wind Gust',
-      value: fmtVal(campus.windGust, 'km/h'),
-      alert: campus.windGust !== undefined && getRiskLevel(campus.windGust, 'windGust') !== 'safe',
-    },
-    {
-      Icon: Eye,
-      label: 'Visibility',
-      value: fmtVal(campus.visibility, 'km'),
-      alert: campus.visibility !== undefined && getRiskLevel(campus.visibility, 'visibility') !== 'safe',
-    },
-    {
-      Icon: Droplets,
-      label: 'Dew Point',
-      value: fmtVal(campus.dewpoint, '°C'),
-      alert: campus.dewpoint !== undefined && getRiskLevel(campus.dewpoint, 'dewpoint') !== 'safe',
-    },
+  // Three pages × 3 tiles each — card height NEVER changes
+  const miniPages: { Icon: React.ElementType; label: string; value: string; alert: boolean }[][] = [
+    // Page 0: Basic
+    [
+      { Icon: TrendingUp,  label: 'Rain %',   value: campus.rainPossibility ?? '—',                         alert: false },
+      { Icon: Thermometer, label: 'Temp',      value: campus.temperature ? `${campus.temperature}°C` : '—', alert: false },
+      { Icon: Compass,     label: 'Wind Dir',  value: campus.windDirection ?? '—',                          alert: false },
+    ],
+    // Page 1: Wind & Atmosphere
+    [
+      { Icon: Zap,      label: 'Wind Gust',  value: fmtVal(campus.windGust,  ' km/h'), alert: campus.windGust   !== undefined && getRiskLevel(campus.windGust,   'windGust')   !== 'safe' },
+      { Icon: Eye,      label: 'Visibility', value: fmtVal(campus.visibility,' km'),   alert: campus.visibility !== undefined && getRiskLevel(campus.visibility, 'visibility') !== 'safe' },
+      { Icon: Droplets, label: 'Dew Point',  value: fmtVal(campus.dewpoint,  '°C'),    alert: campus.dewpoint  !== undefined && getRiskLevel(campus.dewpoint,   'dewpoint')   !== 'safe' },
+    ],
+    // Page 2: Pressure & Cloud
+    [
+      { Icon: TrendingUp, label: 'MSLP (hPa)', value: campus.mslp ?? '—',                                alert: false },
+      { Icon: Cloud,      label: 'Cloud',       value: campus.cloudCover ? `${campus.cloudCover}%` : '—', alert: false },
+      { Icon: Droplets,   label: 'Humidity',    value: campus.humidity ? `${campus.humidity}%` : '—',    alert: false },
+    ],
   ];
 
-  const currentMinis = showExtra ? extraMinis : basicMinis;
+  const PAGE_LABELS = ['Details ▾', 'Advanced ▾', 'Basic ▴'];
+  const currentMinis = miniPages[miniPage];
 
   return (
     <article
@@ -568,46 +567,39 @@ function CampusCard({ campus }: { campus: CampusWeather }) {
         ))}
       </div>
 
-      {/* ── Swappable 3-col mini grid — NEVER changes the card height ── */}
       <div className="mx-4 mb-2 grid grid-cols-3 gap-1.5">
-        {currentMinis.map(({ Icon, label, value, ...rest }) => {
-          const isAlertMini = 'alert' in rest ? (rest as { alert: boolean }).alert : false;
-          return (
-            <div
-              key={label}
-              className={`flex flex-col items-center gap-0.5 rounded-xl border py-2 px-1 shadow-sm transition-colors duration-200 ${
-                isAlertMini
-                  ? `${cfg.statBg} border-[${cfg.leftBorder}]/30`
-                  : 'border-gray-200 bg-white/70'
-              }`}
+        {currentMinis.map(({ Icon, label, value, alert: isAlertMini }) => (
+          <div
+            key={label}
+            className={`flex flex-col items-center gap-0.5 rounded-xl border py-2 px-1 shadow-sm transition-colors duration-200 ${
+              isAlertMini
+                ? `${cfg.statBg} border-[${cfg.leftBorder}]/30`
+                : 'border-gray-200 bg-white/70'
+            }`}
+          >
+            <Icon size={10} style={{ color: cfg.accent }} aria-hidden="true" />
+            <span className="text-[8px] font-semibold uppercase tracking-wide text-gray-400">{label}</span>
+            <span
+              className={`text-[11px] font-black font-mono-metric ${isAlertMini ? cfg.statColor : 'text-gray-800'}`}
+              style={isAlertMini ? { color: cfg.accent } : {}}
             >
-              <Icon size={10} style={{ color: isAlertMini ? cfg.accent : cfg.accent }} aria-hidden="true" />
-              <span className="text-[8px] font-semibold uppercase tracking-wide text-gray-400">{label}</span>
-              <span
-                className={`text-[11px] font-black font-mono-metric ${
-                  isAlertMini ? cfg.statColor : 'text-gray-800'
-                }`}
-                style={isAlertMini ? { color: cfg.accent } : {}}
-              >
-                {value}
-              </span>
-            </div>
-          );
-        })}
+              {value}
+            </span>
+          </div>
+        ))}
       </div>
 
-      {/* ── Toggle button — swaps content, never resizes the card ── */}
+      {/* ── Cycle button — rotates 3 pages, height NEVER changes ── */}
       <button
-        onClick={() => setShowExtra(p => !p)}
+        onClick={() => setMiniPage(p => ((p + 1) % 3) as 0|1|2)}
         className="mx-4 mb-3 flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white/60 py-1.5 text-[9px] font-bold uppercase tracking-wider text-gray-400 transition-all hover:bg-white hover:text-gray-600 hover:border-gray-300"
-        aria-pressed={showExtra}
       >
         <ChevronDown
           size={11}
           className="transition-transform duration-300"
-          style={{ transform: showExtra ? 'rotate(180deg)' : 'rotate(0deg)' }}
+          style={{ transform: miniPage === 2 ? 'rotate(180deg)' : 'rotate(0deg)' }}
         />
-        {showExtra ? 'Basic View' : 'More Details'}
+        {PAGE_LABELS[miniPage]}
       </button>
 
       {/* ── Footer ── */}
